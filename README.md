@@ -1,6 +1,6 @@
 # Celld on Google Cloud Run
 
-Deploy [Celld](https://github.com/denoland/celld) (>0.2.0) on Google Cloud Run and Google Cloud Storage.
+Deploy [Celld](https://github.com/denoland/celld) (`>=0.2.1`) on Google Cloud Run and Google Cloud Storage.
 
 ---
 
