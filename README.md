@@ -65,7 +65,7 @@ gcloud beta run worker-pools update "${PREFIX}-workers" \
 ## Prerequisites
 
 - [Google Cloud SDK (`gcloud`)](https://cloud.google.com/sdk/docs/install) with `beta` components (`gcloud components install beta`)
-- [Celld CLI](https://github.com/denoland/celld) (`v0.2.0` or later) and `esbuild` on your `PATH`
+- [Celld CLI](https://github.com/denoland/celld) (`v0.2.1` or later) and `esbuild` on your `PATH`
 
 ---
 
@@ -138,14 +138,15 @@ EOF
 gcloud beta run worker-pools deploy "${PREFIX}-workers" \
   --project="$PROJECT_ID" \
   --region="$REGION" \
-  --image="ghcr.io/denoland/celld:v0.2.0" \
+  --image="ghcr.io/denoland/celld:v0.2.1" \
   --instances=1 \
+  --cpu=1 \
+  --memory=1Gi \
   --network=default \
   --subnet=default \
-  --vpc-egress=private-ranges-only \
-  --set-env-vars="CELLD_BUCKET=$CELLD_BUCKET,INTERNAL_PORT=8081,CELLD_MAX_RESIDENT_CELLS=100" \
   --command=/bin/bash \
-  --args=-c,"$WORKER_CMD"
+  --args="-c,$WORKER_CMD" \
+  --set-env-vars="CELLD_BUCKET=${CELLD_BUCKET}"
 ```
 
 ### 6. Deploy Public Entry Point (Cloud Run Service)
@@ -156,7 +157,7 @@ Cloud Run Worker Pools have no public endpoints. We deploy a standard Cloud Run 
 gcloud run deploy "${PREFIX}-ingress" \
   --project="$PROJECT_ID" \
   --region="$REGION" \
-  --image="ghcr.io/denoland/celld:v0.2.0" \
+  --image="ghcr.io/denoland/celld:v0.2.1" \
   --no-allow-unauthenticated \
   --network=default \
   --subnet=default \
