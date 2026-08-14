@@ -37,6 +37,11 @@ flowchart TB
 - **Cloud Run Worker Pool (Horizontally Scalable Fleet)**: Scalable backend fleet (`instances=1..N`). Each worker instance hosts resident Durable Object isolates in RAM, advertises its private Direct VPC address, and persists state changes to Cloud Storage.
 - **Cloud Storage (GCS)**: Serves as the distributed cluster plane (fleet discovery, room lease coordination) and persistent object storage for LTX WAL replication.
 
+### How Fleet Scaling Works
+1. Each newly provisioned worker receives a private VPC IP and queries it from the instance metadata server.
+2. The worker registers its presence in Cloud Storage (`gs://${BUCKET}/main/nodes/node_<id>.json`).
+3. The Ingress Service reads active node records from Cloud Storage and routes newly requested Durable Object rooms across the expanded worker fleet over Direct VPC.
+
 ---
 
 ## Estimated Cost
@@ -209,26 +214,6 @@ Measures end-to-end transaction latency (isolate execution + SQLite write + regi
 - **Base Process Footprint**: ~30.47 MB RSS (0 resident cells).
 - **Per-Resident Cell Memory**: ~1.43 MB RAM per active cell (includes V8 isolate heap, SQLite page cache, and LTX replication state).
 - **File Descriptors**: 8 FDs per resident cell.
-
----
-
-## Scaling Worker Pools
-
-A key architectural advantage of this setup is straightforward horizontal worker scaling without manual routing configuration or cluster managers.
-
-To scale backend worker capacity, update the instance count:
-
-```bash
-gcloud beta run worker-pools update "${PREFIX}-workers" \
-  --project="$PROJECT_ID" \
-  --region="$REGION" \
-  --instances=5
-```
-
-### How Fleet Scaling Works
-1. Each newly provisioned worker receives a private VPC IP and queries it from the instance metadata server.
-2. The worker registers its presence in Cloud Storage (`gs://${BUCKET}/main/nodes/node_<id>.json`).
-3. The Ingress Service reads active node records from Cloud Storage and routes newly requested Durable Object rooms across the expanded worker fleet over Direct VPC.
 
 ---
 
