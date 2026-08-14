@@ -52,6 +52,13 @@ flowchart TB
 
 ---
 
+## Prerequisites
+
+- [Google Cloud SDK (`gcloud`)](https://cloud.google.com/sdk/docs/install) with `beta` components (`gcloud components install beta`)
+- [Celld CLI](https://github.com/denoland/celld) (`v0.2.0` or later) and `esbuild` on your `PATH`
+
+---
+
 ## Quickstart
 
 ### 1. Configure Environment
