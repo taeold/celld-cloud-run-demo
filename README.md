@@ -34,10 +34,20 @@ flowchart TB
 ```
 
 - **Cloud Run Service (Ingress)**: Stateless, request-driven entry point that routes client connections. It reads live fleet state from Cloud Storage to discover all backend workers and load-balances Durable Object rooms across them over Direct VPC.
-- **Cloud Run Worker Pool (Horizontally Scalable Fleet)**: Scalable backend fleet (`instances=1..N`). Each worker instance hosts resident Durable Object isolates in RAM, advertises its private Direct VPC address, and persists state changes to Cloud Storage.
+- **Cloud Run Worker Pool (Workers)**: Scalable backend fleet (`instances=1..N`). Each worker instance hosts resident Durable Object isolates in RAM, advertises its private Direct VPC address, and persists state changes to Cloud Storage.
 - **Cloud Storage (GCS)**: Serves as the distributed cluster plane (fleet discovery, room lease coordination) and persistent object storage for LTX WAL replication.
 
 ### How Fleet Scaling Works
+
+To scale backend capacity, update the Worker Pool instance count with a single command:
+
+```bash
+gcloud beta run worker-pools update "${PREFIX}-workers" \
+  --project="$PROJECT_ID" \
+  --region="$REGION" \
+  --instances=5
+```
+
 1. Each newly provisioned worker receives a private VPC IP and queries it from the instance metadata server.
 2. The worker registers its presence in Cloud Storage (`gs://${BUCKET}/main/nodes/node_<id>.json`).
 3. The Ingress Service reads active node records from Cloud Storage and routes newly requested Durable Object rooms across the expanded worker fleet over Direct VPC.
