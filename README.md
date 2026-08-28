@@ -2,11 +2,6 @@
 
 Deploy [Celld](https://github.com/denoland/celld) (`>=0.2.1`) on Google Cloud Run and Google Cloud Storage.
 
-> [!NOTE]
-> Celld `v0.3.0` added a replicated write-behind log that acknowledges durable writes after a **peer fsync** (the bucket upload completes asynchronously), delivering ~10x lower write latency and >100x fewer Class A operations when running **2 or more** worker instances.
->
-> Celld `v0.4.0` adds zero-downtime hot code deployments without container restarts, streaming versioned peer tunnels, and Linux cgroup-aware memory management.
-
 ---
 
 ## Architecture
