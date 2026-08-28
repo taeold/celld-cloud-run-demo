@@ -2,6 +2,11 @@
 
 Deploy [Celld](https://github.com/denoland/celld) (`>=0.2.1`) on Google Cloud Run and Google Cloud Storage.
 
+> [!NOTE]
+> Celld `v0.3.0` added a replicated write-behind log that acknowledges durable writes after a **peer fsync** (the bucket upload completes asynchronously), delivering ~10x lower write latency and >100x fewer Class A operations when running **2 or more** worker instances.
+>
+> Celld `v0.4.0` adds zero-downtime hot code deployments without container restarts, streaming versioned peer tunnels, and Linux cgroup-aware memory management.
+
 ---
 
 ## Architecture
@@ -56,7 +61,7 @@ gcloud beta run worker-pools update "${PREFIX}-workers" \
 
 ## Estimated Cost
 
-- **Worker Pool**: 1 instance (1 vCPU / 1 GiB) is continuously provisioned at **~$32.79 / month**.
+- **Worker Pool**: 2 instances (1 vCPU / 1 GiB each) continuously provisioned at **~$65.58 / month**. Celld's write-behind log requires ≥2 nodes; drop to 1 instance (**~$32.79 / month**) if you do not need the lower write latency.
 - **Ingress Service**: Standard Cloud Run request-based pricing (scales to zero when idle).
 - **Cloud Storage**: Standard regional storage + Class A operations ($0.005 per 1,000 operations).
 
@@ -111,6 +116,9 @@ Build and upload the application bundle (`example-counter/`) to Cloud Storage:
 celld deploy example-counter --bucket "$CELLD_BUCKET"
 ```
 
+> [!TIP]
+> **Zero-Downtime Hot Deployments**: In Celld `v0.4.0`, running nodes poll `deploy/current.json` in Cloud Storage (`CELLD_DEPLOY_POLL_S=30s`). Once the fleet is running, future code deployments with `celld deploy` are hot-adopted in-place without restarting Cloud Run instances!
+
 ### 5. Deploy Backend Workers (Worker Pool)
 
 Celld operates as a peer-to-peer cluster where nodes communicate directly over private TCP port 8081 to coordinate cell leases and forward requests. To enable private peer-to-peer communication between Cloud Run instances without public routing, we attach the Worker Pool to **Direct VPC**.
@@ -138,8 +146,8 @@ EOF
 gcloud beta run worker-pools deploy "${PREFIX}-workers" \
   --project="$PROJECT_ID" \
   --region="$REGION" \
-  --image="ghcr.io/denoland/celld:v0.2.1" \
-  --instances=1 \
+  --image="ghcr.io/denoland/celld:v0.4.0" \
+  --instances=2 \
   --cpu=1 \
   --memory=1Gi \
   --network=default \
@@ -157,7 +165,7 @@ Cloud Run Worker Pools have no public endpoints. We deploy a standard Cloud Run 
 gcloud run deploy "${PREFIX}-ingress" \
   --project="$PROJECT_ID" \
   --region="$REGION" \
-  --image="ghcr.io/denoland/celld:v0.2.1" \
+  --image="ghcr.io/denoland/celld:v0.4.0" \
   --no-allow-unauthenticated \
   --network=default \
   --subnet=default \
@@ -166,6 +174,9 @@ gcloud run deploy "${PREFIX}-ingress" \
   --timeout=3600s \
   --set-env-vars="CELLD_BUCKET=$CELLD_BUCKET,CELLD_ADDR=0.0.0.0:8080,CELLD_INTERNAL_ADDR=127.0.0.1:8081,CELLD_MAX_RESIDENT_CELLS=0"
 ```
+
+> [!NOTE]
+> If configuring an optional HTTP startup probe, use `httpGet.path=/.well-known/celld/health` for Celld `v0.4.0+` (or `/__celld/health` for `v0.2.1`–`v0.3.0`).
 
 ### 7. Secure & Access the Application
 
