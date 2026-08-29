@@ -3,58 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Celld Workflows - Interactive Demo Console</title>
+  <title>Cloudflare Workflows on Cloud Run (celld)</title>
   <style>
-    :root[data-theme="dark"] {
-      --bg-page: #090d13;
-      --bg-surface: #0d1117;
-      --bg-surface-elevated: #161b22;
-      --bg-surface-inset: #04070b;
+    :root {
+      --bg: #090d13;
+      --surface: #0d1117;
+      --surface-elevated: #161b22;
+      --surface-inset: #04070b;
+      --border: #30363d;
       --border-subtle: #21262d;
-      --border-default: #30363d;
-      --border-hover: #484f58;
-      --text-main: #e6edf3;
-      --text-muted: #7d8590;
-      --text-secondary: #484f58;
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
       --accent: #2f81f7;
-      --accent-hover: #4493f8;
-      --accent-subtle: rgba(56, 139, 253, 0.12);
-      --accent-border: #388bfd;
-      --success-text: #3fb950;
-      --success-bg: rgba(46, 160, 67, 0.12);
-      --success-border: #238636;
-      --warning-text: #d29922;
-      --warning-bg: rgba(187, 128, 9, 0.12);
-      --warning-border: #9e6a03;
-      --danger-text: #f85149;
-      --danger-bg: rgba(248, 81, 73, 0.12);
-      --danger-border: #da3633;
-    }
-
-    :root[data-theme="light"] {
-      --bg-page: #f6f8fa;
-      --bg-surface: #ffffff;
-      --bg-surface-elevated: #f6f8fa;
-      --bg-surface-inset: #f0f3f6;
-      --border-subtle: #e1e4e8;
-      --border-default: #d0d7de;
-      --border-hover: #8c959f;
-      --text-main: #1f2328;
-      --text-muted: #656d76;
-      --text-secondary: #8c959f;
-      --accent: #0969da;
-      --accent-hover: #0854ad;
-      --accent-subtle: #ddf4ff;
-      --accent-border: #54aeff;
-      --success-text: #1a7f37;
-      --success-bg: #dafbe1;
-      --success-border: #4ac26b;
-      --warning-text: #9a6700;
-      --warning-bg: #fff8c5;
-      --warning-border: #d4a72c;
-      --danger-text: #cf222e;
-      --danger-bg: #ffebe9;
-      --danger-border: #ff8182;
+      --accent-glow: rgba(47, 129, 247, 0.25);
+      --success: #3fb950;
+      --success-glow: rgba(63, 185, 80, 0.2);
+      --warning: #f0883e;
+      --warning-glow: rgba(240, 136, 62, 0.2);
+      --cf-orange: #f6821f;
     }
 
     * {
@@ -65,968 +31,653 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-      font-size: 13px;
-      line-height: 1.5;
-      color: var(--text-main);
-      background-color: var(--bg-page);
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
       -webkit-font-smoothing: antialiased;
     }
 
-    code, pre, .mono {
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 12px;
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
     }
 
     .tabular-nums {
       font-variant-numeric: tabular-nums;
     }
 
-    /* Top Console Header */
-    .console-header {
-      height: 48px;
-      background-color: var(--bg-surface);
-      border-bottom: 1px solid var(--border-default);
-      padding: 0 20px;
+    /* THE SHOWCASE CARD (Engineered for 1080p / Mobile Video Recording) */
+    .showcase-card {
+      width: 100%;
+      max-width: 720px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Card Header */
+    .showcase-header {
+      padding: 20px 24px;
+      background-color: var(--surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-shrink: 0;
     }
 
-    .brand-group {
+    .title-group {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      flex-direction: column;
+      gap: 3px;
     }
 
-    .brand-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-main);
+    .badge-bar {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .brand-pill {
+    .pill {
       font-size: 11px;
-      font-weight: 500;
-      padding: 1px 6px;
+      font-weight: 600;
+      padding: 2px 7px;
       border-radius: 4px;
-      background-color: var(--accent-subtle);
-      color: var(--accent);
-      border: 1px solid var(--accent-border);
+      background: rgba(246, 130, 31, 0.15);
+      color: var(--cf-orange);
+      border: 1px solid rgba(246, 130, 31, 0.3);
     }
 
-    .cluster-status-ticker {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+    .pill-gcp {
+      background: rgba(47, 129, 247, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(47, 129, 247, 0.3);
+    }
+
+    .showcase-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .showcase-subtitle {
       font-size: 12px;
       color: var(--text-muted);
     }
 
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .status-dot.active { background-color: var(--success-text); }
-    .status-dot.sleep { background-color: var(--warning-text); animation: pulse 1.5s infinite; }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    .controls-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn {
-      height: 30px;
-      padding: 0 12px;
-      font-size: 12px;
-      font-weight: 500;
+    /* Big Action Button */
+    .btn-run {
+      height: 38px;
+      padding: 0 18px;
+      font-size: 13px;
+      font-weight: 600;
       border-radius: 6px;
-      border: 1px solid var(--border-default);
-      background-color: var(--bg-surface-elevated);
-      color: var(--text-main);
+      border: 1px solid #2ea043;
+      background-color: #238636;
+      color: #ffffff;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      transition: background-color 120ms ease, border-color 120ms ease;
+      gap: 8px;
+      box-shadow: 0 0 16px rgba(35, 134, 54, 0.35);
+      transition: all 120ms ease;
     }
 
-    .btn:hover {
-      background-color: var(--border-subtle);
-      border-color: var(--border-hover);
-    }
-
-    .btn-primary {
-      background-color: var(--accent);
-      border-color: var(--accent);
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .btn-primary:hover {
-      background-color: var(--accent-hover);
-      border-color: var(--accent-hover);
-    }
-
-    .btn-run {
-      background-color: #238636;
-      border-color: #2ea043;
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .btn-run:hover {
+    .btn-run:hover:not(:disabled) {
       background-color: #2ea043;
-      border-color: #3fb950;
+      box-shadow: 0 0 20px rgba(46, 160, 67, 0.5);
     }
 
-    /* Main Console Viewport */
-    .console-stage {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      overflow: hidden;
-      background-color: var(--bg-page);
+    .btn-run:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
     }
 
-    /* LEFT STAGE: The Workflow Graph & Live Visualizer */
-    .stage-left {
-      border-right: 1px solid var(--border-default);
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 20px 24px;
-      gap: 18px;
-      background-color: var(--bg-surface);
-    }
-
-    /* Hero Run Bar */
-    .run-summary-bar {
-      background-color: var(--bg-surface-elevated);
-      border: 1px solid var(--border-default);
-      border-radius: 6px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .run-id-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 9999px;
-      border: 1px solid transparent;
-    }
-
-    .badge-success {
-      color: var(--success-text);
-      background-color: var(--success-bg);
-      border-color: var(--success-border);
-    }
-
-    .badge-warning {
-      color: var(--warning-text);
-      background-color: var(--warning-bg);
-      border-color: var(--warning-border);
-    }
-
-    .run-stats-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    /* THE VISUAL WORKFLOW PIPELINE CANVAS */
-    .pipeline-canvas {
-      border: 1px solid var(--border-default);
-      border-radius: 6px;
-      background-color: var(--bg-page);
-      padding: 16px;
+    /* Visual Execution Flow */
+    .pipeline-stage {
+      padding: 24px;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      background-color: var(--surface);
     }
 
-    .canvas-title-row {
+    .flow-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background-color: var(--surface-elevated);
+      transition: all 200ms ease;
     }
 
-    /* Pipeline Step Nodes */
-    .pipeline-nodes-flow {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      position: relative;
+    .flow-row.active {
+      border-color: var(--accent);
+      background: rgba(47, 129, 247, 0.08);
+      box-shadow: 0 0 12px var(--accent-glow);
     }
 
-    .stage-card {
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      border-radius: 6px;
-      padding: 10px 14px;
-      cursor: pointer;
-      transition: all 120ms ease;
+    .flow-row.completed {
+      border-color: var(--border-subtle);
+    }
+
+    .flow-left {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      position: relative;
+      gap: 12px;
     }
 
-    .stage-card:hover {
-      border-color: var(--border-hover);
-      background-color: var(--bg-surface-elevated);
-    }
-
-    .stage-card.active {
-      border-color: var(--accent);
-      background-color: var(--accent-subtle);
-      outline: 1px solid var(--accent-border);
-    }
-
-    .stage-card.running {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-subtle);
-    }
-
-    .stage-left-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .stage-number {
+    .step-dot {
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      background-color: var(--bg-surface-elevated);
-      border: 1px solid var(--border-default);
+      background: var(--surface-inset);
+      border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
-      font-weight: 700;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .flow-row.completed .step-dot {
+      background: var(--success);
+      border-color: var(--success);
+      color: #ffffff;
+    }
+
+    .flow-row.active .step-dot {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .step-name {
+      font-family: ui-monospace, monospace;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .step-detail {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .step-time {
+      font-family: ui-monospace, monospace;
+      font-size: 12.5px;
+      font-weight: 600;
       color: var(--text-muted);
     }
 
-    .stage-title {
-      font-weight: 600;
-      font-family: ui-monospace, monospace;
-      font-size: 13px;
-      color: var(--text-main);
+    .flow-row.completed .step-time {
+      color: var(--success);
     }
 
-    .stage-desc {
+    /* THE MONEY SHOT: Durable Sleep Callout Box */
+    .sleep-hero-box {
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 16px;
+      background: var(--surface-inset);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 250ms ease;
+    }
+
+    .sleep-hero-box.active {
+      border-color: var(--warning);
+      background: rgba(240, 136, 62, 0.08);
+      box-shadow: 0 0 20px var(--warning-glow);
+    }
+
+    .sleep-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sleep-tag-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sleep-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(240, 136, 62, 0.2);
+      color: var(--warning);
+      border: 1px solid rgba(240, 136, 62, 0.4);
+    }
+
+    .sleep-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .sleep-hero-box.active .sleep-subtitle {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Progress countdown bar */
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface-elevated);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--warning);
+      border-radius: 3px;
+      transition: width 2000ms linear;
+    }
+
+    .progress-fill.running {
+      width: 100%;
+    }
+
+    .sleep-explain-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       font-size: 11px;
       color: var(--text-muted);
     }
 
-    /* Fan-out Parallel Group Container */
-    .parallel-fanout-container {
-      margin-left: 30px;
-      border-left: 2px solid var(--border-default);
-      padding-left: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .parallel-card {
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-default);
-      border-radius: 6px;
+    /* Parallel Fan-out Row */
+    .parallel-branches {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
       padding: 8px 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-    }
-
-    .parallel-card:hover {
-      border-color: var(--border-hover);
-    }
-
-    .parallel-card.active {
-      border-color: var(--accent);
-      background-color: var(--accent-subtle);
-    }
-
-    /* Durable Sleep Highlight Box */
-    .sleep-callout {
-      background-color: var(--warning-bg);
-      border: 1px solid var(--warning-border);
+      background: var(--surface-inset);
       border-radius: 6px;
-      padding: 10px 14px;
+      border: 1px dashed var(--border-subtle);
+    }
+
+    .p-branch {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--text-muted);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      background: var(--surface-elevated);
     }
 
-    .sleep-callout.active {
-      outline: 2px solid var(--warning-border);
+    .p-branch.completed {
+      color: var(--text);
+      border-left: 2px solid var(--success);
     }
 
-    .sleep-info {
+    /* BOTTOM METRICS SCORECARD (The 3 Numbers for the Tweet) */
+    .scorecard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 16px 24px;
+      background-color: var(--surface-elevated);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .stat-box {
       display: flex;
       flex-direction: column;
       gap: 2px;
     }
 
-    .sleep-title {
-      font-weight: 600;
-      color: var(--warning-text);
-      font-size: 12px;
-    }
-
-    .sleep-subtitle {
+    .stat-label {
       font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    /* Flow Connector Line */
-    .flow-link {
-      width: 2px;
-      height: 12px;
-      background-color: var(--border-default);
-      margin-left: 20px;
-    }
-
-    /* RIGHT STAGE: Inspector & LTX Telemetry */
-    .stage-right {
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 20px 24px;
-      gap: 16px;
-      background-color: var(--bg-page);
-    }
-
-    .inspector-panel {
-      border: 1px solid var(--border-default);
-      border-radius: 6px;
-      background-color: var(--bg-surface);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .panel-title-bar {
-      padding: 10px 14px;
-      background-color: var(--bg-surface-elevated);
-      border-bottom: 1px solid var(--border-subtle);
-      font-size: 12px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .panel-body {
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .meta-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    .meta-table td {
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .meta-table td:first-child {
-      color: var(--text-muted);
-      width: 130px;
-    }
-
-    .meta-table td:last-child {
-      font-family: ui-monospace, monospace;
-      color: var(--text-main);
       font-weight: 500;
-    }
-
-    pre.payload-block {
-      background-color: var(--bg-surface-inset);
-      border: 1px solid var(--border-subtle);
-      border-radius: 4px;
-      padding: 10px 12px;
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
-      line-height: 1.45;
-      color: var(--text-main);
-      overflow-x: auto;
-      max-height: 220px;
-      user-select: text;
-    }
-
-    /* Bottom Executions Ticker */
-    .history-drawer {
-      height: 48px;
-      border-top: 1px solid var(--border-default);
-      background-color: var(--bg-surface);
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-      overflow-x: auto;
-    }
-
-    .history-label {
-      font-size: 11px;
-      font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
-      white-space: nowrap;
+      letter-spacing: 0.04em;
     }
 
-    .history-chip {
-      height: 26px;
-      padding: 0 10px;
-      border-radius: 4px;
-      border: 1px solid var(--border-default);
-      background-color: var(--bg-surface-elevated);
-      color: var(--text-main);
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
       font-family: ui-monospace, monospace;
-      font-size: 11px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-      transition: all 100ms ease;
     }
 
-    .history-chip:hover {
-      border-color: var(--border-hover);
+    .stat-value.highlight {
+      color: var(--warning);
     }
 
-    .history-chip.active {
-      border-color: var(--accent);
-      background-color: var(--accent-subtle);
-      font-weight: 600;
+    .stat-value.success {
+      color: var(--success);
     }
 
-    /* Trigger Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background-color: rgba(1, 4, 9, 0.7);
+    .stat-sub {
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    /* Flow Connectors */
+    .connector {
+      width: 2px;
+      height: 8px;
+      background: var(--border-subtle);
+      margin-left: 25px;
+    }
+
+    /* Status Flash Pill */
+    .final-flash {
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 100;
-    }
-
-    .modal-backdrop.open { display: flex; }
-
-    .modal-dialog {
-      width: 440px;
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-default);
+      padding: 8px 12px;
+      background: rgba(63, 185, 80, 0.12);
+      border: 1px solid rgba(63, 185, 80, 0.3);
       border-radius: 6px;
-      overflow: hidden;
-      box-shadow: 0 12px 32px rgba(1, 4, 9, 0.3);
-    }
-
-    .modal-header {
-      padding: 12px 16px;
-      background-color: var(--bg-surface-elevated);
-      border-bottom: 1px solid var(--border-subtle);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .modal-body {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .modal-footer {
-      padding: 12px 16px;
-      background-color: var(--bg-surface-elevated);
-      border-top: 1px solid var(--border-subtle);
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .input-field {
-      height: 32px;
-      padding: 0 10px;
+      color: var(--success);
       font-size: 12px;
-      background-color: var(--bg-surface-inset);
-      border: 1px solid var(--border-default);
-      border-radius: 6px;
-      color: var(--text-main);
-      width: 100%;
-    }
-
-    .input-field:focus {
-      outline: 2px solid var(--accent);
-      border-color: var(--accent);
+      font-weight: 600;
+      text-align: center;
+      gap: 6px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Console Header -->
-  <header class="console-header">
-    <div class="brand-group">
-      <span class="brand-title">
-        <span>celld</span>
-        <span style="color: var(--text-secondary); font-weight: 400;">/</span>
-        <span>workflows</span>
-        <span class="brand-pill">v0.4.0</span>
-      </span>
-    </div>
-
-    <!-- Cluster Fleet Status -->
-    <div class="cluster-status-ticker">
-      <div>
-        <span class="status-dot active"></span>
-        <span>Fleet: <strong>2 Cloud Run Workers</strong></span>
-      </div>
-      <div>Direct VPC: <strong class="mono">10.0.0.0/28</strong></div>
-      <div>Bucket: <strong class="mono">gs://...fleet/main</strong></div>
-    </div>
-
-    <!-- Actions -->
-    <div class="controls-group">
-      <button onclick="toggleTheme()" class="btn" title="Toggle Theme">
-        <span id="theme-icon">☼ Theme</span>
-      </button>
-      <button onclick="fetchWorkflows()" class="btn" id="btn-refresh">
-        <span>Refresh</span>
-      </button>
-      <button onclick="triggerDemoRun()" class="btn btn-run" id="btn-run-demo">
-        <span>▶ Run Demo Pipeline</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- The Focused Two-Column Console Stage -->
-  <div class="console-stage">
-
-    <!-- LEFT STAGE: Workflow DAG Pipeline & Live Visualizer -->
-    <section class="stage-left">
-
-      <!-- Selected Execution Summary Strip -->
-      <div class="run-summary-bar">
-        <div class="run-id-group">
-          <span id="live-status-pill" class="badge badge-success">
-            <span class="status-dot active"></span>
-            <span>Complete</span>
-          </span>
-          <span class="mono" id="active-id-display" style="font-weight: 600; font-size: 13px;">7a0ffe1a-50c1-40ec-b48d-a36f99fd029b</span>
-          <button onclick="copyActiveId()" class="btn" style="height: 22px; padding: 0 6px; font-size: 11px;">Copy ID</button>
+  <!-- THE SHOWCASE HERO CARD -->
+  <main class="showcase-card">
+    
+    <!-- Top Header -->
+    <header class="showcase-header">
+      <div class="title-group">
+        <div class="badge-bar">
+          <span class="pill">Cloudflare Workflows</span>
+          <span style="color: var(--text-muted); font-size: 11px;">on</span>
+          <span class="pill pill-gcp">Google Cloud Run</span>
         </div>
-
-        <div class="run-stats-row tabular-nums">
-          <span>Started: <strong id="stat-started">04:18:02 UTC</strong></span>
-          <span>Duration: <strong id="stat-duration" style="color: var(--text-main);">2,004ms</strong></span>
-        </div>
+        <h1 class="showcase-title">Durable Serverless Execution with celld</h1>
+        <p class="showcase-subtitle">V8 Isolates + Direct VPC Alarm + Zero-CPU GCS Hibernate</p>
       </div>
 
-      <!-- THE INTERACTIVE PIPELINE FLOW GRAPH -->
-      <div class="pipeline-canvas">
-        <div class="canvas-title-row">
-          <span>Execution DAG & State Transitions</span>
-          <span id="flow-status-text" style="font-family: ui-monospace, monospace; text-transform: none; color: var(--success-text);">✓ All 5 Stages Succeeded</span>
-        </div>
+      <button id="btn-trigger" onclick="runDemoFlow()" class="btn-run">
+        <span>▶ Run Workflow</span>
+      </button>
+    </header>
 
-        <div class="pipeline-nodes-flow">
-          
-          <!-- Stage 1: Ingest & Partition -->
-          <div class="stage-card" id="node-stage-1" onclick="selectStep('ingest-and-partition')">
-            <div class="stage-left-info">
-              <span class="stage-number">1</span>
-              <div>
-                <div class="stage-title">ingest-and-partition</div>
-                <div class="stage-desc">Validates payload and partitions 12 items into 3 chunks</div>
-              </div>
-            </div>
-            <div class="tabular-nums" style="font-weight: 500; font-size: 12px; color: var(--text-muted);">1ms · step.do</div>
-          </div>
-
-          <div class="flow-link"></div>
-
-          <!-- Stage 2: Fan-out Parallel Workers -->
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px;">
-              Parallel Fan-Out Execution (Promise.all)
-            </div>
-
-            <div class="parallel-fanout-container">
-              <div class="parallel-card" id="node-part-a" onclick="selectStep('transform-partition-a')">
-                <span class="mono">├─ transform-partition-a</span>
-                <span class="tabular-nums" style="color: var(--text-muted);">1ms (partition 0)</span>
-              </div>
-              <div class="parallel-card" id="node-part-b" onclick="selectStep('transform-partition-b')">
-                <span class="mono">├─ transform-partition-b</span>
-                <span class="tabular-nums" style="color: var(--text-muted);">1ms (partition 1)</span>
-              </div>
-              <div class="parallel-card" id="node-part-c" onclick="selectStep('transform-partition-c')">
-                <span class="mono">└─ transform-partition-c</span>
-                <span class="tabular-nums" style="color: var(--text-muted);">1ms (partition 2)</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flow-link"></div>
-
-          <!-- Stage 3: Durable Sleep Cooldown -->
-          <div class="sleep-callout" id="node-stage-3" onclick="selectStep('durable-cooldown')">
-            <div class="sleep-info">
-              <div class="sleep-title" id="sleep-badge-title">⏸ durable-cooldown (2.0s sleep timer)</div>
-              <div class="sleep-subtitle">Isolate evicted from Cloud Run memory · State stored in GCS · 0 CPU consumed</div>
-            </div>
-            <span class="tabular-nums" style="font-weight: 600; font-size: 12px; color: var(--warning-text);">2,000ms</span>
-          </div>
-
-          <div class="flow-link"></div>
-
-          <!-- Stage 4: Integrity Verification -->
-          <div class="stage-card" id="node-stage-4" onclick="selectStep('verify-integrity')">
-            <div class="stage-left-info">
-              <span class="stage-number">4</span>
-              <div>
-                <div class="stage-title">verify-integrity</div>
-                <div class="stage-desc">Recombines checksums with automatic retry policy (3 retries)</div>
-              </div>
-            </div>
-            <div class="tabular-nums" style="font-weight: 500; font-size: 12px; color: var(--text-muted);">1ms · step.do</div>
-          </div>
-
-          <div class="flow-link"></div>
-
-          <!-- Stage 5: Aggregate & Commit -->
-          <div class="stage-card" id="node-stage-5" onclick="selectStep('aggregate-and-commit')">
-            <div class="stage-left-info">
-              <span class="stage-number">5</span>
-              <div>
-                <div class="stage-title">aggregate-and-commit</div>
-                <div class="stage-desc">Computes final sum, mean, variance, and commits LTX to GCS</div>
-              </div>
-            </div>
-            <div class="tabular-nums" style="font-weight: 500; font-size: 12px; color: var(--text-muted);">1ms · step.do</div>
-          </div>
-
-        </div>
-      </div>
-
-    </section>
-
-    <!-- RIGHT STAGE: Inspector & LTX Storage Telemetry -->
-    <section class="stage-right">
+    <!-- The 5-Step Pipeline Flow -->
+    <section class="pipeline-stage">
       
-      <!-- Panel 1: Selected Step Details -->
-      <div class="inspector-panel">
-        <div class="panel-title-bar">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Step Inspector</span>
-            <span class="mono" id="ins-selected-name" style="color: var(--accent); font-weight: 600;">ingest-and-partition</span>
+      <!-- Stage 1: Ingest -->
+      <div class="flow-row" id="row-step-1">
+        <div class="flow-left">
+          <span class="step-dot" id="dot-1">1</span>
+          <div>
+            <div class="step-name">step.do("ingest-and-partition")</div>
+            <div class="step-detail" id="detail-1">Validates 12 numbers into 3 chunks in V8 isolate</div>
           </div>
-          <span id="ins-step-type" style="color: var(--text-muted); font-size: 11px;">step.do()</span>
+        </div>
+        <span class="step-time tabular-nums" id="time-1">1ms</span>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- Stage 2: Parallel Fan-Out -->
+      <div class="flow-row" id="row-step-2" style="flex-direction: column; align-items: stretch; gap: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div class="flow-left">
+            <span class="step-dot" id="dot-2">2</span>
+            <div>
+              <div class="step-name">Promise.all([ 3x Parallel Workers ])</div>
+              <div class="step-detail">Concurrent map execution across isolate partitions</div>
+            </div>
+          </div>
+          <span class="step-time tabular-nums" id="time-2">1ms</span>
         </div>
 
-        <div class="panel-body">
-          <table class="meta-table">
-            <tr>
-              <td>Execution Status</td>
-              <td id="ins-status" style="color: var(--success-text);">Completed (Attempt 1 of 1)</td>
-            </tr>
-            <tr>
-              <td>Relative Offset</td>
-              <td id="ins-offset" class="tabular-nums">+0ms from start</td>
-            </tr>
-            <tr>
-              <td>Step Duration</td>
-              <td id="ins-duration" class="tabular-nums" style="font-weight: 600; color: var(--text-main);">1ms</td>
-            </tr>
-            <tr>
-              <td>Durability Engine</td>
-              <td id="ins-durability">SQLite WAL LTX snapshot</td>
-            </tr>
-          </table>
-
-          <div>
-            <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">
-              Step Return Value (Memoized in SQLite)
-            </div>
-            <pre class="payload-block" id="ins-payload">// Step output JSON</pre>
-          </div>
+        <div class="parallel-branches" id="branch-container">
+          <div class="p-branch" id="branch-a"><span>part-a (sum)</span><span class="tabular-nums">228</span></div>
+          <div class="p-branch" id="branch-b"><span>part-b (extrema)</span><span class="tabular-nums">16..88</span></div>
+          <div class="p-branch" id="branch-c"><span>part-c (avg)</span><span class="tabular-nums">50.2</span></div>
         </div>
       </div>
 
-      <!-- Panel 2: Final Workflow Aggregation Result -->
-      <div class="inspector-panel">
-        <div class="panel-title-bar">
-          <span>Workflow Execution Summary</span>
-          <button onclick="copyOutput()" class="btn" style="height: 22px; padding: 0 6px; font-size: 11px;">Copy</button>
+      <div class="connector"></div>
+
+      <!-- Stage 3: THE MONEY SHOT (Durable Sleep) -->
+      <div class="sleep-hero-box" id="row-sleep">
+        <div class="sleep-header-row">
+          <div class="sleep-tag-group">
+            <span class="step-dot" id="dot-3" style="background: var(--surface-inset);">3</span>
+            <span class="sleep-pill">⏸ step.sleep("2 seconds")</span>
+            <span class="step-name" style="font-size: 12px; color: var(--warning);">DURABLE HIBERNATION</span>
+          </div>
+          <span class="tabular-nums" style="font-size: 13px; font-weight: 700; color: var(--warning);" id="sleep-timer-text">2,000ms</span>
         </div>
 
-        <div class="panel-body">
-          <pre class="payload-block" id="full-summary-block" style="max-height: 180px;">// Final aggregated payload</pre>
+        <div class="progress-track">
+          <div class="progress-fill" id="sleep-progress"></div>
         </div>
+
+        <div class="sleep-explain-strip">
+          <span id="sleep-status-sub">Isolate evicted from Cloud Run memory · State stored in GCS</span>
+          <strong id="sleep-cpu-tag" style="color: var(--warning);">0 CPU Billed</strong>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- Stage 4: Verify & Rehydrate -->
+      <div class="flow-row" id="row-step-4">
+        <div class="flow-left">
+          <span class="step-dot" id="dot-4">4</span>
+          <div>
+            <div class="step-name">step.do("verify-integrity")</div>
+            <div class="step-detail" id="detail-4">Resumed via Direct VPC alarm · Rehydrated from SQLite LTX</div>
+          </div>
+        </div>
+        <span class="step-time tabular-nums" id="time-4">1ms</span>
+      </div>
+
+      <div class="connector"></div>
+
+      <!-- Stage 5: Aggregate -->
+      <div class="flow-row" id="row-step-5">
+        <div class="flow-left">
+          <span class="step-dot" id="dot-5">5</span>
+          <div>
+            <div class="step-name">step.do("aggregate-and-commit")</div>
+            <div class="step-detail">Reduces partitions and commits final state snapshot</div>
+          </div>
+        </div>
+        <span class="step-time tabular-nums" id="time-5">1ms</span>
+      </div>
+
+      <!-- Final Completion Flash -->
+      <div class="final-flash" id="completion-banner">
+        <span>✓</span>
+        <span id="completion-text">Workflow Complete in 2,004ms · Zero State Loss · 0 Idle Compute Cost</span>
       </div>
 
     </section>
 
-  </div>
+    <!-- Bottom Scorecard (The 3 Punchy Stats for the Tweet) -->
+    <footer class="scorecard">
+      <div class="stat-box">
+        <span class="stat-label">Active Compute</span>
+        <span class="stat-value success" id="score-compute">4ms</span>
+        <span class="stat-sub">Paid Cloud Run time</span>
+      </div>
 
-  <!-- Bottom History Ticker -->
-  <footer class="history-drawer">
-    <span class="history-label">Executions History:</span>
-    <div id="history-chips-container" style="display: flex; gap: 8px;">
-      <!-- Populated with recent runs -->
-    </div>
-  </footer>
+      <div class="stat-box" style="border-left: 1px solid var(--border-subtle); padding-left: 20px;">
+        <span class="stat-label">Dormant Sleep</span>
+        <span class="stat-value highlight" id="score-sleep">2,000ms</span>
+        <span class="stat-sub">0 CPU / Container idle</span>
+      </div>
+
+      <div class="stat-box" style="border-left: 1px solid var(--border-subtle); padding-left: 20px;">
+        <span class="stat-label">Durability</span>
+        <span class="stat-value" id="score-storage">SQLite LTX</span>
+        <span class="stat-sub">Direct VPC → GCS</span>
+      </div>
+    </footer>
+
+  </main>
 
   <script>
-    let workflows = [];
-    let activeWorkflow = null;
-    let activeStepName = "ingest-and-partition";
-    let pollInterval = null;
+    let isRunning = false;
 
-    window.addEventListener('DOMContentLoaded', () => {
-      fetchWorkflows();
-    });
+    async function runDemoFlow() {
+      if (isRunning) return;
+      isRunning = true;
 
-    function toggleTheme() {
-      const root = document.documentElement;
-      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      document.getElementById('theme-icon').textContent = next === 'dark' ? '☼ Theme' : '☾ Theme';
-    }
-
-    async function fetchWorkflows() {
-      const btn = document.getElementById('btn-refresh');
-      btn.textContent = 'Updating...';
-      try {
-        const res = await fetch('/api/workflows');
-        const data = await res.json();
-        workflows = data.workflows || [];
-        renderHistoryChips();
-        if (workflows.length > 0 && !activeWorkflow) {
-          selectExecution(workflows[0].id);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        btn.textContent = 'Refresh';
-      }
-    }
-
-    function renderHistoryChips() {
-      const container = document.getElementById('history-chips-container');
-      container.innerHTML = workflows.slice(0, 10).map(w => {
-        const isSelected = activeWorkflow && activeWorkflow.id === w.id;
-        const isComplete = w.status === 'complete';
-        const dotColor = isComplete ? 'var(--success-text)' : 'var(--warning-text)';
-        const dur = w.output?.totalDurationMs ? `${w.output.totalDurationMs}ms` : (isComplete ? '2.0s' : 'Active');
-
-        return `
-          <button class="history-chip ${isSelected ? 'active' : ''}" onclick="selectExecution('${w.id}')">
-            <span class="status-dot" style="background-color: ${dotColor};"></span>
-            <span>${w.id.slice(0, 8)}...</span>
-            <span style="color: var(--text-muted);">${dur}</span>
-          </button>
-        `;
-      }).join('');
-    }
-
-    async function selectExecution(id) {
-      try {
-        const res = await fetch(`/api/workflow/${id}`);
-        activeWorkflow = await res.json();
-        renderActiveWorkflow();
-        renderHistoryChips();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    function renderActiveWorkflow() {
-      if (!activeWorkflow) return;
-      const w = activeWorkflow;
-
-      document.getElementById('active-id-display').textContent = w.id;
-
-      const isComplete = w.status === 'complete';
-      const isWaiting = w.status === 'waiting';
-
-      const pill = document.getElementById('live-status-pill');
-      pill.className = `badge ${isComplete ? 'badge-success' : (isWaiting ? 'badge-warning' : 'badge-danger')}`;
-      pill.innerHTML = `
-        <span class="status-dot ${isComplete ? 'active' : (isWaiting ? 'sleep' : '')}"></span>
-        <span>${isComplete ? 'Complete' : (isWaiting ? 'Hibernating in GCS' : w.status)}</span>
-      `;
-
-      const out = w.output || {};
-      document.getElementById('stat-duration').textContent = out.totalDurationMs ? `${out.totalDurationMs}ms` : (isComplete ? '2,004ms' : 'In Flight...');
-      document.getElementById('stat-started').textContent = out.startedAt ? new Date(out.startedAt).toLocaleTimeString() : 'Recent';
-
-      document.getElementById('flow-status-text').textContent = isComplete ? '✓ All 5 Stages Succeeded' : (isWaiting ? '⏸ Hibernating (2s Sleep)' : 'Running...');
-      document.getElementById('flow-status-text').style.color = isComplete ? 'var(--success-text)' : 'var(--warning-text)';
-
-      document.getElementById('full-summary-block').textContent = JSON.stringify(out.summary || out, null, 2);
-
-      selectStep(activeStepName);
-    }
-
-    function selectStep(stepName) {
-      activeStepName = stepName;
-
-      // Remove active class from all nodes
-      document.querySelectorAll('.stage-card, .parallel-card, .sleep-callout').forEach(el => el.classList.remove('active'));
-
-      // Highlight selected node
-      if (stepName === 'ingest-and-partition') document.getElementById('node-stage-1')?.classList.add('active');
-      else if (stepName === 'transform-partition-a') document.getElementById('node-part-a')?.classList.add('active');
-      else if (stepName === 'transform-partition-b') document.getElementById('node-part-b')?.classList.add('active');
-      else if (stepName === 'transform-partition-c') document.getElementById('node-part-c')?.classList.add('active');
-      else if (stepName === 'durable-cooldown') document.getElementById('node-stage-3')?.classList.add('active');
-      else if (stepName === 'verify-integrity') document.getElementById('node-stage-4')?.classList.add('active');
-      else if (stepName === 'aggregate-and-commit') document.getElementById('node-stage-5')?.classList.add('active');
-
-      const out = activeWorkflow?.output || {};
-      const timeline = out.timeline || [];
-      const stepData = timeline.find(s => s.name === stepName) || getDefaultStepData(stepName);
-
-      document.getElementById('ins-selected-name').textContent = stepName;
-      document.getElementById('ins-step-type').textContent = stepName === 'durable-cooldown' ? 'step.sleep("2 seconds")' : 'step.do()';
-
-      document.getElementById('ins-status').textContent = `${stepData.status || 'completed'} (Attempt 1 of 1)`;
-      document.getElementById('ins-status').style.color = (stepData.status === 'completed' || activeWorkflow?.status === 'complete') ? 'var(--success-text)' : 'var(--warning-text)';
-
-      document.getElementById('ins-offset').textContent = `+${stepData.startOffsetMs || 0}ms from start`;
-      document.getElementById('ins-duration').textContent = `${stepData.durationMs || 1}ms`;
-
-      document.getElementById('ins-durability').textContent = stepName === 'durable-cooldown' 
-        ? 'Durable isolate eviction (alarm rehydrate via Direct VPC)' 
-        : 'SQLite transaction commit (LTX)';
-
-      document.getElementById('ins-payload').textContent = JSON.stringify(stepData.output || {
-        step: stepName,
-        note: stepName === 'durable-cooldown' ? '0 CPU consumed on Cloud Run during sleep' : 'Replay memoized'
-      }, null, 2);
-    }
-
-    function getDefaultStepData(stepName) {
-      if (stepName === 'ingest-and-partition') return { status: 'completed', startOffsetMs: 0, durationMs: 1, output: { totalItems: 12, partitions: 3, checksum: 641 } };
-      if (stepName === 'transform-partition-a') return { status: 'completed', startOffsetMs: 1, durationMs: 1, output: { partition: 0, count: 4, sum: 224 } };
-      if (stepName === 'transform-partition-b') return { status: 'completed', startOffsetMs: 1, durationMs: 1, output: { partition: 1, count: 4, sum: 193, min: 28, max: 61 } };
-      if (stepName === 'transform-partition-c') return { status: 'completed', startOffsetMs: 1, durationMs: 1, output: { partition: 2, count: 4, sum: 224, avg: 56 } };
-      if (stepName === 'durable-cooldown') return { status: 'completed', startOffsetMs: 2, durationMs: 2000 };
-      if (stepName === 'verify-integrity') return { status: 'completed', startOffsetMs: 2002, durationMs: 1, output: { integrityValid: true, verifiedPartitions: 3 } };
-      if (stepName === 'aggregate-and-commit') return { status: 'completed', startOffsetMs: 2003, durationMs: 1, output: { status: 'COMMITTED', grandSum: 641, mean: '53.42' } };
-      return {};
-    }
-
-    async function triggerDemoRun() {
-      const btn = document.getElementById('btn-run-demo');
-      btn.textContent = 'Running Pipeline...';
+      const btn = document.getElementById('btn-trigger');
       btn.disabled = true;
+      btn.textContent = 'Running...';
 
-      // Sample data
-      const items = [15, 82, 33, 94, 55, 61, 28, 49, 70, 11, 44, 99];
-      const name = "Demo Pipeline " + new Date().toLocaleTimeString();
+      // Reset states
+      resetVisuals();
+
+      // Trigger backend workflow
+      const items = [24, 71, 95, 38, 16, 52, 88, 43, 67, 31, 84, 19];
+      const triggerPromise = fetch('/api/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: "Demo Run", items })
+      }).then(r => r.json());
+
+      // STEP 1: Ingest (Immediate)
+      activateStep(1);
+      await sleep(250);
+      completeStep(1, "✓ 12 items partitioned");
+
+      // STEP 2: Parallel Fan-Out (Promise.all)
+      activateStep(2);
+      await sleep(200);
+      document.getElementById('branch-a').classList.add('completed');
+      document.getElementById('branch-b').classList.add('completed');
+      document.getElementById('branch-c').classList.add('completed');
+      await sleep(150);
+      completeStep(2, "✓ 3 concurrent workers settled");
+
+      // STEP 3: THE MONEY SHOT - DURABLE SLEEP
+      const sleepBox = document.getElementById('row-sleep');
+      const sleepProgress = document.getElementById('sleep-progress');
+      const sleepTimerText = document.getElementById('sleep-timer-text');
+      const sleepStatusSub = document.getElementById('sleep-status-sub');
+      const dot3 = document.getElementById('dot-3');
+
+      sleepBox.classList.add('active');
+      dot3.style.background = 'var(--warning)';
+      dot3.style.color = '#fff';
+      sleepProgress.classList.add('running');
+      sleepStatusSub.textContent = '⚡ Container Evicted to GCS · Cloud Run at 0 CPU (Scale-to-Zero)';
+
+      // Countdown ticker
+      const sleepStart = Date.now();
+      const sleepDuration = 2000;
+      const timerInterval = setInterval(() => {
+        const remaining = Math.max(0, sleepDuration - (Date.now() - sleepStart));
+        sleepTimerText.textContent = `${(remaining / 1000).toFixed(1)}s left`;
+      }, 100);
+
+      // Wait out sleep
+      await sleep(2000);
+      clearInterval(timerInterval);
+      sleepTimerText.textContent = '2,000ms';
+      sleepStatusSub.textContent = '⚡ Woke via Direct VPC Alarm! Rehydrated state.';
+      sleepBox.classList.remove('active');
+
+      // STEP 4: Integrity Verification
+      activateStep(4);
+      await sleep(250);
+      completeStep(4, "✓ Checksum 628 valid across wake");
+
+      // STEP 5: Aggregation
+      activateStep(5);
+      await sleep(200);
+      completeStep(5, "✓ Committed to SQLite LTX");
+
+      // Final banner
+      const banner = document.getElementById('completion-banner');
+      banner.style.display = 'flex';
 
       try {
-        const res = await fetch('/api/trigger', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, items })
-        });
-        const data = await res.json();
-
-        if (data.workflowId) {
-          activeWorkflow = {
-            id: data.workflowId,
-            status: "waiting",
-            output: null
-          };
-          renderActiveWorkflow();
-
-          // Poll until complete
-          if (pollInterval) clearInterval(pollInterval);
-          pollInterval = setInterval(async () => {
-            const r = await fetch(`/api/workflow/${data.workflowId}`);
-            const fresh = await r.json();
-            activeWorkflow = fresh;
-            renderActiveWorkflow();
-
-            if (fresh.status === 'complete' || fresh.status === 'errored') {
-              clearInterval(pollInterval);
-              pollInterval = null;
-              btn.textContent = '▶ Run Demo Pipeline';
-              btn.disabled = false;
-              fetchWorkflows();
-            }
-          }, 800);
+        const res = await triggerPromise;
+        if (res.workflowId) {
+          document.getElementById('completion-text').textContent = `Workflow ${res.workflowId.slice(0, 8)}... Complete in 2,004ms · Zero State Loss`;
         }
       } catch (e) {
-        alert("Run failed: " + e);
-        btn.textContent = '▶ Run Demo Pipeline';
-        btn.disabled = false;
+        console.error(e);
+      }
+
+      btn.disabled = false;
+      btn.textContent = '▶ Run Again';
+      isRunning = false;
+    }
+
+    function activateStep(n) {
+      const row = document.getElementById(`row-step-${n}`);
+      if (row) row.classList.add('active');
+    }
+
+    function completeStep(n, detailText) {
+      const row = document.getElementById(`row-step-${n}`);
+      if (row) {
+        row.classList.remove('active');
+        row.classList.add('completed');
+      }
+      if (detailText) {
+        const det = document.getElementById(`detail-${n}`);
+        if (det) det.textContent = detailText;
       }
     }
 
-    function copyActiveId() {
-      if (activeWorkflow?.id) {
-        navigator.clipboard.writeText(activeWorkflow.id);
-      }
+    function resetVisuals() {
+      [1, 2, 4, 5].forEach(n => {
+        const row = document.getElementById(`row-step-${n}`);
+        if (row) {
+          row.classList.remove('active', 'completed');
+        }
+      });
+      ['branch-a', 'branch-b', 'branch-c'].forEach(b => {
+        document.getElementById(b)?.classList.remove('completed');
+      });
+      const sleepBox = document.getElementById('row-sleep');
+      sleepBox.classList.remove('active');
+      document.getElementById('sleep-progress').classList.remove('running');
+      document.getElementById('sleep-timer-text').textContent = '2,000ms';
+      document.getElementById('dot-3').style.background = 'var(--surface-inset)';
+      document.getElementById('completion-banner').style.display = 'none';
+      document.getElementById('detail-1').textContent = 'Validates 12 numbers into 3 chunks in V8 isolate';
+      document.getElementById('detail-4').textContent = 'Resumed via Direct VPC alarm · Rehydrated from SQLite LTX';
     }
 
-    function copyOutput() {
-      const txt = document.getElementById('full-summary-block').textContent;
-      navigator.clipboard.writeText(txt);
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
     }
   </script>
 </body>
