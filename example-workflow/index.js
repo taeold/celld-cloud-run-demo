@@ -101,8 +101,7 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
     // Stage 1: Ingest & Shard Dataset
     const planned = await step.do("01-ingest-and-shard", async () => {
       const t0 = Date.now();
-      const cpu = burnCpu(350000, "crypto");
-      const n = Math.ceil(rawItems.length / 4);
+      const cpu = burnCpu(1500000, "crypto");
       return {
         totalItems: rawItems.length,
         partitions: 4,
@@ -129,10 +128,10 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
 
     // Stage 2: 4x Parallel Heavy Compute Fan-Out (Promise.all)
     const [partA, partB, partC, partD] = await Promise.all([
-      // Worker A: Cryptographic Merkle Hash Tree
+      // Worker A: Cryptographic Merkle Hash Tree (~350ms)
       step.do("02a-merkle-tree-hashing", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(800000, "crypto");
+        const cpu = burnCpu(3500000, "crypto");
         return {
           worker: "merkle-tree-hashing",
           status: "VERIFIED",
@@ -142,10 +141,10 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
           t1: Date.now(),
         };
       }),
-      // Worker B: Monte Carlo Volatility Simulation
+      // Worker B: Monte Carlo Volatility Simulation (~500ms)
       step.do("02b-monte-carlo-simulation", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(1100000, "monte-carlo");
+        const cpu = burnCpu(4500000, "monte-carlo");
         return {
           worker: "monte-carlo-simulation",
           simulations: 250000,
@@ -154,10 +153,10 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
           t1: Date.now(),
         };
       }),
-      // Worker C: Linear Regression & Beta Modeling
+      // Worker C: Linear Regression & Beta Modeling (~300ms)
       step.do("02c-linear-regression-modeling", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(600000, "regression");
+        const cpu = burnCpu(3000000, "regression");
         return {
           worker: "linear-regression-modeling",
           beta: cpu.beta,
@@ -166,10 +165,10 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
           t1: Date.now(),
         };
       }),
-      // Worker D: Anomaly & Z-Score Detection
+      // Worker D: Anomaly & Z-Score Detection (~200ms)
       step.do("02d-anomaly-zscore-detection", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(450000, "math");
+        const cpu = burnCpu(2000000, "math");
         return {
           worker: "anomaly-zscore-detection",
           outliersDetected: 0,
@@ -220,18 +219,18 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
     // STAGE 3: DURABLE HIBERNATION #1 (Zero-CPU GCS Eviction)
     // =========================================================================
     const sleep1T0 = Date.now();
-    await step.sleep("03-cooldown-window-1", "1.5 seconds");
+    await step.sleep("03-cooldown-window-1", "3 seconds");
     const sleep1T1 = Date.now();
 
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
-      name: "03: durable-sleep-1 (1.5s - Isolate Evicted to GCS)",
+      name: "03: durable-sleep-1 (3s - Isolate Evicted to GCS)",
       startMs: sleep1T0,
       endMs: sleep1T1,
       attributes: {
         "step.kind": "sleep",
-        "step.duration_spec": "1.5 seconds",
+        "step.duration_spec": "3 seconds",
         "celld.compute_cost": "0 CPU",
         "celld.storage": "gs://danielylee-junk-celld-demo-fleet/main/cells/"
       }
@@ -244,7 +243,7 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
     // Stage 4: Reconcile proofs & cross-validate
     const reconciled = await step.do("04-cross-shard-reconciliation", async () => {
       const t0 = Date.now();
-      const cpu = burnCpu(300000, "crypto");
+      const cpu = burnCpu(1500000, "crypto");
       return {
         step: "reconciliation",
         reconciledShards: 4,
@@ -266,10 +265,10 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
 
     // Stage 5: 3x Parallel Calibration Fan-Out
     const [calibA, calibB, calibC] = await Promise.all([
-      // Calibrator 1: Bayesian Parameter Prior Update
+      // Calibrator 1: Bayesian Parameter Prior Update (~250ms)
       step.do("05a-bayesian-calibration", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(700000, "regression");
+        const cpu = burnCpu(2500000, "regression");
         return {
           model: "bayesian",
           priorConfidence: "99.1%",
@@ -278,10 +277,10 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
           t1: Date.now(),
         };
       }),
-      // Calibrator 2: Black Swan Stress-Test Simulation
+      // Calibrator 2: Black Swan Stress-Test Simulation (~450ms)
       step.do("05b-stress-test-simulation", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(950000, "monte-carlo");
+        const cpu = burnCpu(4000000, "monte-carlo");
         return {
           model: "black-swan-stress",
           maxDrawdownEstimate: "14.2%",
@@ -290,10 +289,10 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
           t1: Date.now(),
         };
       }),
-      // Calibrator 3: Regulatory Capital Audit
+      // Calibrator 3: Regulatory Capital Audit (~200ms)
       step.do("05c-regulatory-capital-audit", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(500000, "math");
+        const cpu = burnCpu(2000000, "math");
         return {
           model: "basel-iii-audit",
           tier1CapitalRatio: "16.8%",
@@ -336,18 +335,18 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
     // STAGE 6: DURABLE HIBERNATION #2 (Zero-CPU Settlement Lockout)
     // =========================================================================
     const sleep2T0 = Date.now();
-    await step.sleep("06-settlement-delay", "1.5 seconds");
+    await step.sleep("06-settlement-delay", "3 seconds");
     const sleep2T1 = Date.now();
 
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
-      name: "06: durable-sleep-2 (1.5s - Isolate Evicted to GCS)",
+      name: "06: durable-sleep-2 (3s - Isolate Evicted to GCS)",
       startMs: sleep2T0,
       endMs: sleep2T1,
       attributes: {
         "step.kind": "sleep",
-        "step.duration_spec": "1.5 seconds",
+        "step.duration_spec": "3 seconds",
         "celld.compute_cost": "0 CPU",
         "celld.storage": "gs://danielylee-junk-celld-demo-fleet/main/cells/"
       }
@@ -358,7 +357,7 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
     // =========================================================================
     const committed = await step.do("07-consensus-and-commit", async () => {
       const t0 = Date.now();
-      burnCpu(400000, "crypto");
+      burnCpu(1500000, "crypto");
       return {
         status: "COMMITTED",
         pipeline: name || "Autonomous Risk & Analytics Pipeline",
@@ -388,6 +387,8 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
     });
 
     const wfEndTime = Date.now();
+    const startTimeMs = event?.timestamp ? new Date(event.timestamp).getTime() : (planned?.t0 || wfStartTime);
+    const realTotalDuration = Math.max(1, wfEndTime - startTimeMs);
 
     // Emit top-level Workflow execution root span
     await emitOtelSpan({
@@ -395,12 +396,12 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
       parentSpanId: undefined,
       spanId: wfSpanId,
       name: `celld.workflow: data-pipeline`,
-      startMs: wfStartTime,
+      startMs: planned?.t0 || wfStartTime,
       endMs: wfEndTime,
       attributes: {
         "workflow.name": "data-pipeline",
         "workflow.status": "COMMITTED",
-        "workflow.total_duration_ms": wfEndTime - wfStartTime,
+        "workflow.total_duration_ms": realTotalDuration,
         "workflow.stages": 7,
         "workflow.total_items": rawItems.length,
         "celld.runtime": "v0.4.0"
@@ -410,7 +411,7 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
     return {
       status: "SUCCESS",
       workflowName: "data-pipeline",
-      totalDurationMs: wfEndTime - wfStartTime,
+      totalDurationMs: realTotalDuration,
       traceId,
       traceUrl: traceId ? `https://console.cloud.google.com/traces/explorer?project=danielylee-junk&traceId=${traceId}` : null,
       summary: committed

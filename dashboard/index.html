@@ -245,13 +245,13 @@
           <!-- STEP 3: DURABLE SLEEP #1 -->
           <div id="row-step-3" class="code-row pl-8 my-1.5">
             <div class="flex items-baseline gap-2 flex-wrap">
-              <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"03-cooldown-window-1"</span>, <span class="c-str">"1.5 seconds"</span>);
+              <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"03-cooldown-window-1"</span>, <span class="c-str">"3 seconds"</span>);
               <span id="sleep-badge-1" class="hidden mono text-[11px] px-2 py-0.5 rounded border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark bg-status-attention-bg-light dark:bg-status-attention-bg-dark font-medium">
                 ⚡ 0 CPU Billed · Isolate Evicted to GCS
               </span>
             </div>
             <span id="sleep-timer-1" class="mono text-[11.5px] tabular-nums text-fg-secondary-light dark:text-fg-secondary-dark ml-2">
-              1,500ms
+              3,000ms
             </span>
           </div>
 
@@ -261,7 +261,7 @@
               <span class="c-kw">const</span> reconciled = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"04-cross-shard-reconciliation"</span>, <span class="c-kw">async</span> () =&gt; { ... });
             </div>
             <span id="badge-4" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              25ms · Reconciled
+              150ms · Reconciled
             </span>
           </div>
 
@@ -276,7 +276,7 @@
               step.<span class="c-fn">do</span>(<span class="c-str">"05a-bayesian-calibration"</span>, <span class="c-kw">async</span> () =&gt; calibratePriors(reconciled)),
             </div>
             <span id="badge-5a" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              60ms · 99.1%
+              250ms · 99.1%
             </span>
           </div>
 
@@ -286,7 +286,7 @@
               step.<span class="c-fn">do</span>(<span class="c-str">"05b-stress-test-simulation"</span>, <span class="c-kw">async</span> () =&gt; simulateLiquidityShock()),
             </div>
             <span id="badge-5b" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              85ms · 14.2% DD
+              450ms · 14.2% DD
             </span>
           </div>
 
@@ -296,7 +296,7 @@
               step.<span class="c-fn">do</span>(<span class="c-str">"05c-regulatory-capital-audit"</span>, <span class="c-kw">async</span> () =&gt; auditBaselCompliance()),
             </div>
             <span id="badge-5c" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              45ms · Compliant
+              200ms · Compliant
             </span>
           </div>
 
@@ -307,13 +307,13 @@
           <!-- STEP 6: DURABLE SLEEP #2 -->
           <div id="row-step-6" class="code-row pl-8 my-1.5">
             <div class="flex items-baseline gap-2 flex-wrap">
-              <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"06-settlement-delay"</span>, <span class="c-str">"1.5 seconds"</span>);
+              <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"06-settlement-delay"</span>, <span class="c-str">"3 seconds"</span>);
               <span id="sleep-badge-2" class="hidden mono text-[11px] px-2 py-0.5 rounded border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark bg-status-attention-bg-light dark:bg-status-attention-bg-dark font-medium">
                 ⚡ Second Eviction · Zero Memory Drift
               </span>
             </div>
             <span id="sleep-timer-2" class="mono text-[11.5px] tabular-nums text-fg-secondary-light dark:text-fg-secondary-dark ml-2">
-              1,500ms
+              3,000ms
             </span>
           </div>
 
@@ -469,31 +469,31 @@
       // STAGE 1: 01-ingest-and-shard
       highlightRow('row-step-1', 'active-compute');
       document.getElementById('run-status-label').textContent = 'Executing 01-ingest-and-shard in V8 isolate...';
-      await sleep(150);
-      showBadge('badge-1', '25ms · 4 shards');
+      await sleep(250);
+      showBadge('badge-1', '150ms · 4 shards');
       finishRow('row-step-1', 'completed');
 
       // STAGE 2: 4x Parallel Compute Fan-Out (Concurrent highlighting)
       ['row-step-2a', 'row-step-2b', 'row-step-2c', 'row-step-2d'].forEach(id => highlightRow(id, 'active-compute'));
       document.getElementById('run-status-label').textContent = 'Promise.all across 4 parallel isolate workers...';
       
-      await sleep(100);
-      showBadge('badge-2d', '40ms · Z < 2.2');
+      await sleep(200);
+      showBadge('badge-2d', '200ms · Z < 2.2');
       finishRow('row-step-2d', 'completed');
       
-      await sleep(40);
-      showBadge('badge-2c', '55ms · β 1.45');
+      await sleep(100);
+      showBadge('badge-2c', '300ms · β 1.45');
       finishRow('row-step-2c', 'completed');
       
       await sleep(50);
-      showBadge('badge-2a', '75ms · 0x53ad');
+      showBadge('badge-2a', '350ms · 0x53ad');
       finishRow('row-step-2a', 'completed');
       
-      await sleep(50);
-      showBadge('badge-2b', '95ms · VaR 99%');
+      await sleep(150);
+      showBadge('badge-2b', '500ms · VaR 99%');
       finishRow('row-step-2b', 'completed');
 
-      // STAGE 3: DURABLE HIBERNATION #1 (1.5 seconds)
+      // STAGE 3: DURABLE HIBERNATION #1 (3.0 seconds)
       const sleepRow1 = document.getElementById('row-step-3');
       const sleepBadge1 = document.getElementById('sleep-badge-1');
       const sleepTimer1 = document.getElementById('sleep-timer-1');
@@ -504,12 +504,12 @@
       dot.className = 'w-2 h-2 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark animate-ping';
 
       const s1T0 = Date.now();
-      while ((Date.now() - s1T0) < 1500) {
-        const rem = Math.max(0, 1500 - (Date.now() - s1T0));
+      while ((Date.now() - s1T0) < 3000) {
+        const rem = Math.max(0, 3000 - (Date.now() - s1T0));
         sleepTimer1.textContent = `${(rem / 1000).toFixed(1)}s left`;
         await sleep(50);
       }
-      sleepTimer1.textContent = '1,500ms';
+      sleepTimer1.textContent = '3,000ms';
       sleepRow1.classList.remove('active-sleep');
       sleepRow1.classList.add('completed');
       sleepBadge1.textContent = '⚡ Woke via Direct VPC alarm #1';
@@ -519,27 +519,27 @@
       // STAGE 4: Reconciliation
       highlightRow('row-step-4', 'active-compute');
       document.getElementById('run-status-label').textContent = 'Reconciling Merkle proofs across shards...';
-      await sleep(150);
-      showBadge('badge-4', '25ms · Consensus verified');
+      await sleep(250);
+      showBadge('badge-4', '150ms · Consensus verified');
       finishRow('row-step-4', 'completed');
 
       // STAGE 5: 3x Parallel Model Calibration
       ['row-step-5a', 'row-step-5b', 'row-step-5c'].forEach(id => highlightRow(id, 'active-compute'));
       document.getElementById('run-status-label').textContent = 'Calibrating risk models in parallel...';
       
-      await sleep(90);
-      showBadge('badge-5c', '45ms · Basel Compliant');
+      await sleep(200);
+      showBadge('badge-5c', '200ms · Basel Compliant');
       finishRow('row-step-5c', 'completed');
       
-      await sleep(40);
-      showBadge('badge-5a', '60ms · Prior 99.1%');
+      await sleep(50);
+      showBadge('badge-5a', '250ms · Prior 99.1%');
       finishRow('row-step-5a', 'completed');
       
-      await sleep(60);
-      showBadge('badge-5b', '85ms · Stress Tested');
+      await sleep(200);
+      showBadge('badge-5b', '450ms · Stress Tested');
       finishRow('row-step-5b', 'completed');
 
-      // STAGE 6: DURABLE HIBERNATION #2 (1.5 seconds)
+      // STAGE 6: DURABLE HIBERNATION #2 (3.0 seconds)
       const sleepRow2 = document.getElementById('row-step-6');
       const sleepBadge2 = document.getElementById('sleep-badge-2');
       const sleepTimer2 = document.getElementById('sleep-timer-2');
@@ -562,16 +562,16 @@
             clearInterval(pollInterval);
           }
         } catch (e) {}
-      }, 350);
+      }, 400);
 
-      while (!completedData || (Date.now() - s2T0) < 1500) {
-        const rem = Math.max(0, 1500 - (Date.now() - s2T0));
+      while (!completedData || (Date.now() - s2T0) < 3000) {
+        const rem = Math.max(0, 3000 - (Date.now() - s2T0));
         sleepTimer2.textContent = `${(rem / 1000).toFixed(1)}s left`;
         await sleep(50);
       }
       clearInterval(pollInterval);
 
-      sleepTimer2.textContent = '1,500ms';
+      sleepTimer2.textContent = '3,000ms';
       sleepRow2.classList.remove('active-sleep');
       sleepRow2.classList.add('completed');
       sleepBadge2.textContent = '⚡ Woke via Direct VPC alarm #2';
@@ -581,12 +581,12 @@
       // STAGE 7: Final Consensus & Commit
       highlightRow('row-step-7', 'active-compute');
       document.getElementById('run-status-label').textContent = 'Durably committing to SQLite LTX in GCS...';
-      await sleep(150);
-      showBadge('badge-7', '30ms · ACID Committed');
+      await sleep(250);
+      showBadge('badge-7', '150ms · ACID Committed');
       finishRow('row-step-7', 'completed');
 
       // Final Completion
-      const totalDur = completedData?.output?.totalDurationMs || 3420;
+      const totalDur = completedData?.output?.totalDurationMs || 8240;
       dot.className = 'w-2 h-2 rounded-full bg-status-success-fg-light dark:bg-status-success-fg-dark';
       document.getElementById('run-status-label').textContent = `Complete in ${totalDur}ms`;
 
