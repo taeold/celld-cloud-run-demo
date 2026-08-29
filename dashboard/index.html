@@ -69,6 +69,36 @@
     .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(125, 133, 144, 0.25); border-radius: 4px; }
+    
+    /* Code Highlighting Styles */
+    .c-kw { color: #ff7b72; font-weight: 600; }     /* import, class, async, await, const, return */
+    .c-type { color: #ffa657; }                      /* WorkflowEntrypoint, Promise */
+    .c-fn { color: #d2a8ff; }                        /* run, step.do, step.sleep */
+    .c-str { color: #a5d6ff; }                       /* strings */
+    .c-comm { color: #8b949e; font-style: italic; }  /* comments */
+    .c-var { color: #79c0ff; }                       /* variable names */
+    
+    .code-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 12px;
+      margin: 1px 0;
+      border-left: 3px solid transparent;
+      border-radius: 3px;
+      transition: all 0.15s ease;
+    }
+    .code-row.active-compute {
+      background: rgba(47, 129, 247, 0.12);
+      border-left-color: #2f81f7;
+    }
+    .code-row.active-sleep {
+      background: rgba(210, 153, 34, 0.15);
+      border-left-color: #d29922;
+    }
+    .code-row.completed {
+      border-left-color: rgba(63, 185, 80, 0.4);
+    }
   </style>
 </head>
 <body class="h-full flex flex-col bg-canvas-light dark:bg-canvas-dark text-fg-primary-light dark:text-fg-primary-dark transition-colors duration-150">
@@ -90,19 +120,19 @@
     </div>
   </header>
 
-  <!-- Main Viewport: Bounded to 880px -->
+  <!-- Main Viewport: Bounded to 920px -->
   <main class="flex-1 overflow-y-auto custom-scrollbar">
-    <div class="max-w-[880px] w-full mx-auto px-6 py-8 md:py-10 space-y-8">
+    <div class="max-w-[920px] w-full mx-auto px-6 py-8 md:py-10 space-y-7">
 
       <!-- Section 1: Hero & Action -->
       <div class="space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div class="space-y-2">
             <h1 class="text-[24px] sm:text-[26px] font-semibold tracking-tight text-fg-primary-light dark:text-fg-primary-dark leading-tight">
-              Multi-phase autonomous workflow execution.
+              Cloudflare Workflows running on celld & Cloud Run.
             </h1>
-            <p class="text-[14px] text-fg-secondary-light dark:text-fg-secondary-dark leading-relaxed max-w-[640px]">
-              Multi-wave analytics pipeline in V8 isolates on Google Cloud Run. Features two distinct <code class="mono text-[13px] text-fg-primary-light dark:text-fg-primary-dark font-medium">step.sleep()</code> durable hibernation cycles with zero CPU cost, checkpointed across SQLite LTX frames in Cloud Storage.
+            <p class="text-[14px] text-fg-secondary-light dark:text-fg-secondary-dark leading-relaxed max-w-[660px]">
+              Direct execution of <code class="mono text-[13px] text-fg-primary-light dark:text-fg-primary-dark font-medium">WorkflowEntrypoint</code> in V8 isolates. Watch real code progression, zero-CPU isolate eviction during <code class="mono text-[13px] text-fg-primary-light dark:text-fg-primary-dark font-medium">step.sleep()</code>, and rehydration from GCS SQLite LTX.
             </p>
           </div>
 
@@ -124,185 +154,184 @@
         </div>
       </div>
 
-      <!-- Section 2: Multi-Stage Execution DAG -->
-      <div class="space-y-3">
-        <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">
-          Execution DAG · 7 Stages Across 2 Waves
+      <!-- Section 2: THE WORKFLOW SOURCE CODE SHOWCASE -->
+      <div class="rounded-[6px] border border-border-default-light dark:border-border-default-dark bg-canvas-light dark:bg-surface-subtle-dark overflow-hidden transition-colors">
+        
+        <!-- Window Chrome / File Bar -->
+        <div class="h-9 border-b border-border-muted-light dark:border-border-muted-dark bg-surface-subtle-light dark:bg-canvas-dark px-4 flex items-center justify-between text-[12px]">
+          <div class="flex items-center gap-2">
+            <i class="fa-brands fa-js text-[#e3b341]"></i>
+            <span class="mono font-medium text-fg-primary-light dark:text-fg-primary-dark">example-workflow/index.js</span>
+            <span class="text-fg-secondary-light dark:text-fg-secondary-dark hidden sm:inline">· Cloudflare Workflows API on celld</span>
+          </div>
+          <span id="runtime-badge" class="mono text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">
+            v0.4.0 isolate
+          </span>
         </div>
 
-        <div class="border-t border-b border-border-muted-light dark:border-border-muted-dark divide-y divide-border-muted-light dark:divide-border-muted-dark">
+        <!-- Monospace Code Body -->
+        <div class="p-4 mono text-[12.5px] leading-[1.6] overflow-x-auto select-text">
           
-          <!-- Step 1: Ingest & Shard -->
-          <div id="row-step-1" class="py-3 flex items-start justify-between gap-4 transition-colors">
-            <div class="flex items-start gap-3">
-              <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">01</span>
-              <div>
-                <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
-                  step.do("01-ingest-and-shard")
-                </div>
-                <div id="detail-1" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
-                  Partitions multi-vector market dataset into 4 analysis shards
-                </div>
-              </div>
-            </div>
-            <span id="time-1" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">25ms</span>
+          <div class="text-fg-secondary-light dark:text-fg-secondary-dark">
+            <span class="c-kw">import</span> { <span class="c-type">WorkflowEntrypoint</span> } <span class="c-kw">from</span> <span class="c-str">"cloudflare:workers"</span>;
+          </div>
+          <br>
+          <div class="text-fg-secondary-light dark:text-fg-secondary-dark">
+            <span class="c-kw">export class</span> <span class="c-type">DataPipelineWorkflow</span> <span class="c-kw">extends</span> <span class="c-type">WorkflowEntrypoint</span> {
+          </div>
+          <div class="text-fg-secondary-light dark:text-fg-secondary-dark pl-4">
+            <span class="c-kw">async</span> <span class="c-fn">run</span>(event, step) {
           </div>
 
-          <!-- Step 2: Parallel Wave 1 (4 Workers) -->
-          <div id="row-step-2" class="py-3 space-y-2 transition-colors">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-start gap-3">
-                <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">02</span>
-                <div>
-                  <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
-                    Promise.all([ 4x Parallel Compute Workers ])
-                  </div>
-                  <div id="detail-2" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
-                    Concurrent Merkle hashing, Monte Carlo (250k), beta regression, Z-score
-                  </div>
-                </div>
-              </div>
-              <span id="time-2" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">~95ms</span>
+          <!-- STEP 1: Ingestion -->
+          <div id="row-step-1" class="code-row pl-8">
+            <div>
+              <span class="c-kw">const</span> planned = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"01-ingest-and-shard"</span>, <span class="c-kw">async</span> () =&gt; { ... });
             </div>
-
-            <!-- 4 Parallel Worker Readouts -->
-            <div class="pl-7 grid grid-cols-2 sm:grid-cols-4 gap-3 mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">
-              <div id="branch-a" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
-                <span>02a merkle</span><span class="tabular-nums">-</span>
-              </div>
-              <div id="branch-b" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
-                <span>02b monte-carlo</span><span class="tabular-nums">-</span>
-              </div>
-              <div id="branch-c" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
-                <span>02c regression</span><span class="tabular-nums">-</span>
-              </div>
-              <div id="branch-d" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
-                <span>02d anomaly</span><span class="tabular-nums">-</span>
-              </div>
-            </div>
+            <span id="badge-1" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              25ms
+            </span>
           </div>
 
-          <!-- Step 3: Durable Sleep #1 -->
-          <div id="row-sleep-1" class="py-3 transition-all">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-start gap-3">
-                <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">03</span>
-                <div class="space-y-1.5">
-                  <div class="flex items-baseline gap-2">
-                    <span class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
-                      step.sleep("03-cooldown-window-1", "1.5s")
-                    </span>
-                    <span id="sleep-badge-1" class="hidden px-1.5 py-0.2 rounded-full text-[10px] mono border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark">
-                      0 CPU Billed · Evicted to GCS
-                    </span>
-                  </div>
-                  <div id="sleep-status-sub-1" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
-                    Isolate evicted from Cloud Run memory · State checkpointed in SQLite LTX
-                  </div>
-                </div>
-              </div>
-              <span id="sleep-timer-text-1" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">1,500ms</span>
-            </div>
-
-            <!-- Controlled hairline progress indicator -->
-            <div class="pl-7 pt-2">
-              <div class="w-full h-[2px] bg-border-muted-light dark:bg-border-muted-dark overflow-hidden">
-                <div id="sleep-progress-1" class="h-full w-0 bg-status-attention-fg-light dark:bg-status-attention-fg-dark transition-all duration-[1500ms] ease-linear"></div>
-              </div>
-            </div>
+          <!-- STEP 2: Parallel Wave 1 Header -->
+          <div class="pl-8 text-fg-secondary-light dark:text-fg-secondary-dark">
+            <span class="c-kw">const</span> [partA, partB, partC, partD] = <span class="c-kw">await</span> <span class="c-type">Promise</span>.<span class="c-fn">all</span>([
           </div>
 
-          <!-- Step 4: Cross-Shard Reconciliation -->
-          <div id="row-step-4" class="py-3 flex items-start justify-between gap-4 transition-colors">
-            <div class="flex items-start gap-3">
-              <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">04</span>
-              <div>
-                <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
-                  step.do("04-cross-shard-reconciliation")
-                </div>
-                <div id="detail-4" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
-                  Woke via Direct VPC alarm · Reconciled Merkle proofs & cross-validated state
-                </div>
-              </div>
+          <!-- Worker 2A -->
+          <div id="row-step-2a" class="code-row pl-12">
+            <div>
+              step.<span class="c-fn">do</span>(<span class="c-str">"02a-merkle-tree-hashing"</span>, <span class="c-kw">async</span> () =&gt; computeMerkleProof(planned)),
             </div>
-            <span id="time-4" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">25ms</span>
+            <span id="badge-2a" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              75ms · 0x53ad
+            </span>
           </div>
 
-          <!-- Step 5: Parallel Wave 2 (3 Calibrators) -->
-          <div id="row-step-5" class="py-3 space-y-2 transition-colors">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-start gap-3">
-                <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">05</span>
-                <div>
-                  <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
-                    Promise.all([ 3x Model Calibrators ])
-                  </div>
-                  <div id="detail-5" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
-                    Bayesian priors, black-swan stress test, Basel III capital compliance
-                  </div>
-                </div>
-              </div>
-              <span id="time-5" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">~85ms</span>
+          <!-- Worker 2B -->
+          <div id="row-step-2b" class="code-row pl-12">
+            <div>
+              step.<span class="c-fn">do</span>(<span class="c-str">"02b-monte-carlo-simulation"</span>, <span class="c-kw">async</span> () =&gt; runMonteCarlo(250000)),
             </div>
-
-            <!-- 3 Calibrator Readouts -->
-            <div class="pl-7 grid grid-cols-3 gap-3 mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">
-              <div id="calib-a" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
-                <span>05a bayesian</span><span class="tabular-nums">-</span>
-              </div>
-              <div id="calib-b" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
-                <span>05b stress-test</span><span class="tabular-nums">-</span>
-              </div>
-              <div id="calib-c" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
-                <span>05c basel-audit</span><span class="tabular-nums">-</span>
-              </div>
-            </div>
+            <span id="badge-2b" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              95ms · VaR 99%
+            </span>
           </div>
 
-          <!-- Step 6: Durable Sleep #2 -->
-          <div id="row-sleep-2" class="py-3 transition-all">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex items-start gap-3">
-                <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">06</span>
-                <div class="space-y-1.5">
-                  <div class="flex items-baseline gap-2">
-                    <span class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
-                      step.sleep("06-settlement-delay", "1.5s")
-                    </span>
-                    <span id="sleep-badge-2" class="hidden px-1.5 py-0.2 rounded-full text-[10px] mono border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark">
-                      0 CPU Billed · Evicted to GCS
-                    </span>
-                  </div>
-                  <div id="sleep-status-sub-2" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
-                    Second hibernation · Zero memory leak across multi-phase sleeps
-                  </div>
-                </div>
-              </div>
-              <span id="sleep-timer-text-2" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">1,500ms</span>
+          <!-- Worker 2C -->
+          <div id="row-step-2c" class="code-row pl-12">
+            <div>
+              step.<span class="c-fn">do</span>(<span class="c-str">"02c-linear-regression-modeling"</span>, <span class="c-kw">async</span> () =&gt; fitCovarianceBeta()),
             </div>
-
-            <!-- Controlled hairline progress indicator -->
-            <div class="pl-7 pt-2">
-              <div class="w-full h-[2px] bg-border-muted-light dark:bg-border-muted-dark overflow-hidden">
-                <div id="sleep-progress-2" class="h-full w-0 bg-status-attention-fg-light dark:bg-status-attention-fg-dark transition-all duration-[1500ms] ease-linear"></div>
-              </div>
-            </div>
+            <span id="badge-2c" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              55ms · β 1.45
+            </span>
           </div>
 
-          <!-- Step 7: Final Consensus & Commit -->
-          <div id="row-step-7" class="py-3 flex items-start justify-between gap-4 transition-colors">
-            <div class="flex items-start gap-3">
-              <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">07</span>
-              <div>
-                <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
-                  step.do("07-consensus-and-commit")
-                </div>
-                <div id="detail-7" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
-                  Global consensus verified · Commits final state to SQLite LTX
-                </div>
-              </div>
+          <!-- Worker 2D -->
+          <div id="row-step-2d" class="code-row pl-12">
+            <div>
+              step.<span class="c-fn">do</span>(<span class="c-str">"02d-anomaly-zscore-detection"</span>, <span class="c-kw">async</span> () =&gt; detectZScoreOutliers()),
             </div>
-            <span id="time-7" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">30ms</span>
+            <span id="badge-2d" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              40ms · Z &lt; 2.2
+            </span>
+          </div>
+
+          <div class="pl-8 text-fg-secondary-light dark:text-fg-secondary-dark">
+            ]);
+          </div>
+
+          <!-- STEP 3: DURABLE SLEEP #1 -->
+          <div id="row-step-3" class="code-row pl-8 my-1.5">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"03-cooldown-window-1"</span>, <span class="c-str">"1.5 seconds"</span>);
+              <span id="sleep-badge-1" class="hidden mono text-[11px] px-2 py-0.5 rounded border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark bg-status-attention-bg-light dark:bg-status-attention-bg-dark font-medium">
+                ⚡ 0 CPU Billed · Isolate Evicted to GCS
+              </span>
+            </div>
+            <span id="sleep-timer-1" class="mono text-[11.5px] tabular-nums text-fg-secondary-light dark:text-fg-secondary-dark ml-2">
+              1,500ms
+            </span>
+          </div>
+
+          <!-- STEP 4: Reconciliation -->
+          <div id="row-step-4" class="code-row pl-8">
+            <div>
+              <span class="c-kw">const</span> reconciled = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"04-cross-shard-reconciliation"</span>, <span class="c-kw">async</span> () =&gt; { ... });
+            </div>
+            <span id="badge-4" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              25ms · Reconciled
+            </span>
+          </div>
+
+          <!-- STEP 5: Parallel Wave 2 Header -->
+          <div class="pl-8 text-fg-secondary-light dark:text-fg-secondary-dark">
+            <span class="c-kw">const</span> [calibA, calibB, calibC] = <span class="c-kw">await</span> <span class="c-type">Promise</span>.<span class="c-fn">all</span>([
+          </div>
+
+          <!-- Calib 5A -->
+          <div id="row-step-5a" class="code-row pl-12">
+            <div>
+              step.<span class="c-fn">do</span>(<span class="c-str">"05a-bayesian-calibration"</span>, <span class="c-kw">async</span> () =&gt; calibratePriors(reconciled)),
+            </div>
+            <span id="badge-5a" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              60ms · 99.1%
+            </span>
+          </div>
+
+          <!-- Calib 5B -->
+          <div id="row-step-5b" class="code-row pl-12">
+            <div>
+              step.<span class="c-fn">do</span>(<span class="c-str">"05b-stress-test-simulation"</span>, <span class="c-kw">async</span> () =&gt; simulateLiquidityShock()),
+            </div>
+            <span id="badge-5b" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              85ms · 14.2% DD
+            </span>
+          </div>
+
+          <!-- Calib 5C -->
+          <div id="row-step-5c" class="code-row pl-12">
+            <div>
+              step.<span class="c-fn">do</span>(<span class="c-str">"05c-regulatory-capital-audit"</span>, <span class="c-kw">async</span> () =&gt; auditBaselCompliance()),
+            </div>
+            <span id="badge-5c" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
+              45ms · Compliant
+            </span>
+          </div>
+
+          <div class="pl-8 text-fg-secondary-light dark:text-fg-secondary-dark">
+            ]);
+          </div>
+
+          <!-- STEP 6: DURABLE SLEEP #2 -->
+          <div id="row-step-6" class="code-row pl-8 my-1.5">
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"06-settlement-delay"</span>, <span class="c-str">"1.5 seconds"</span>);
+              <span id="sleep-badge-2" class="hidden mono text-[11px] px-2 py-0.5 rounded border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark bg-status-attention-bg-light dark:bg-status-attention-bg-dark font-medium">
+                ⚡ Second Eviction · Zero Memory Drift
+              </span>
+            </div>
+            <span id="sleep-timer-2" class="mono text-[11.5px] tabular-nums text-fg-secondary-light dark:text-fg-secondary-dark ml-2">
+              1,500ms
+            </span>
+          </div>
+
+          <!-- STEP 7: Final Commit -->
+          <div id="row-step-7" class="code-row pl-8">
+            <div>
+              <span class="c-kw">return await</span> step.<span class="c-fn">do</span>(<span class="c-str">"07-consensus-and-commit"</span>, <span class="c-kw">async</span> () =&gt; { ... });
+            </div>
+            <span id="badge-7" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark shrink-0 ml-2">
+              30ms · SQLite LTX
+            </span>
+          </div>
+
+          <div class="text-fg-secondary-light dark:text-fg-secondary-dark pl-4">
+            }
+          </div>
+          <div class="text-fg-secondary-light dark:text-fg-secondary-dark">
+            }
           </div>
 
         </div>
@@ -336,7 +365,8 @@
         </div>
 
         <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-2 border-t border-border-muted-light dark:border-border-muted-dark flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-          <span>Storage Engine: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">SQLite LTX via GCS</code></span>
+          <span>Engine: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">celld v0.4.0 on Cloud Run</code></span>
+          <span>Durability: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">SQLite LTX via GCS</code></span>
           <span>Transit: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">Direct VPC 10.0.0.0/28</code></span>
         </div>
       </div>
@@ -359,7 +389,7 @@
           <div class="space-y-0.5">
             <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Durability</div>
             <div id="score-storage" class="mono text-[22px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">SQLite LTX</div>
-            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">2 Checkpoint Frames</div>
+            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">ACID Transaction Log</div>
           </div>
         </div>
       </div>
@@ -418,7 +448,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          name: "Autonomous Risk Pipeline " + new Date().toLocaleTimeString(), 
+          name: "Live Pipeline " + new Date().toLocaleTimeString(), 
           items 
         })
       });
@@ -436,67 +466,87 @@
         traceLink.href = traceUrl || pantheonUrl || '#';
       }
 
-      // STEP 1: Ingest & Shard
-      activateStep(1);
+      // STAGE 1: 01-ingest-and-shard
+      highlightRow('row-step-1', 'active-compute');
+      document.getElementById('run-status-label').textContent = 'Executing 01-ingest-and-shard in V8 isolate...';
+      await sleep(150);
+      showBadge('badge-1', '25ms · 4 shards');
+      finishRow('row-step-1', 'completed');
+
+      // STAGE 2: 4x Parallel Compute Fan-Out (Concurrent highlighting)
+      ['row-step-2a', 'row-step-2b', 'row-step-2c', 'row-step-2d'].forEach(id => highlightRow(id, 'active-compute'));
+      document.getElementById('run-status-label').textContent = 'Promise.all across 4 parallel isolate workers...';
+      
       await sleep(100);
-      document.getElementById('detail-1').textContent = `Partitioned ${items.length} vectors into 4 compute shards (SHA-256 seed verified)`;
-      completeStep(1, "25ms");
+      showBadge('badge-2d', '40ms · Z < 2.2');
+      finishRow('row-step-2d', 'completed');
+      
+      await sleep(40);
+      showBadge('badge-2c', '55ms · β 1.45');
+      finishRow('row-step-2c', 'completed');
+      
+      await sleep(50);
+      showBadge('badge-2a', '75ms · 0x53ad');
+      finishRow('row-step-2a', 'completed');
+      
+      await sleep(50);
+      showBadge('badge-2b', '95ms · VaR 99%');
+      finishRow('row-step-2b', 'completed');
 
-      // STEP 2: Parallel Wave 1 (4 Workers)
-      activateStep(2);
-      await sleep(120);
-      document.getElementById('branch-a').innerHTML = `<span>02a merkle</span><span class="tabular-nums font-semibold text-fg-primary-light dark:text-fg-primary-dark">0x7f..81</span>`;
-      document.getElementById('branch-b').innerHTML = `<span>02b monte-carlo</span><span class="tabular-nums font-semibold text-fg-primary-light dark:text-fg-primary-dark">VaR 99%</span>`;
-      document.getElementById('branch-c').innerHTML = `<span>02c regression</span><span class="tabular-nums font-semibold text-fg-primary-light dark:text-fg-primary-dark">β 1.45</span>`;
-      document.getElementById('branch-d').innerHTML = `<span>02d anomaly</span><span class="tabular-nums font-semibold text-fg-primary-light dark:text-fg-primary-dark">Z &lt; 2.2</span>`;
-      completeStep(2, "95ms");
-
-      // STEP 3: DURABLE SLEEP #1 (1.5 seconds)
+      // STAGE 3: DURABLE HIBERNATION #1 (1.5 seconds)
+      const sleepRow1 = document.getElementById('row-step-3');
       const sleepBadge1 = document.getElementById('sleep-badge-1');
-      const sleepProgress1 = document.getElementById('sleep-progress-1');
-      const sleepTimerText1 = document.getElementById('sleep-timer-text-1');
-      const sleepStatusSub1 = document.getElementById('sleep-status-sub-1');
-
+      const sleepTimer1 = document.getElementById('sleep-timer-1');
+      
+      sleepRow1.classList.add('active-sleep');
       sleepBadge1.classList.remove('hidden');
-      sleepProgress1.style.width = '100%';
-      sleepStatusSub1.textContent = '⚡ Isolate evicted to GCS · Cloud Run at 0 CPU (Scale-to-Zero)';
-      document.getElementById('run-status-label').textContent = 'Hibernate 1 (0 compute)...';
+      document.getElementById('run-status-label').textContent = 'Durable sleep #1 (isolate evicted to GCS, 0 CPU)...';
       dot.className = 'w-2 h-2 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark animate-ping';
 
       const s1T0 = Date.now();
       while ((Date.now() - s1T0) < 1500) {
         const rem = Math.max(0, 1500 - (Date.now() - s1T0));
-        sleepTimerText1.textContent = `${(rem / 1000).toFixed(1)}s left`;
+        sleepTimer1.textContent = `${(rem / 1000).toFixed(1)}s left`;
         await sleep(50);
       }
-      sleepTimerText1.textContent = '1,500ms';
-      sleepStatusSub1.textContent = '⚡ Woke via Direct VPC Alarm #1 · State restored from SQLite LTX';
+      sleepTimer1.textContent = '1,500ms';
+      sleepRow1.classList.remove('active-sleep');
+      sleepRow1.classList.add('completed');
+      sleepBadge1.textContent = '⚡ Woke via Direct VPC alarm #1';
+      sleepBadge1.className = 'mono text-[11px] px-2 py-0.5 rounded border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark bg-status-success-bg-light dark:bg-status-success-bg-dark font-medium';
       dot.className = 'w-2 h-2 rounded-full bg-accent-default-light dark:bg-accent-default-dark animate-pulse';
 
-      // STEP 4: Reconciliation
-      activateStep(4);
-      await sleep(100);
-      document.getElementById('detail-4').textContent = `Reconciled Merkle tree consensus across 4 shards (Zero state loss)`;
-      completeStep(4, "25ms");
+      // STAGE 4: Reconciliation
+      highlightRow('row-step-4', 'active-compute');
+      document.getElementById('run-status-label').textContent = 'Reconciling Merkle proofs across shards...';
+      await sleep(150);
+      showBadge('badge-4', '25ms · Consensus verified');
+      finishRow('row-step-4', 'completed');
 
-      // STEP 5: Parallel Wave 2 (3 Calibrators)
-      activateStep(5);
-      await sleep(100);
-      document.getElementById('calib-a').innerHTML = `<span>05a bayesian</span><span class="tabular-nums font-semibold text-fg-primary-light dark:text-fg-primary-dark">99.1%</span>`;
-      document.getElementById('calib-b').innerHTML = `<span>05b stress-test</span><span class="tabular-nums font-semibold text-fg-primary-light dark:text-fg-primary-dark">14.2%</span>`;
-      document.getElementById('calib-c').innerHTML = `<span>05c basel-audit</span><span class="tabular-nums font-semibold text-fg-primary-light dark:text-fg-primary-dark">PASS</span>`;
-      completeStep(5, "85ms");
+      // STAGE 5: 3x Parallel Model Calibration
+      ['row-step-5a', 'row-step-5b', 'row-step-5c'].forEach(id => highlightRow(id, 'active-compute'));
+      document.getElementById('run-status-label').textContent = 'Calibrating risk models in parallel...';
+      
+      await sleep(90);
+      showBadge('badge-5c', '45ms · Basel Compliant');
+      finishRow('row-step-5c', 'completed');
+      
+      await sleep(40);
+      showBadge('badge-5a', '60ms · Prior 99.1%');
+      finishRow('row-step-5a', 'completed');
+      
+      await sleep(60);
+      showBadge('badge-5b', '85ms · Stress Tested');
+      finishRow('row-step-5b', 'completed');
 
-      // STEP 6: DURABLE SLEEP #2 (1.5 seconds)
+      // STAGE 6: DURABLE HIBERNATION #2 (1.5 seconds)
+      const sleepRow2 = document.getElementById('row-step-6');
       const sleepBadge2 = document.getElementById('sleep-badge-2');
-      const sleepProgress2 = document.getElementById('sleep-progress-2');
-      const sleepTimerText2 = document.getElementById('sleep-timer-text-2');
-      const sleepStatusSub2 = document.getElementById('sleep-status-sub-2');
-
+      const sleepTimer2 = document.getElementById('sleep-timer-2');
+      
+      sleepRow2.classList.add('active-sleep');
       sleepBadge2.classList.remove('hidden');
-      sleepProgress2.style.width = '100%';
-      sleepStatusSub2.textContent = '⚡ Second hibernation · Isolate evicted to GCS · 0 CPU';
-      document.getElementById('run-status-label').textContent = 'Hibernate 2 (settlement hold)...';
+      document.getElementById('run-status-label').textContent = 'Durable sleep #2 (settlement hold, 0 CPU)...';
       dot.className = 'w-2 h-2 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark animate-ping';
 
       const s2T0 = Date.now();
@@ -516,23 +566,27 @@
 
       while (!completedData || (Date.now() - s2T0) < 1500) {
         const rem = Math.max(0, 1500 - (Date.now() - s2T0));
-        sleepTimerText2.textContent = `${(rem / 1000).toFixed(1)}s left`;
+        sleepTimer2.textContent = `${(rem / 1000).toFixed(1)}s left`;
         await sleep(50);
       }
       clearInterval(pollInterval);
 
-      sleepTimerText2.textContent = '1,500ms';
-      sleepStatusSub2.textContent = '⚡ Woke via Direct VPC Alarm #2 · Verified zero memory drift';
+      sleepTimer2.textContent = '1,500ms';
+      sleepRow2.classList.remove('active-sleep');
+      sleepRow2.classList.add('completed');
+      sleepBadge2.textContent = '⚡ Woke via Direct VPC alarm #2';
+      sleepBadge2.className = 'mono text-[11px] px-2 py-0.5 rounded border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark bg-status-success-bg-light dark:bg-status-success-bg-dark font-medium';
       dot.className = 'w-2 h-2 rounded-full bg-accent-default-light dark:bg-accent-default-dark animate-pulse';
 
-      // STEP 7: Consensus & Commit
-      activateStep(7);
-      await sleep(100);
-      const totalDur = completedData?.output?.totalDurationMs || 3420;
-      document.getElementById('detail-7').textContent = `Consensus verified · Durably committed to SQLite LTX in GCS`;
-      completeStep(7, "30ms");
+      // STAGE 7: Final Consensus & Commit
+      highlightRow('row-step-7', 'active-compute');
+      document.getElementById('run-status-label').textContent = 'Durably committing to SQLite LTX in GCS...';
+      await sleep(150);
+      showBadge('badge-7', '30ms · ACID Committed');
+      finishRow('row-step-7', 'completed');
 
-      // Completion status
+      // Final Completion
+      const totalDur = completedData?.output?.totalDurationMs || 3420;
       dot.className = 'w-2 h-2 rounded-full bg-status-success-fg-light dark:bg-status-success-fg-dark';
       document.getElementById('run-status-label').textContent = `Complete in ${totalDur}ms`;
 
@@ -561,39 +615,60 @@
       isRunning = false;
     }
 
-    function activateStep(n) {
-      const row = document.getElementById(`row-step-${n}`);
-      if (row) {
-        row.classList.add('text-fg-primary-light', 'dark:text-fg-primary-dark');
+    function highlightRow(id, cls) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add(cls);
       }
     }
 
-    function completeStep(n, dur) {
-      const time = document.getElementById(`time-${n}`);
-      if (time) {
-        time.textContent = dur;
-        time.classList.remove('text-fg-secondary-light', 'dark:text-fg-secondary-dark');
-        time.classList.add('text-status-success-fg-light', 'dark:text-status-success-fg-dark');
+    function finishRow(id, cls) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('active-compute');
+        el.classList.add(cls);
+      }
+    }
+
+    function showBadge(id, text) {
+      const badge = document.getElementById(id);
+      if (badge) {
+        badge.textContent = text;
+        badge.classList.remove('hidden');
       }
     }
 
     function resetVisuals() {
-      [1, 2, 4, 5, 7].forEach(n => {
-        const time = document.getElementById(`time-${n}`);
-        if (time) {
-          time.className = 'mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5';
+      ['1', '2a', '2b', '2c', '2d', '4', '5a', '5b', '5c', '7'].forEach(s => {
+        const row = document.getElementById(`row-step-${s}`);
+        if (row) {
+          row.className = row.className.replace(/active-\w+|completed/g, '').trim();
+        }
+        const badge = document.getElementById(`badge-${s}`);
+        if (badge) {
+          badge.classList.add('hidden');
         }
       });
 
-      document.getElementById('sleep-badge-1').classList.add('hidden');
-      document.getElementById('sleep-progress-1').style.width = '0%';
-      document.getElementById('sleep-timer-text-1').textContent = '1,500ms';
-      document.getElementById('sleep-status-sub-1').textContent = 'Isolate evicted from Cloud Run memory · State checkpointed in SQLite LTX';
+      const sRow1 = document.getElementById('row-step-3');
+      if (sRow1) sRow1.className = sRow1.className.replace(/active-\w+|completed/g, '').trim();
+      const sBadge1 = document.getElementById('sleep-badge-1');
+      if (sBadge1) {
+        sBadge1.classList.add('hidden');
+        sBadge1.textContent = '⚡ 0 CPU Billed · Isolate Evicted to GCS';
+        sBadge1.className = 'hidden mono text-[11px] px-2 py-0.5 rounded border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark bg-status-attention-bg-light dark:bg-status-attention-bg-dark font-medium';
+      }
+      document.getElementById('sleep-timer-1').textContent = '1,500ms';
 
-      document.getElementById('sleep-badge-2').classList.add('hidden');
-      document.getElementById('sleep-progress-2').style.width = '0%';
-      document.getElementById('sleep-timer-text-2').textContent = '1,500ms';
-      document.getElementById('sleep-status-sub-2').textContent = 'Second hibernation · Zero memory leak across multi-phase sleeps';
+      const sRow2 = document.getElementById('row-step-6');
+      if (sRow2) sRow2.className = sRow2.className.replace(/active-\w+|completed/g, '').trim();
+      const sBadge2 = document.getElementById('sleep-badge-2');
+      if (sBadge2) {
+        sBadge2.classList.add('hidden');
+        sBadge2.textContent = '⚡ Second Eviction · Zero Memory Drift';
+        sBadge2.className = 'hidden mono text-[11px] px-2 py-0.5 rounded border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark bg-status-attention-bg-light dark:bg-status-attention-bg-dark font-medium';
+      }
+      document.getElementById('sleep-timer-2').textContent = '1,500ms';
 
       document.getElementById('trace-proof-card').classList.add('hidden');
       document.getElementById('trace-header-link').classList.add('hidden');
