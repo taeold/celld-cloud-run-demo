@@ -3,60 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cloudflare Workflows Dashboard - celld</title>
+  <title>data-pipeline - Celld Workflows</title>
   <style>
-    :root[data-theme="dark"] {
-      --bg-page: #0b0f17;
-      --bg-surface: #111827;
-      --bg-surface-elevated: #1f2937;
-      --bg-surface-inset: #0d131f;
-      --border-subtle: #1f2937;
-      --border-default: #374151;
-      --border-hover: #4b5563;
-      --text-main: #f9fafb;
-      --text-muted: #9ca3af;
-      --text-secondary: #6b7280;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --accent-subtle: rgba(37, 99, 235, 0.12);
-      --accent-border: #3b82f6;
-      --success-text: #34d399;
-      --success-bg: rgba(16, 185, 129, 0.12);
-      --success-border: #059669;
-      --warning-text: #fbbf24;
-      --warning-bg: rgba(245, 158, 11, 0.12);
-      --warning-border: #d97706;
-      --danger-text: #f87171;
-      --danger-bg: rgba(239, 68, 68, 0.12);
-      --danger-border: #dc2626;
-      --cf-orange: #f38020;
+    /* =========================================================================
+       GitHub Primer & Artifax Semantic Design System
+       ========================================================================= */
+    :root[data-theme="light"] {
+      --canvas-default: #ffffff;
+      --surface-subtle: #f6f8fa;
+      --surface-elevated: #ffffff;
+      --border-default: #d0d7de;
+      --border-muted: #e1e4e8;
+      --text-primary: #1f2328;
+      --text-secondary: #656d76;
+      --accent: #0969da;
+      --accent-hover: #0854ad;
+      --accent-subtle: #ddf4ff;
+      --accent-border: #54aeff;
+      --success-text: #1a7f37;
+      --success-bg: #dafbe1;
+      --success-border: #4ac26b;
+      --warning-text: #9a6700;
+      --warning-bg: #fff8c5;
+      --warning-border: #d4a72c;
+      --danger-text: #cf222e;
+      --danger-bg: #ffebe9;
+      --danger-border: #ff8182;
+      --code-bg: #f6f8fa;
+      --grid-line: #e1e4e8;
     }
 
-    :root[data-theme="light"] {
-      --bg-page: #f9fafb;
-      --bg-surface: #ffffff;
-      --bg-surface-elevated: #f3f4f6;
-      --bg-surface-inset: #f8fafc;
-      --border-subtle: #e5e7eb;
-      --border-default: #d1d5db;
-      --border-hover: #9ca3af;
-      --text-main: #111827;
-      --text-muted: #4b5563;
-      --text-secondary: #6b7280;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --accent-subtle: #eff6ff;
-      --accent-border: #93c5fd;
-      --success-text: #059669;
-      --success-bg: #ecfdf5;
-      --success-border: #6ee7b7;
-      --warning-text: #d97706;
-      --warning-bg: #fffbeb;
-      --warning-border: #fcd34d;
-      --danger-text: #dc2626;
-      --danger-bg: #fef2f2;
-      --danger-border: #fca5a5;
-      --cf-orange: #f38020;
+    :root[data-theme="dark"] {
+      --canvas-default: #0d1117;
+      --surface-subtle: #161b22;
+      --surface-elevated: #21262d;
+      --border-default: #30363d;
+      --border-muted: #21262d;
+      --text-primary: #e6edf3;
+      --text-secondary: #7d8590;
+      --accent: #2f81f7;
+      --accent-hover: #4493f8;
+      --accent-subtle: rgba(56, 139, 253, 0.15);
+      --accent-border: #388bfd;
+      --success-text: #3fb950;
+      --success-bg: rgba(46, 160, 67, 0.15);
+      --success-border: #238636;
+      --warning-text: #d29922;
+      --warning-bg: rgba(187, 128, 9, 0.15);
+      --warning-border: #9e6a03;
+      --danger-text: #f85149;
+      --danger-bg: rgba(248, 81, 73, 0.15);
+      --danger-border: #da3633;
+      --code-bg: #161b22;
+      --grid-line: #21262d;
     }
 
     * {
@@ -66,11 +65,11 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
       font-size: 14px;
       line-height: 1.5;
-      color: var(--text-main);
-      background-color: var(--bg-page);
+      color: var(--text-primary);
+      background-color: var(--canvas-default);
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -79,7 +78,7 @@
     }
 
     code, pre, .mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
       font-size: 12px;
     }
 
@@ -87,67 +86,55 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Top Cloudflare Navigation */
-    .cf-nav {
-      height: 52px;
-      background-color: var(--bg-surface);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 0 20px;
+    /* Top Navigation (GitHub Header baseline) */
+    .top-header {
+      height: 48px;
+      background-color: var(--surface-subtle);
+      border-bottom: 1px solid var(--border-default);
+      padding: 0 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
     }
 
-    .cf-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .cf-logo-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      background: var(--cf-orange);
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 13px;
-      box-shadow: 0 1px 3px rgba(243, 128, 32, 0.3);
-    }
-
-    .cf-breadcrumbs {
+    .nav-breadcrumbs {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
+      font-size: 14px;
     }
 
-    .cf-breadcrumbs a {
-      color: var(--text-muted);
+    .nav-breadcrumbs a {
+      color: var(--accent);
       text-decoration: none;
     }
 
-    .cf-breadcrumbs a:hover {
-      color: var(--text-main);
+    .nav-breadcrumbs a:hover {
+      text-decoration: underline;
     }
 
-    .cf-breadcrumbs .sep {
+    .nav-breadcrumbs .sep {
       color: var(--text-secondary);
     }
 
-    .cf-breadcrumbs .current {
-      color: var(--text-main);
+    .nav-breadcrumbs .current {
       font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .nav-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
     }
 
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     /* Buttons */
@@ -158,18 +145,23 @@
       font-weight: 500;
       border-radius: 6px;
       border: 1px solid var(--border-default);
-      background-color: var(--bg-surface);
-      color: var(--text-main);
+      background-color: var(--surface-elevated);
+      color: var(--text-primary);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 120ms ease;
+      transition: background-color 150ms ease, border-color 150ms ease;
     }
 
     .btn:hover {
-      background-color: var(--bg-surface-elevated);
-      border-color: var(--border-hover);
+      background-color: var(--surface-subtle);
+      border-color: var(--border-default);
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
 
     .btn-primary {
@@ -185,7 +177,7 @@
     }
 
     .btn-sm {
-      height: 26px;
+      height: 28px;
       padding: 0 8px;
       font-size: 12px;
     }
@@ -194,19 +186,20 @@
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 500;
       padding: 2px 8px;
       border-radius: 9999px;
       border: 1px solid transparent;
       line-height: 1.4;
     }
 
-    .badge-dot {
-      width: 6px;
-      height: 6px;
+    .status-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
+      display: inline-block;
     }
 
     .badge-success {
@@ -214,729 +207,605 @@
       background-color: var(--success-bg);
       border-color: var(--success-border);
     }
-    .badge-success .badge-dot { background-color: var(--success-text); }
+    .badge-success .status-dot { background-color: var(--success-text); }
 
     .badge-warning {
       color: var(--warning-text);
       background-color: var(--warning-bg);
       border-color: var(--warning-border);
     }
-    .badge-warning .badge-dot { background-color: var(--warning-text); }
+    .badge-warning .status-dot { background-color: var(--warning-text); }
 
     .badge-danger {
       color: var(--danger-text);
       background-color: var(--danger-bg);
       border-color: var(--danger-border);
     }
-    .badge-danger .badge-dot { background-color: var(--danger-text); }
+    .badge-danger .status-dot { background-color: var(--danger-text); }
 
-    .badge-neutral {
-      color: var(--text-muted);
-      background-color: var(--bg-surface-elevated);
+    .badge-muted {
+      color: var(--text-secondary);
+      background-color: var(--surface-subtle);
       border-color: var(--border-default);
     }
 
-    /* Sub-header Navigation Tabs */
-    .subnav {
-      height: 44px;
-      background-color: var(--bg-surface);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      flex-shrink: 0;
-    }
-
-    .tab-item {
-      height: 44px;
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: color 120ms ease, border-color 120ms ease;
-    }
-
-    .tab-item:hover {
-      color: var(--text-main);
-    }
-
-    .tab-item.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-      font-weight: 600;
-    }
-
-    /* Main Container */
-    .main-body {
+    /* Bounded Main Content Container */
+    .page-container {
       flex: 1;
       overflow-y: auto;
-      padding: 20px 24px;
+      padding: 24px 32px;
+    }
+
+    .page-content {
+      max-width: 1200px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-    }
-
-    /* Detail Hero Strip */
-    .hero-card {
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .hero-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .hero-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .hero-metrics {
-      display: flex;
-      align-items: center;
       gap: 24px;
-      font-size: 12px;
-      color: var(--text-muted);
     }
 
-    .metric-item {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .metric-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      font-weight: 600;
-      color: var(--text-secondary);
-      letter-spacing: 0.04em;
-    }
-
-    .metric-val {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-main);
-      margin-top: 1px;
-    }
-
-    /* ============================================================
-       CONNECTED STEP PIPELINE GRAPH (Cloudflare & Inngest Signature)
-       ============================================================ */
-    .pipeline-section {
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .section-title {
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .pipeline-track {
-      display: flex;
-      align-items: center;
-      overflow-x: auto;
-      padding: 10px 4px;
-      gap: 0;
-    }
-
-    .step-card {
-      min-width: 200px;
-      background-color: var(--bg-surface-elevated);
-      border: 1px solid var(--border-default);
-      border-radius: 8px;
-      padding: 12px 14px;
-      cursor: pointer;
-      transition: all 150ms ease;
+    /* Execution Header Card */
+    .exec-header {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      position: relative;
-      user-select: none;
+      border-bottom: 1px solid var(--border-muted);
+      padding-bottom: 16px;
     }
 
-    .step-card:hover {
-      border-color: var(--border-hover);
-      transform: translateY(-1px);
-    }
-
-    .step-card.active {
-      border-color: var(--accent);
-      background-color: var(--accent-subtle);
-      box-shadow: 0 0 0 2px var(--accent-border);
-    }
-
-    .step-card-top {
+    .exec-header-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
     }
 
-    .step-card-name {
-      font-weight: 700;
-      font-size: 13px;
-      color: var(--text-main);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .step-card-type {
-      font-size: 11px;
-      color: var(--text-secondary);
+    .exec-title-row {
       display: flex;
       align-items: center;
-      gap: 4px;
-    }
-
-    .step-card-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .step-duration {
-      color: var(--text-muted);
-    }
-
-    /* Flow Connector Arrows */
-    .step-connector {
-      width: 44px;
-      height: 2px;
-      background: var(--border-default);
-      position: relative;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .step-connector::after {
-      content: "";
-      position: absolute;
-      right: 0;
-      width: 0;
-      height: 0;
-      border-top: 4px solid transparent;
-      border-bottom: 4px solid transparent;
-      border-left: 6px solid var(--border-default);
-    }
-
-    .step-connector.sleep-mode {
-      background: repeating-linear-gradient(90deg, var(--warning-border), var(--warning-border) 4px, transparent 4px, transparent 8px);
-    }
-
-    .step-connector.sleep-mode::after {
-      border-left-color: var(--warning-border);
-    }
-
-    /* Drilldown Split: Inspector + Event Feed */
-    .drilldown-grid {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 20px;
-    }
-
-    .inspector-card {
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-header-bar {
-      padding: 12px 16px;
-      background-color: var(--bg-surface-elevated);
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .inspector-body {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      overflow-y: auto;
-      max-height: 480px;
-    }
-
-    .prop-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .prop-row .label {
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .prop-row .val {
-      font-family: ui-monospace, monospace;
-      color: var(--text-main);
-      font-weight: 600;
-    }
-
-    .code-box {
-      background-color: var(--bg-surface-inset);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 12px;
-      font-family: ui-monospace, monospace;
-      font-size: 12px;
-      line-height: 1.45;
-      color: var(--text-main);
-      overflow-x: auto;
-      max-height: 220px;
-      user-select: text;
-    }
-
-    /* Event Audit Log (Inngest Style) */
-    .event-stream {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .event-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border-subtle);
-      font-size: 12px;
-      transition: background-color 100ms ease;
-    }
-
-    .event-item:hover {
-      background-color: var(--bg-surface-elevated);
-    }
-
-    .event-time {
-      font-family: ui-monospace, monospace;
-      color: var(--text-secondary);
-      width: 70px;
-      flex-shrink: 0;
-    }
-
-    .event-icon {
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      font-size: 10px;
-    }
-
-    .event-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .event-title {
-      font-weight: 600;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .event-desc {
-      color: var(--text-muted);
-      font-size: 11px;
-    }
-
-    /* Full Executions Table View (Page 1) */
-    .table-container {
-      background-color: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .table-toolbar {
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border-subtle);
       gap: 12px;
     }
 
-    .search-field {
-      height: 32px;
-      padding: 0 12px;
+    .exec-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .exec-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
       font-size: 13px;
-      border-radius: 6px;
+      color: var(--text-secondary);
+    }
+
+    .exec-meta-row .sep {
+      color: var(--border-default);
+    }
+
+    /* Cards and Panels */
+    .card {
+      background-color: var(--canvas-default);
       border: 1px solid var(--border-default);
-      background-color: var(--bg-surface-inset);
-      color: var(--text-main);
-      width: 320px;
+      border-radius: 6px;
+      overflow: hidden;
     }
 
-    .search-field:focus {
-      outline: 2px solid var(--accent);
-      border-color: var(--accent);
+    .card-header {
+      padding: 12px 16px;
+      background-color: var(--surface-subtle);
+      border-bottom: 1px solid var(--border-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    table.exec-table {
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Clean Steps Table */
+    table.data-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
     }
 
-    table.exec-table th {
-      background-color: var(--bg-surface-elevated);
+    table.data-table th {
+      background-color: var(--surface-subtle);
       color: var(--text-secondary);
       font-weight: 600;
       text-align: left;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-default);
       font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
     }
 
-    table.exec-table td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border-subtle);
-      color: var(--text-main);
+    table.data-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-muted);
+      color: var(--text-primary);
+      vertical-align: top;
     }
 
-    table.exec-table tr:hover td {
-      background-color: var(--bg-surface-elevated);
+    table.data-table tr.step-row:hover td {
+      background-color: var(--surface-subtle);
       cursor: pointer;
     }
 
-    /* Modal */
-    .modal-overlay {
+    table.data-table tr.step-row.active td {
+      background-color: var(--accent-subtle);
+    }
+
+    .step-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: ui-monospace, monospace;
+      font-weight: 500;
+    }
+
+    .step-chevron {
+      color: var(--text-secondary);
+      font-size: 10px;
+      width: 14px;
+      display: inline-block;
+      transition: transform 150ms ease;
+    }
+
+    .step-chevron.expanded {
+      transform: rotate(90deg);
+    }
+
+    /* Step Inline Drawer */
+    .step-drawer {
+      display: none;
+      background-color: var(--surface-subtle);
+      border-top: 1px solid var(--border-muted);
+      padding: 14px 16px;
+      font-size: 12px;
+    }
+
+    .step-drawer.open {
+      display: block;
+    }
+
+    .drawer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    pre.json-box {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--text-primary);
+      overflow-x: auto;
+      max-height: 200px;
+      user-select: text;
+    }
+
+    /* =========================================================================
+       Gantt Trace Waterfall (Minimalist, Proportional, Zero Slop)
+       ========================================================================= */
+    .waterfall-card {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .waterfall-ruler {
+      display: flex;
+      justify-content: space-between;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-muted);
+      padding-bottom: 6px;
+      padding-left: 200px; /* aligns with step names */
+      padding-right: 80px; /* aligns with duration */
+    }
+
+    .waterfall-canvas {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .waterfall-grid-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: var(--grid-line);
+      pointer-events: none;
+    }
+
+    .waterfall-row {
+      display: flex;
+      align-items: center;
+      height: 32px;
+      border-bottom: 1px solid var(--border-muted);
+      position: relative;
+    }
+
+    .wf-name-col {
+      width: 200px;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      color: var(--text-primary);
+      padding-right: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+
+    .wf-track-col {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .wf-bar {
+      position: absolute;
+      height: 16px;
+      border-radius: 3px;
+      background-color: var(--accent);
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .wf-bar.sleep {
+      background-color: var(--warning-text);
+    }
+
+    .wf-bar.root {
+      background-color: transparent;
+      border: 1px solid var(--accent);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .wf-dur-col {
+      width: 80px;
+      text-align: right;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    /* Details Disclosure */
+    details {
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      background-color: var(--canvas-default);
+      overflow: hidden;
+    }
+
+    details summary {
+      padding: 10px 16px;
+      background-color: var(--surface-subtle);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      user-select: none;
+    }
+
+    details summary:hover {
+      background-color: var(--surface-elevated);
+    }
+
+    details .details-body {
+      padding: 16px;
+      background-color: var(--canvas-default);
+      border-top: 1px solid var(--border-muted);
+    }
+
+    /* Modal (Trigger Workflow) */
+    .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(2px);
+      background-color: rgba(1, 4, 9, 0.6);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 100;
     }
 
-    .modal-overlay.open { display: flex; }
+    .modal-backdrop.open {
+      display: flex;
+    }
 
-    .modal-box {
-      width: 480px;
-      background: var(--bg-surface);
+    .modal-card {
+      width: 440px;
+      background-color: var(--canvas-default);
       border: 1px solid var(--border-default);
-      border-radius: 8px;
+      border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 24px rgba(1, 4, 9, 0.2);
     }
 
     .modal-header {
-      padding: 14px 20px;
-      background: var(--bg-surface-elevated);
-      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+      background-color: var(--surface-subtle);
+      border-bottom: 1px solid var(--border-muted);
+      font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-weight: 700;
-      font-size: 14px;
     }
 
     .modal-body {
-      padding: 20px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
 
     .modal-footer {
-      padding: 14px 20px;
-      background: var(--bg-surface-elevated);
-      border-top: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+      background-color: var(--surface-subtle);
+      border-top: 1px solid var(--border-muted);
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .form-label {
+    .input-control {
+      height: 32px;
+      padding: 0 10px;
+      font-size: 13px;
+      background-color: var(--canvas-default);
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      color: var(--text-primary);
+      width: 100%;
+    }
+
+    .input-control:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .filter-tab {
+      height: 28px;
+      padding: 0 10px;
       font-size: 12px;
-      font-weight: 600;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
       color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 4px;
-      display: block;
+      cursor: pointer;
+    }
+
+    .filter-tab.active {
+      background-color: var(--surface-subtle);
+      border-color: var(--border-default);
+      color: var(--text-primary);
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
 
-  <!-- Cloudflare Top Navigation -->
-  <header class="cf-nav">
-    <div class="cf-brand">
-      <div class="cf-logo-icon">W</div>
-      <div class="cf-breadcrumbs">
-        <a href="#">Workers & Pages</a>
-        <span class="sep">/</span>
-        <a href="#">celld-workflow-demo</a>
-        <span class="sep">/</span>
-        <span class="current">data-pipeline</span>
-      </div>
+  <!-- Top Navigation Header -->
+  <header class="top-header">
+    <div class="nav-breadcrumbs">
+      <a href="#" onclick="showAllRuns(); return false;">celld</a>
+      <span class="sep">/</span>
+      <a href="#" onclick="showAllRuns(); return false;">workflows</a>
+      <span class="sep">/</span>
+      <span class="current">data-pipeline</span>
+    </div>
+
+    <div class="nav-meta">
+      <span>Fleet: <strong>2 Workers active</strong></span>
+      <span>Storage: <strong class="mono">gs://...fleet/main</strong></span>
     </div>
 
     <div class="nav-actions">
-      <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); margin-right: 12px;">
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
-        <span>Fleet: 2 Cloud Run Workers</span>
-      </div>
-      <button onclick="toggleTheme()" class="btn btn-sm" title="Toggle Theme">
-        <span id="theme-btn-text">☼ Theme</span>
+      <button onclick="toggleTheme()" class="btn btn-sm" title="Toggle Light/Dark Theme">
+        <span id="theme-text">☼ Theme</span>
       </button>
       <button onclick="fetchWorkflows()" class="btn btn-sm" id="btn-refresh">
         <span>Refresh</span>
       </button>
-      <button onclick="openModal()" class="btn btn-primary btn-sm">
-        <span>+ Run workflow</span>
+      <button onclick="openTriggerModal()" class="btn btn-primary btn-sm">
+        <span>Trigger workflow</span>
       </button>
     </div>
   </header>
 
-  <!-- Subnav Tabs -->
-  <div class="subnav">
-    <div class="tab-item active" onclick="switchView('runs')">Executions</div>
-    <div class="tab-item" onclick="switchView('diagram')">Visualizer / Flow</div>
-    <div class="tab-item" onclick="switchView('settings')">Settings & Triggers</div>
-  </div>
+  <!-- Main View Container -->
+  <div class="page-container">
+    <div class="page-content">
 
-  <!-- Main Scrollable Area -->
-  <main class="main-body" id="main-view-container">
+      <!-- =====================================================================
+           VIEW A: EXECUTION DRILLDOWN (Default)
+           ===================================================================== -->
+      <div id="view-drilldown" style="display: flex; flex-direction: column; gap: 24px;">
 
-    <!-- VIEW 1: DRILLDOWN (Default when run is loaded) -->
-    <div id="view-drilldown" style="display: flex; flex-direction: column; gap: 20px;">
-      
-      <!-- Execution Summary Hero -->
-      <div class="hero-card">
-        <div class="hero-left">
-          <button onclick="showTableView()" class="btn btn-sm" style="gap: 4px;">
-            <span>← All runs</span>
-          </button>
-          <div>
-            <div class="hero-title">
-              <span id="hero-status-badge" class="badge badge-success">
-                <span class="badge-dot"></span>
+        <!-- Header -->
+        <div class="exec-header">
+          <div class="exec-header-top">
+            <div class="exec-title-row">
+              <span id="run-status-badge" class="badge badge-success">
+                <span class="status-dot"></span>
                 <span>Complete</span>
               </span>
-              <span class="mono" id="hero-id" style="font-size: 15px;">5be2c111-d943-4069-8599-1d645f3b4cc9</span>
-              <button onclick="copyId()" class="btn btn-sm" style="height: 22px; padding: 0 6px; font-size: 11px;">Copy ID</button>
+              <h1 class="exec-title mono" id="run-id-title">5be2c111-d943-4069-8599-1d645f3b4cc9</h1>
+              <button onclick="copyCurrentId()" class="btn btn-sm" style="font-size: 11px;">Copy ID</button>
             </div>
-            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-              Triggered via <span class="mono" style="color: var(--text-muted);">POST /create</span> · Replicated to <span class="mono">gs://...fleet/main</span>
+
+            <div>
+              <button onclick="showAllRuns()" class="btn btn-sm">
+                <span>View all executions</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="exec-meta-row tabular-nums">
+            <span>Started: <strong id="run-started">-</strong></span>
+            <span class="sep">·</span>
+            <span>Duration: <strong id="run-duration" style="color: var(--text-primary);">-</strong></span>
+            <span class="sep">·</span>
+            <span>Trigger: <strong>HTTP POST /create</strong></span>
+            <span class="sep">·</span>
+            <span>Storage: <strong>SQLite LTX</strong></span>
+          </div>
+        </div>
+
+        <!-- Section 1: Workflow Steps Table (Interactive Replay View) -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Workflow Steps & Replay Execution</span>
+            <span style="font-size: 12px; color: var(--text-secondary);">Click any step to inspect inputs and return values</span>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 260px;">Step</th>
+                <th style="width: 140px;">Type</th>
+                <th style="width: 140px;">Status</th>
+                <th style="width: 140px;">Relative Offset</th>
+                <th style="width: 120px; text-align: right;">Duration</th>
+              </tr>
+            </thead>
+            <tbody id="steps-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 2: Gantt Waterfall Timeline -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Execution Timeline Waterfall</span>
+            <span style="font-size: 12px; color: var(--text-secondary);">Millisecond trace of sequential step cascade and sleep duration</span>
+          </div>
+
+          <div class="waterfall-card">
+            <div class="waterfall-ruler tabular-nums" id="wf-ruler">
+              <span>0ms</span>
+              <span>500ms</span>
+              <span>1,000ms</span>
+              <span>1,500ms</span>
+              <span>2,000ms</span>
+              <span>2,500ms</span>
+            </div>
+
+            <div class="waterfall-canvas" id="waterfall-canvas">
+              <!-- Populated by JS -->
             </div>
           </div>
         </div>
 
-        <div class="hero-metrics">
-          <div class="metric-item">
-            <span class="metric-label">Execution Time</span>
-            <span class="metric-val tabular-nums" id="hero-duration">2.003s</span>
+        <!-- Section 3: Full Payload Disclosure -->
+        <details>
+          <summary>View Complete Workflow Response Payload (JSON)</summary>
+          <div class="details-body">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+              <button onclick="copyPayload()" class="btn btn-sm">Copy JSON</button>
+            </div>
+            <pre class="json-box" id="full-payload-box">// Payload will appear here...</pre>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">Steps Completed</span>
-            <span class="metric-val" id="hero-steps-count">4 of 4</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Started At</span>
-            <span class="metric-val tabular-nums" id="hero-started">03:07:34 UTC</span>
-          </div>
-        </div>
+        </details>
+
       </div>
 
-      <!-- Connected Step Pipeline (Inngest / Cloudflare Signature) -->
-      <div class="pipeline-section">
-        <div class="section-header">
-          <span class="section-title">
-            <span>Step Execution Graph</span>
-            <span style="font-size: 11px; font-weight: 500; text-transform: none; color: var(--text-muted);">Click any step to inspect</span>
-          </span>
-          <span class="badge badge-neutral">Durable Replay Engine</span>
-        </div>
-
-        <div class="pipeline-track" id="pipeline-track">
-          <!-- Populated by JS: [Step 1] ─→ [Sleep 2s] ─→ [Step 3] ─→ [Step 4] -->
-        </div>
-      </div>
-
-      <!-- Lower Split: Inspector + Chronological Event Log -->
-      <div class="drilldown-grid">
+      <!-- =====================================================================
+           VIEW B: ALL RUNS TABLE (When clicking "View all executions")
+           ===================================================================== -->
+      <div id="view-table" style="display: none; flex-direction: column; gap: 16px;">
         
-        <!-- Left: Step Inspector -->
-        <div class="inspector-card">
-          <div class="card-header-bar">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span>Step Inspector</span>
-              <span id="inspector-step-pill" class="badge badge-neutral">validate-input</span>
-            </div>
-            <span id="inspector-step-type" style="font-size: 12px; color: var(--text-secondary); font-family: ui-monospace, monospace;">step.do</span>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <h2 style="font-size: 18px; font-weight: 600;">Workflow Executions</h2>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">Recent runs discovered from GCS bucket storage</p>
           </div>
 
-          <div class="inspector-body" id="inspector-body">
-            <!-- Property Rows -->
-            <div>
-              <div class="prop-row">
-                <span class="label">Step Status</span>
-                <span class="val" id="ins-status" style="color: var(--success-text);">Completed (Attempt 1 of 1)</span>
-              </div>
-              <div class="prop-row">
-                <span class="label">Execution Duration</span>
-                <span class="val tabular-nums" id="ins-duration">1ms</span>
-              </div>
-              <div class="prop-row">
-                <span class="label">Replay Storage</span>
-                <span class="val" id="ins-storage">SQLite KV (__wf.1.step.1)</span>
-              </div>
-            </div>
-
-            <!-- Return Value Block -->
-            <div>
-              <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">Step Return Value</div>
-              <pre class="code-box" id="ins-output">// Output payload</pre>
-            </div>
+          <div class="filter-tabs">
+            <button onclick="setFilter('all')" id="ftab-all" class="filter-tab active">All</button>
+            <button onclick="setFilter('complete')" id="ftab-complete" class="filter-tab">Complete</button>
+            <button onclick="setFilter('waiting')" id="ftab-waiting" class="filter-tab">Waiting</button>
           </div>
         </div>
 
-        <!-- Right: Chronological Event Audit Stream -->
-        <div class="inspector-card">
-          <div class="card-header-bar">
-            <span>Execution Event Log</span>
-            <button onclick="copyOutput()" class="btn btn-sm">Copy Output JSON</button>
-          </div>
-
-          <div class="inspector-body" style="padding: 0;">
-            <div class="event-stream" id="event-stream">
-              <!-- Chronological log items -->
-            </div>
-          </div>
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Status</th>
+                <th>Execution ID</th>
+                <th>Trigger</th>
+                <th>Started</th>
+                <th style="text-align: right;">Duration</th>
+              </tr>
+            </thead>
+            <tbody id="all-runs-table-body">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
         </div>
 
       </div>
 
     </div>
+  </div>
 
-    <!-- VIEW 2: FULL EXECUTIONS TABLE (When user clicks "All Runs") -->
-    <div id="view-table" style="display: none; flex-direction: column; gap: 16px;">
-      <div class="table-container">
-        <div class="table-toolbar">
-          <input type="text" id="filter-input" oninput="filterTable()" class="search-field" placeholder="Search executions by ID...">
-          <div style="display: flex; gap: 6px;">
-            <button onclick="setTableFilter('all')" id="tbl-filter-all" class="btn btn-sm" style="background: var(--bg-surface-elevated);">All</button>
-            <button onclick="setTableFilter('complete')" id="tbl-filter-complete" class="btn btn-sm">Complete</button>
-            <button onclick="setTableFilter('waiting')" id="tbl-filter-waiting" class="btn btn-sm">Waiting</button>
-          </div>
-        </div>
-
-        <table class="exec-table">
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Execution ID</th>
-              <th>Trigger</th>
-              <th>Started</th>
-              <th>Duration</th>
-              <th>Steps</th>
-            </tr>
-          </thead>
-          <tbody id="table-body">
-            <!-- Populated by JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </main>
-
-  <!-- Trigger Modal -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal-box">
+  <!-- Trigger Workflow Modal -->
+  <div class="modal-backdrop" id="trigger-modal">
+    <div class="modal-card">
       <div class="modal-header">
-        <span>Trigger Cloudflare Workflow</span>
-        <button onclick="closeModal()" class="btn btn-sm" style="border: none; background: transparent;">✕</button>
+        <span>Trigger New Workflow Execution</span>
+        <button onclick="closeTriggerModal()" class="btn btn-sm" style="border: none; background: transparent;">✕</button>
       </div>
 
       <div class="modal-body">
         <div>
-          <label class="form-label">Workflow</label>
-          <input type="text" class="search-field" style="width: 100%;" value="data-pipeline" disabled>
+          <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 4px;">Job Name</label>
+          <input id="modal-name" type="text" class="input-control" value="Verification Run">
         </div>
 
         <div>
-          <label class="form-label">Instance / Job Name</label>
-          <input id="form-name" type="text" class="search-field" style="width: 100%;" value="Cloudflare Workflows Demo Run">
+          <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 4px;">Items Array (Numbers)</label>
+          <input id="modal-items" type="text" class="input-control mono" value="10, 20, 30, 40, 50">
         </div>
 
-        <div>
-          <label class="form-label">Input Array (Numbers)</label>
-          <input id="form-items" type="text" class="search-field mono" style="width: 100%;" value="10, 20, 30, 40, 50">
-        </div>
-
-        <div style="background: var(--bg-surface-inset); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 12px; color: var(--text-muted);">
-          <strong style="color: var(--text-main); display: block; margin-bottom: 2px;">Workflow Pipeline Steps:</strong>
-          1. <code>validate-input</code> → 2. <code>wait-briefly (2s sleep)</code> → 3. <code>process-items</code> → 4. <code>finalize-report</code>
+        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; padding: 8px; background: var(--surface-subtle); border-radius: 4px;">
+          This will trigger a 4-step pipeline: <code>validate-input</code> → <code>wait-briefly (2s sleep)</code> → <code>process-items</code> → <code>finalize-report</code>.
         </div>
       </div>
 
       <div class="modal-footer">
-        <button onclick="closeModal()" class="btn">Cancel</button>
-        <button onclick="submitTrigger()" class="btn btn-primary" id="btn-submit">Trigger Run</button>
+        <button onclick="closeTriggerModal()" class="btn">Cancel</button>
+        <button onclick="submitTrigger()" class="btn btn-primary" id="modal-submit-btn">Run workflow</button>
       </div>
     </div>
   </div>
@@ -944,8 +813,8 @@
   <script>
     let workflows = [];
     let currentId = null;
-    let selectedStepIndex = 0;
-    let tableFilter = 'all';
+    let currentFilter = 'all';
+    let expandedStepIndex = 0;
 
     window.addEventListener('DOMContentLoaded', () => {
       fetchWorkflows();
@@ -959,10 +828,9 @@
 
     function toggleTheme() {
       const root = document.documentElement;
-      const cur = root.getAttribute('data-theme');
-      const next = cur === 'dark' ? 'light' : 'dark';
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', next);
-      document.getElementById('theme-btn-text').textContent = next === 'dark' ? '☼ Theme' : '☾ Theme';
+      document.getElementById('theme-text').textContent = next === 'dark' ? '☼ Theme' : '☾ Theme';
     }
 
     async function fetchWorkflows() {
@@ -972,7 +840,7 @@
         const res = await fetch('/api/workflows');
         const data = await res.json();
         workflows = data.workflows || [];
-        renderTable();
+        renderAllRunsTable();
         if (workflows.length > 0 && !currentId) {
           selectExecution(workflows[0].id);
         }
@@ -985,23 +853,22 @@
 
     function selectExecution(id) {
       currentId = id;
-      selectedStepIndex = 0;
+      expandedStepIndex = 0;
       document.getElementById('view-drilldown').style.display = 'flex';
       document.getElementById('view-table').style.display = 'none';
 
       const w = workflows.find(x => x.id === id);
-      if (w) {
-        renderDrilldown(w);
-      }
-      // Also fetch fresh status
+      if (w) renderDrilldown(w);
+
       fetch(`/api/workflow/${id}`).then(r => r.json()).then(data => {
         renderDrilldown(data);
       });
     }
 
-    function showTableView() {
+    function showAllRuns() {
       document.getElementById('view-drilldown').style.display = 'none';
       document.getElementById('view-table').style.display = 'flex';
+      renderAllRunsTable();
     }
 
     async function refreshCurrent() {
@@ -1010,214 +877,215 @@
         const res = await fetch(`/api/workflow/${currentId}`);
         const data = await res.json();
         const idx = workflows.findIndex(w => w.id === currentId);
-        if (idx !== -1) {
-          workflows[idx] = { ...workflows[idx], ...data };
-        }
+        if (idx !== -1) workflows[idx] = { ...workflows[idx], ...data };
         renderDrilldown(data);
-        renderTable();
+        renderAllRunsTable();
       } catch (e) {
         console.error(e);
       }
     }
 
     function renderDrilldown(data) {
-      // 1. Hero
-      document.getElementById('hero-id').textContent = data.id;
-      const statusPill = document.getElementById('hero-status-badge');
+      document.getElementById('run-id-title').textContent = data.id;
+
+      const badge = document.getElementById('run-status-badge');
       const isComplete = data.status === 'complete';
       const isWaiting = data.status === 'waiting';
 
-      statusPill.className = `badge ${isComplete ? 'badge-success' : (isWaiting ? 'badge-warning' : 'badge-danger')}`;
-      statusPill.innerHTML = `
-        <span class="badge-dot ${isWaiting ? 'animate-ping' : ''}"></span>
-        <span>${isComplete ? 'Complete' : (isWaiting ? 'Waiting (Sleeping)' : data.status)}</span>
-      `;
+      badge.className = `badge ${isComplete ? 'badge-success' : (isWaiting ? 'badge-warning' : 'badge-danger')}`;
+      badge.innerHTML = `<span class="status-dot"></span><span>${isComplete ? 'Complete' : (isWaiting ? 'Waiting (Sleep timer)' : data.status)}</span>`;
 
       const out = data.output || {};
-      const totalDur = out.totalDurationMs ? `${(out.totalDurationMs / 1000).toFixed(3)}s` : (isComplete ? '2.003s' : 'Running...');
-      document.getElementById('hero-duration').textContent = totalDur;
-      document.getElementById('hero-started').textContent = out.startedAt ? new Date(out.startedAt).toLocaleTimeString() : 'Just now';
+      const totalDur = out.totalDurationMs ? `${out.totalDurationMs}ms` : (isComplete ? '2,003ms' : 'Active');
+      document.getElementById('run-duration').textContent = totalDur;
+      document.getElementById('run-started').textContent = out.startedAt ? new Date(out.startedAt).toLocaleTimeString() : 'Recent';
 
-      // 2. Steps Data
-      const steps = out.timeline || [
-        { name: "validate-input", kind: "step", status: "completed", durationMs: 1, output: { itemCount: 3, status: "valid" } },
+      // Full payload JSON box
+      document.getElementById('full-payload-box').textContent = JSON.stringify(data, null, 2);
+
+      // Steps
+      const rawSteps = out.timeline || [
+        { name: "validate-input", kind: "step", status: "completed", durationMs: 1, output: { itemCount: 3 } },
         { name: "wait-briefly", kind: "sleep", sleepSpec: "2 seconds", status: isWaiting ? "waiting" : "completed", durationMs: 2000 },
-        { name: "process-items", kind: "step", status: isComplete ? "completed" : "pending", durationMs: 1, output: { processedBy: "DEMO", totalSum: 60, average: 20 } },
+        { name: "process-items", kind: "step", status: isComplete ? "completed" : "pending", durationMs: 1, output: { processedBy: "DEMO", totalSum: 60 } },
         { name: "finalize-report", kind: "step", status: isComplete ? "completed" : "pending", durationMs: 1, output: { status: "SUCCESS", totalSum: 60 } }
       ];
 
-      // 3. Render Connected Step Pipeline Graph
-      const track = document.getElementById('pipeline-track');
-      let trackHtml = '';
-
-      steps.forEach((step, idx) => {
-        const isSelected = idx === selectedStepIndex;
-        const isSleep = step.kind === 'sleep';
-        const isStepComplete = step.status === 'completed';
-        const isStepWaiting = step.status === 'waiting';
-
-        const icon = isSleep ? '⏰' : (isStepComplete ? '⚡' : '○');
-        const badgeClass = isStepComplete ? 'badge-success' : (isStepWaiting ? 'badge-warning' : 'badge-neutral');
-        const statusText = isStepComplete ? 'Success' : (isStepWaiting ? 'Sleeping (2s)' : 'Pending');
-
-        trackHtml += `
-          <div class="step-card ${isSelected ? 'active' : ''}" onclick="selectStep(${idx})">
-            <div class="step-card-top">
-              <span class="step-card-name">${icon} ${step.name}</span>
-              <span class="badge ${badgeClass}" style="font-size: 11px;">${statusText}</span>
-            </div>
-            <div class="step-card-bottom">
-              <span class="step-card-type">${isSleep ? 'step.sleep' : 'step.do'}</span>
-              <span class="step-duration tabular-nums">${step.durationMs}ms</span>
-            </div>
-          </div>
-        `;
-
-        if (idx < steps.length - 1) {
-          trackHtml += `<div class="step-connector ${isSleep ? 'sleep-mode' : ''}"></div>`;
-        }
+      // Sequential cascading offsets
+      let offset = 0;
+      const steps = rawSteps.map(s => {
+        const d = s.durationMs || 1;
+        const start = (s.startOffsetMs !== undefined && s.startOffsetMs > 0) ? s.startOffsetMs : offset;
+        offset = start + d;
+        return { ...s, startOffsetMs: start, durationMs: d };
       });
 
-      track.innerHTML = trackHtml;
-
-      // 4. Render Step Inspector
-      renderInspector(steps[selectedStepIndex] || steps[0]);
-
-      // 5. Render Chronological Event Audit Log (Inngest signature)
-      renderEventLog(data, steps);
+      renderStepsTable(steps);
+      renderWaterfall(steps, Math.max(2200, offset));
     }
 
-    function selectStep(idx) {
-      selectedStepIndex = idx;
+    function renderStepsTable(steps) {
+      const tbody = document.getElementById('steps-table-body');
+      let html = '';
+
+      steps.forEach((s, idx) => {
+        const isExpanded = idx === expandedStepIndex;
+        const isComplete = s.status === 'completed';
+        const isWaiting = s.status === 'waiting';
+        const badgeClass = isComplete ? 'badge-success' : (isWaiting ? 'badge-warning' : 'badge-muted');
+
+        html += `
+          <tr class="step-row ${isExpanded ? 'active' : ''}" onclick="toggleStep(${idx})">
+            <td>
+              <div class="step-name-cell">
+                <span class="step-chevron ${isExpanded ? 'expanded' : ''}">▶</span>
+                <span>${s.name}</span>
+              </div>
+            </td>
+            <td><code>${s.kind === 'sleep' ? 'step.sleep' : 'step.do'}</code></td>
+            <td><span class="badge ${badgeClass}"><span class="status-dot"></span><span>${s.status}</span></span></td>
+            <td class="tabular-nums">+${s.startOffsetMs}ms</td>
+            <td class="tabular-nums" style="text-align: right; font-weight: 500;">${s.durationMs}ms</td>
+          </tr>
+          <tr class="step-drawer-row">
+            <td colspan="5" style="padding: 0;">
+              <div class="step-drawer ${isExpanded ? 'open' : ''}">
+                <div class="drawer-grid">
+                  <div>
+                    <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Step Execution Summary</div>
+                    <div style="line-height: 1.6; color: var(--text-primary);">
+                      <div><strong>Step Name:</strong> ${s.name}</div>
+                      <div><strong>Type:</strong> ${s.kind === 'sleep' ? 'Durable sleep timer (2 seconds)' : 'Standard memoized step'}</div>
+                      <div><strong>Storage:</strong> ${s.kind === 'sleep' ? 'Cell alarm scheduled (zero compute during wait)' : 'SQLite KV memoized'}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Return Value / Output</div>
+                    <pre class="json-box">${JSON.stringify(s.output || { status: s.status }, null, 2)}</pre>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function toggleStep(idx) {
+      expandedStepIndex = expandedStepIndex === idx ? -1 : idx;
       const active = workflows.find(w => w.id === currentId);
       if (active) renderDrilldown(active);
     }
 
-    function renderInspector(step) {
-      if (!step) return;
-      document.getElementById('inspector-step-pill').textContent = step.name;
-      document.getElementById('inspector-step-type').textContent = step.kind === 'sleep' ? 'step.sleep("2 seconds")' : 'step.do()';
+    function renderWaterfall(steps, totalWindowMs) {
+      const container = document.getElementById('waterfall-canvas');
+      const maxMs = Math.max(2200, totalWindowMs);
 
-      document.getElementById('ins-status').textContent = `${step.status} (Attempt 1 of 1)`;
-      document.getElementById('ins-duration').textContent = `${step.durationMs}ms`;
-      document.getElementById('ins-storage').textContent = step.kind === 'sleep' ? 'Durable alarm (GCS hibernate)' : 'SQLite KV (memoized)';
-
-      const out = step.output || (step.sleepSpec ? { alarmSchedule: step.sleepSpec, behavior: "Zero compute consumption during hibernate" } : { status: step.status });
-      document.getElementById('ins-output').textContent = JSON.stringify(out, null, 2);
-    }
-
-    function renderEventLog(wf, steps) {
-      const container = document.getElementById('event-stream');
-      const events = [
-        { time: "+0.000s", icon: "▶", title: "workflow.started", desc: `Payload received by Cloud Run Ingress: ${JSON.stringify(wf.params || { items: [10, 20, 30] })}` },
-        { time: "+0.001s", icon: "⚡", title: "step.started", desc: "Invoking step: validate-input" },
-        { time: "+0.002s", icon: "✓", title: "step.completed", desc: `validate-input finished in ${steps[0]?.durationMs || 1}ms. Return saved to SQLite.` },
-        { time: "+0.002s", icon: "⏰", title: "workflow.hibernated", desc: "Alarm scheduled for 2 seconds (wait-briefly). Worker entered dormant state." },
-        { time: "+2.002s", icon: "⚡", title: "workflow.resumed", desc: "Alarm woke cell via Direct VPC tunnel. State rehydrated seamlessly." },
-        { time: "+2.002s", icon: "⚡", title: "step.started", desc: "Invoking step: process-items" },
-        { time: "+2.003s", icon: "✓", title: "step.completed", desc: `process-items finished in ${steps[2]?.durationMs || 1}ms.` },
-        { time: "+2.003s", icon: "⚡", title: "step.started", desc: "Invoking step: finalize-report" },
-        { time: "+2.004s", icon: "✓", title: "step.completed", desc: `finalize-report committed report in ${steps[3]?.durationMs || 1}ms.` },
-        { time: "+2.004s", icon: "★", title: "workflow.finished", desc: "Workflow completed successfully. Status: COMPLETE." }
-      ];
-
-      container.innerHTML = events.map(e => `
-        <div class="event-item">
-          <span class="event-time">${e.time}</span>
-          <span class="event-icon" style="background: var(--bg-surface-elevated); color: var(--text-muted);">${e.icon}</span>
-          <div class="event-content">
-            <span class="event-title">${e.title}</span>
-            <span class="event-desc">${e.desc}</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function renderTable() {
-      const tbody = document.getElementById('table-body');
-      const q = document.getElementById('filter-input')?.value.toLowerCase() || '';
-
-      const filtered = workflows.filter(w => {
-        if (tableFilter !== 'all' && w.status !== tableFilter) return false;
-        if (q && !w.id.toLowerCase().includes(q)) return false;
-        return true;
+      // Gridlines
+      let gridHtml = '';
+      [0, 20, 40, 60, 80, 100].forEach(pct => {
+        gridHtml += `<div class="waterfall-grid-line" style="left: calc(200px + (100% - 280px) * ${pct / 100});"></div>`;
       });
 
+      // Root workflow row
+      let rowsHtml = `
+        <div class="waterfall-row">
+          <div class="wf-name-col" style="font-weight: 600;">data-pipeline</div>
+          <div class="wf-track-col">
+            <div class="wf-bar root tabular-nums" style="left: 0%; width: 99%;">
+              ${totalWindowMs}ms (total)
+            </div>
+          </div>
+          <div class="wf-dur-col tabular-nums">${totalWindowMs}ms</div>
+        </div>
+      `;
+
+      // Step rows
+      steps.forEach(s => {
+        const leftPct = Math.max(0, Math.min(96, (s.startOffsetMs / maxMs) * 100));
+        const widthPct = Math.max(1.5, Math.min(100 - leftPct, (s.durationMs / maxMs) * 100));
+        const isSleep = s.kind === 'sleep';
+
+        rowsHtml += `
+          <div class="waterfall-row">
+            <div class="wf-name-col" style="padding-left: 12px; color: var(--text-secondary); font-size: 12px;">↳ ${s.name}</div>
+            <div class="wf-track-col">
+              <div class="wf-bar ${isSleep ? 'sleep' : ''} tabular-nums" style="left: ${leftPct}%; width: ${widthPct}%;">
+                ${s.durationMs}ms
+              </div>
+            </div>
+            <div class="wf-dur-col tabular-nums">${s.durationMs}ms</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = gridHtml + rowsHtml;
+    }
+
+    function renderAllRunsTable() {
+      const tbody = document.getElementById('all-runs-table-body');
+      const filtered = workflows.filter(w => currentFilter === 'all' || w.status === currentFilter);
+
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-secondary);">No executions found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--text-secondary);">No executions found.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = filtered.map(w => {
         const isComplete = w.status === 'complete';
         const badgeClass = isComplete ? 'badge-success' : (w.status === 'waiting' ? 'badge-warning' : 'badge-danger');
-        const dur = w.output?.totalDurationMs ? `${(w.output.totalDurationMs/1000).toFixed(3)}s` : (isComplete ? '2.003s' : 'Running');
+        const dur = w.output?.totalDurationMs ? `${w.output.totalDurationMs}ms` : (isComplete ? '2,003ms' : 'Active');
         const started = w.output?.startedAt ? new Date(w.output.startedAt).toLocaleTimeString() : 'Recent';
 
         return `
-          <tr onclick="selectExecution('${w.id}')">
-            <td><span class="badge ${badgeClass}">${w.status}</span></td>
+          <tr class="step-row" onclick="selectExecution('${w.id}')">
+            <td><span class="badge ${badgeClass}"><span class="status-dot"></span><span>${w.status}</span></span></td>
             <td><span class="mono" style="font-weight: 600;">${w.id}</span></td>
-            <td><span style="color: var(--text-secondary);">HTTP POST</span></td>
+            <td style="color: var(--text-secondary);">HTTP POST /create</td>
             <td class="tabular-nums">${started}</td>
-            <td class="tabular-nums">${dur}</td>
-            <td><span style="color: var(--success-text); font-weight: 600;">4 / 4</span></td>
+            <td class="tabular-nums" style="text-align: right; font-weight: 500;">${dur}</td>
           </tr>
         `;
       }).join('');
     }
 
-    function setTableFilter(f) {
-      tableFilter = f;
-      ['all', 'complete', 'waiting'].forEach(x => {
-        const btn = document.getElementById(`tbl-filter-${x}`);
-        if (btn) btn.style.background = x === f ? 'var(--bg-surface-elevated)' : 'transparent';
+    function setFilter(filter) {
+      currentFilter = filter;
+      ['all', 'complete', 'waiting'].forEach(f => {
+        const btn = document.getElementById(`ftab-${f}`);
+        if (btn) btn.className = `filter-tab ${f === filter ? 'active' : ''}`;
       });
-      renderTable();
+      renderAllRunsTable();
     }
 
-    function filterTable() {
-      renderTable();
-    }
-
-    function switchView(view) {
-      if (view === 'runs') {
-        showTableView();
-      } else {
-        alert(view + ' view available in enterprise edition.');
-      }
-    }
-
-    function copyId() {
+    function copyCurrentId() {
       if (currentId) {
         navigator.clipboard.writeText(currentId);
-        alert("Copied ID: " + currentId);
       }
     }
 
-    function copyOutput() {
-      const active = workflows.find(w => w.id === currentId);
-      if (active) {
-        navigator.clipboard.writeText(JSON.stringify(active, null, 2));
-        alert("Workflow output JSON copied to clipboard!");
-      }
+    function copyPayload() {
+      const txt = document.getElementById('full-payload-box').textContent;
+      navigator.clipboard.writeText(txt);
     }
 
-    function openModal() {
-      document.getElementById('modal-overlay').classList.add('open');
+    function openTriggerModal() {
+      document.getElementById('trigger-modal').classList.add('open');
     }
 
-    function closeModal() {
-      document.getElementById('modal-overlay').classList.remove('open');
+    function closeTriggerModal() {
+      document.getElementById('trigger-modal').classList.remove('open');
     }
 
     async function submitTrigger() {
-      const btn = document.getElementById('btn-submit');
+      const btn = document.getElementById('modal-submit-btn');
       btn.textContent = 'Running...';
       btn.disabled = true;
 
-      const name = document.getElementById('form-name').value.trim();
-      const items = document.getElementById('form-items').value.split(',').map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x));
+      const name = document.getElementById('modal-name').value.trim();
+      const items = document.getElementById('modal-items').value.split(',').map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x));
 
       try {
         const res = await fetch('/api/trigger', {
@@ -1226,7 +1094,7 @@
           body: JSON.stringify({ name, items })
         });
         const data = await res.json();
-        closeModal();
+        closeTriggerModal();
         if (data.workflowId) {
           await fetchWorkflows();
           selectExecution(data.workflowId);
@@ -1234,7 +1102,7 @@
       } catch (e) {
         alert('Trigger failed: ' + e);
       } finally {
-        btn.textContent = 'Trigger Run';
+        btn.textContent = 'Run workflow';
         btn.disabled = false;
       }
     }
