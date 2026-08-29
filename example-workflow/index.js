@@ -1,4 +1,5 @@
 import { WorkflowEntrypoint } from "cloudflare:workers";
+import { DASHBOARD_HTML } from "./dashboardHtml.js";
 
 function generateSpanId() {
   const bytes = new Uint8Array(8);
@@ -307,14 +308,8 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/") {
-      return new Response(JSON.stringify({
-        service: "celld-workflow-demo",
-        endpoints: [
-          "POST /create - trigger a new workflow instance",
-          "GET /status?id=<id> - check workflow instance status",
-        ]
-      }, null, 2), {
-        headers: { "content-type": "application/json" }
+      return new Response(DASHBOARD_HTML, {
+        headers: { "content-type": "text/html; charset=utf-8" }
       });
     }
 
@@ -322,7 +317,7 @@ export default {
       return Response.json(Object.fromEntries(request.headers));
     }
 
-    if (url.pathname === "/create" && request.method === "POST") {
+    if ((url.pathname === "/create" || url.pathname === "/api/trigger") && request.method === "POST") {
       let body = {};
       try {
         body = await request.json();
@@ -368,9 +363,9 @@ export default {
       });
     }
 
-    if (url.pathname === "/status") {
-      const id = url.searchParams.get("id");
-      if (!id) return new Response("Missing ?id parameter", { status: 400 });
+    if (url.pathname === "/status" || url.pathname.startsWith("/api/workflow/")) {
+      const id = url.searchParams.get("id") || url.pathname.split("/").pop();
+      if (!id) return new Response("Missing id parameter", { status: 400 });
       try {
         const instance = await env.PIPELINE.get(id);
         const status = await instance.status();
