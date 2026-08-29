@@ -1,0 +1,12 @@
+{
+  "name": "celld-workflow-demo",
+  "main": "index.js",
+  "compatibility_date": "2026-08-18",
+  "workflows": [
+    {
+      "binding": "PIPELINE",
+      "name": "data-pipeline",
+      "class_name": "DataPipelineWorkflow"
+    }
+  ]
+}

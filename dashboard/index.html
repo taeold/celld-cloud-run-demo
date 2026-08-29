@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celld Workflow Observability</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    code, pre, .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden antialiased select-none">
+
+  <!-- Top Navbar -->
+  <header class="h-14 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur px-5 flex items-center justify-between flex-shrink-0 z-20">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm shadow-inner shadow-emerald-500/20">
+        ⚡
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-bold text-slate-100 tracking-tight text-sm">Celld Workflows</span>
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v0.4.0</span>
+          <span class="text-xs text-slate-500">/</span>
+          <span class="text-xs text-slate-400 font-mono">Cloud Run Fleet</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cluster Metadata Badges -->
+    <div class="hidden md:flex items-center space-x-4 text-xs text-slate-400">
+      <div class="flex items-center space-x-1.5 bg-slate-800/60 px-2.5 py-1 rounded-md border border-slate-700/50">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Fleet Settled: <strong>2 Workers</strong></span>
+      </div>
+      <div class="flex items-center space-x-1.5 bg-slate-800/60 px-2.5 py-1 rounded-md border border-slate-700/50">
+        <i data-lucide="database" class="w-3.5 h-3.5 text-blue-400"></i>
+        <span class="font-mono text-[11px] text-slate-300">gs://...demo-fleet</span>
+      </div>
+      <div class="flex items-center space-x-1.5 bg-slate-800/60 px-2.5 py-1 rounded-md border border-slate-700/50">
+        <i data-lucide="activity" class="w-3.5 h-3.5 text-purple-400"></i>
+        <span>Direct VPC Peering</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center space-x-2.5">
+      <button id="btn-refresh" onclick="fetchWorkflows()" class="px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 text-xs flex items-center space-x-1.5 transition">
+        <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+        <span>Refresh</span>
+      </button>
+      <button onclick="openTriggerModal()" class="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center space-x-1.5 shadow-sm shadow-emerald-500/30 transition">
+        <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+        <span>Trigger Workflow</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Split Layout -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- Left Sidebar: Workflow Execution List -->
+    <aside class="w-80 border-r border-slate-800/80 bg-slate-900/30 flex flex-col flex-shrink-0 z-10">
+      <!-- Search & Filters -->
+      <div class="p-3 border-b border-slate-800/60 space-y-2">
+        <div class="relative">
+          <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
+          <input id="search-input" oninput="filterWorkflows()" type="text" placeholder="Filter executions by ID..." class="w-full bg-slate-950/70 border border-slate-800 rounded-md text-xs pl-8 pr-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-700">
+        </div>
+        <div class="flex items-center space-x-1 text-[11px]">
+          <button onclick="setStatusFilter('all')" id="filter-all" class="px-2 py-0.5 rounded font-medium bg-slate-800 text-slate-200 border border-slate-700">All</button>
+          <button onclick="setStatusFilter('complete')" id="filter-complete" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200">Complete</button>
+          <button onclick="setStatusFilter('waiting')" id="filter-waiting" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200">Waiting</button>
+          <button onclick="setStatusFilter('errored')" id="filter-errored" class="px-2 py-0.5 rounded text-slate-400 hover:text-slate-200">Failed</button>
+        </div>
+      </div>
+
+      <!-- Execution List -->
+      <div id="execution-list" class="flex-1 overflow-y-auto divide-y divide-slate-800/40 select-none">
+        <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2">
+          <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-slate-400"></i>
+          <span>Loading workflow executions...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center/Right: Execution Waterfall & Drilldown -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-950">
+      
+      <!-- Selected Execution Header -->
+      <div id="exec-header" class="px-6 py-4 border-b border-slate-800/80 bg-slate-900/40 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div id="exec-status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold flex items-center space-x-1.5 bg-slate-800 text-slate-400 border border-slate-700">
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span>Select Execution</span>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 id="exec-title" class="font-bold text-sm text-slate-100 font-mono">No workflow selected</h2>
+              <button id="btn-copy-id" onclick="copyActiveId()" class="text-slate-500 hover:text-slate-300 transition" title="Copy Workflow ID">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <p id="exec-subtitle" class="text-xs text-slate-500 mt-0.5">Select a run from the sidebar to inspect its step timeline</p>
+          </div>
+        </div>
+
+        <div id="exec-meta-stats" class="hidden flex items-center space-x-6 text-xs text-slate-400">
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-semibold">Started</span>
+            <span id="stat-started" class="font-mono text-slate-300">-</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-semibold">Total Duration</span>
+            <span id="stat-duration" class="font-mono font-semibold text-emerald-400">-</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-semibold">Steps</span>
+            <span id="stat-step-count" class="font-mono text-slate-300">4</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution Detail Tabs & Views -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Waterfall Timeline Container -->
+        <div class="p-6 border-b border-slate-800/80 bg-slate-900/20 flex-shrink-0">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="git-commit" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-xs font-semibold text-slate-200 uppercase tracking-wider">Execution Timeline & Step Waterfall</h3>
+            </div>
+            <span class="text-[11px] text-slate-500">Click any step bar to inspect inputs & outputs</span>
+          </div>
+
+          <!-- Timeline Chart Area -->
+          <div class="bg-slate-900/80 rounded-xl border border-slate-800/80 p-4 relative overflow-hidden shadow-inner">
+            <!-- Time Axis Ticks -->
+            <div class="flex justify-between text-[10px] font-mono text-slate-500 border-b border-slate-800 pb-1.5 mb-3 select-none">
+              <span>0ms (start)</span>
+              <span>500ms</span>
+              <span>1000ms</span>
+              <span>1500ms</span>
+              <span>2000ms (sleep complete)</span>
+              <span>2500ms</span>
+            </div>
+
+            <!-- Steps Waterfall Stack -->
+            <div id="waterfall-steps" class="space-y-2.5">
+              <div class="py-8 text-center text-slate-500 text-xs">
+                No active execution selected.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lower Section: Step Inspector & JSON View -->
+        <div class="flex-1 flex overflow-hidden">
+          
+          <!-- Step Inspector Panel (Left 50%) -->
+          <div class="flex-1 border-r border-slate-800/80 p-5 flex flex-col overflow-hidden bg-slate-950/50">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="sliders" class="w-3.5 h-3.5 text-blue-400"></i>
+                <h4 class="text-xs font-semibold text-slate-200 uppercase tracking-wider">Step Inspector</h4>
+              </div>
+              <span id="selected-step-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-800 text-slate-400">Select a step</span>
+            </div>
+
+            <div id="step-inspector-body" class="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
+              <div class="py-12 text-center text-slate-600">
+                Click any step above in the waterfall to inspect inputs, outputs, and durable retries.
+              </div>
+            </div>
+          </div>
+
+          <!-- Workflow Result / Payload View (Right 50%) -->
+          <div class="flex-1 p-5 flex flex-col overflow-hidden bg-slate-950">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="code-2" class="w-3.5 h-3.5 text-purple-400"></i>
+                <h4 class="text-xs font-semibold text-slate-200 uppercase tracking-wider">Full Workflow Output (JSON)</h4>
+              </div>
+              <button onclick="copyOutputJson()" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center space-x-1 border border-slate-700/60 transition">
+                <i data-lucide="copy" class="w-3 h-3"></i>
+                <span>Copy Output</span>
+              </button>
+            </div>
+
+            <pre id="json-output" class="flex-1 bg-slate-900/90 rounded-xl border border-slate-800 p-4 font-mono text-[11px] text-slate-300 overflow-auto select-text leading-relaxed">
+// Workflow output payload will appear here...
+            </pre>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Trigger New Workflow Modal -->
+  <div id="trigger-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+          </div>
+          <h3 class="font-bold text-slate-100 text-sm">Trigger Cloudflare Workflow</h3>
+        </div>
+        <button onclick="closeTriggerModal()" class="text-slate-400 hover:text-slate-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1 text-[11px] uppercase">Workflow Name</label>
+          <input id="modal-wf-name" type="text" value="Data Pipeline Batch" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1 text-[11px] uppercase">Items to Process (Numbers)</label>
+          <input id="modal-wf-items" type="text" value="10, 25, 50, 75, 100" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:outline-none focus:border-emerald-500">
+          <p class="text-[11px] text-slate-500 mt-1">Comma-separated integers passed to the workflow instance.</p>
+        </div>
+
+        <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Execution Steps</span>
+          <ol class="list-decimal list-inside space-y-0.5 text-slate-400 text-[11px]">
+            <li><code class="text-blue-400">validate-input</code> (Validates items payload)</li>
+            <li><code class="text-amber-400">wait-briefly</code> (Durable 2.0s sleep timer)</li>
+            <li><code class="text-purple-400">process-items</code> (Computes sums and averages)</li>
+            <li><code class="text-emerald-400">finalize-report</code> (Commits report to SQLite & GCS)</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-950/50 border-t border-slate-800 flex justify-end space-x-2">
+        <button onclick="closeTriggerModal()" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-xs font-medium">Cancel</button>
+        <button id="btn-submit-trigger" onclick="submitTriggerWorkflow()" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center space-x-1.5 shadow-sm shadow-emerald-500/20">
+          <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+          <span>Run Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allWorkflows = [];
+    let activeWorkflow = null;
+    let selectedStepIndex = 0;
+    let currentFilter = 'all';
+    let pollInterval = null;
+
+    // Load initial workflows
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      fetchWorkflows();
+      // Auto-poll every 3s
+      setInterval(() => {
+        if (activeWorkflow && (activeWorkflow.status === 'waiting' || activeWorkflow.status === 'running')) {
+          refreshActiveWorkflow();
+        }
+      }, 2000);
+    });
+
+    async function fetchWorkflows() {
+      const btn = document.getElementById('btn-refresh');
+      btn.classList.add('opacity-50', 'pointer-events-none');
+      try {
+        const res = await fetch('/api/workflows');
+        const data = await res.json();
+        allWorkflows = data.workflows || [];
+        renderWorkflowList();
+        if (allWorkflows.length > 0 && !activeWorkflow) {
+          selectWorkflow(allWorkflows[0].id);
+        }
+      } catch (err) {
+        console.error("Error fetching workflows:", err);
+      } finally {
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+      }
+    }
+
+    function setStatusFilter(filter) {
+      currentFilter = filter;
+      ['all', 'complete', 'waiting', 'errored'].forEach(f => {
+        const el = document.getElementById(`filter-${f}`);
+        if (f === filter) {
+          el.className = 'px-2 py-0.5 rounded font-medium bg-slate-800 text-slate-200 border border-slate-700';
+        } else {
+          el.className = 'px-2 py-0.5 rounded text-slate-400 hover:text-slate-200';
+        }
+      });
+      renderWorkflowList();
+    }
+
+    function filterWorkflows() {
+      renderWorkflowList();
+    }
+
+    function renderWorkflowList() {
+      const listEl = document.getElementById('execution-list');
+      const query = document.getElementById('search-input').value.toLowerCase();
+      
+      let filtered = allWorkflows.filter(w => {
+        if (currentFilter !== 'all' && w.status !== currentFilter) return false;
+        if (query && !w.id.toLowerCase().includes(query)) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-8 text-center text-slate-500 text-xs">
+            No executions found matching filter.
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(w => {
+        const isSelected = activeWorkflow && activeWorkflow.id === w.id;
+        const statusConfig = getStatusBadge(w.status);
+        const durationText = w.output?.totalDurationMs ? `${w.output.totalDurationMs}ms` : (w.status === 'complete' ? '2.1s' : 'In flight');
+        
+        return `
+          <div onclick="selectWorkflow('${w.id}')" class="p-3 cursor-pointer transition ${isSelected ? 'bg-slate-800/80 border-l-2 border-emerald-500' : 'hover:bg-slate-900/60'}">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-mono text-xs font-semibold text-slate-200 truncate w-40" title="${w.id}">${w.id.slice(0, 8)}...${w.id.slice(-4)}</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-medium ${statusConfig.badgeClass}">
+                ${w.status}
+              </span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <span>data-pipeline</span>
+              <span class="font-mono">${durationText}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function selectWorkflow(id) {
+      try {
+        const res = await fetch(`/api/workflow/${id}`);
+        activeWorkflow = await res.json();
+        renderWorkflowDetail();
+        renderWorkflowList();
+      } catch (err) {
+        console.error("Error loading workflow details:", err);
+      }
+    }
+
+    async function refreshActiveWorkflow() {
+      if (!activeWorkflow) return;
+      const res = await fetch(`/api/workflow/${activeWorkflow.id}`);
+      const fresh = await res.json();
+      activeWorkflow = fresh;
+      renderWorkflowDetail();
+      // Also update in allWorkflows
+      const idx = allWorkflows.findIndex(w => w.id === fresh.id);
+      if (idx !== -1) {
+        allWorkflows[idx].status = fresh.status;
+        allWorkflows[idx].output = fresh.output;
+      }
+      renderWorkflowList();
+    }
+
+    function renderWorkflowDetail() {
+      if (!activeWorkflow) return;
+      const w = activeWorkflow;
+
+      // Header
+      const statusBadge = getStatusBadge(w.status);
+      const badgeEl = document.getElementById('exec-status-badge');
+      badgeEl.className = `px-2.5 py-1 rounded-full text-xs font-semibold flex items-center space-x-1.5 ${statusBadge.badgeClass}`;
+      badgeEl.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${statusBadge.dotClass} ${w.status === 'waiting' ? 'animate-ping' : ''}"></span>
+        <span class="capitalize">${w.status}</span>
+      `;
+
+      document.getElementById('exec-title').textContent = w.id;
+      document.getElementById('exec-meta-stats').classList.remove('hidden');
+
+      const out = w.output || {};
+      document.getElementById('stat-started').textContent = out.startedAt ? new Date(out.startedAt).toLocaleTimeString() : 'Just now';
+      document.getElementById('stat-duration').textContent = out.totalDurationMs ? `${out.totalDurationMs}ms` : (w.status === 'complete' ? '~2050ms' : 'Active');
+
+      // Render Waterfall Steps
+      renderWaterfall(out.timeline || getDefaultSteps(w.status));
+
+      // JSON Output
+      document.getElementById('json-output').textContent = JSON.stringify(w, null, 2);
+    }
+
+    function getDefaultSteps(status) {
+      // If run was completed prior to instrumentation or in progress
+      return [
+        { name: "validate-input", kind: "step", status: "completed", startOffsetMs: 0, durationMs: 12, output: { status: "valid" } },
+        { name: "wait-briefly", kind: "sleep", sleepSpec: "2 seconds", status: status === 'waiting' ? "waiting" : "completed", startOffsetMs: 15, durationMs: 2000 },
+        { name: "process-items", kind: "step", status: status === 'complete' ? "completed" : "pending", startOffsetMs: 2018, durationMs: 28, output: { processed: true } },
+        { name: "finalize-report", kind: "step", status: status === 'complete' ? "completed" : "pending", startOffsetMs: 2050, durationMs: 10, output: { report: "committed" } }
+      ];
+    }
+
+    function renderWaterfall(steps) {
+      const container = document.getElementById('waterfall-steps');
+      const totalWindowMs = 2600;
+
+      container.innerHTML = steps.map((step, idx) => {
+        const isSelected = selectedStepIndex === idx;
+        const leftPercent = Math.min(95, (step.startOffsetMs / totalWindowMs) * 100);
+        const widthPercent = Math.max(3, Math.min(100 - leftPercent, (step.durationMs / totalWindowMs) * 100));
+
+        let barColor = "bg-blue-500 border-blue-400";
+        let icon = "activity";
+        if (step.kind === "sleep") {
+          barColor = "bg-amber-500/90 border-amber-400";
+          icon = "clock";
+        } else if (step.name === "finalize-report") {
+          barColor = "bg-emerald-500 border-emerald-400";
+          icon = "check-circle";
+        } else if (step.name === "process-items") {
+          barColor = "bg-purple-500 border-purple-400";
+          icon = "cpu";
+        }
+
+        return `
+          <div onclick="selectStep(${idx})" class="group cursor-pointer flex items-center space-x-3 py-1.5 px-2 rounded-lg transition ${isSelected ? 'bg-slate-800/90 ring-1 ring-emerald-500/50' : 'hover:bg-slate-800/40'}">
+            <div class="w-36 flex items-center space-x-2 text-xs truncate flex-shrink-0">
+              <i data-lucide="${icon}" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
+              <span class="font-mono text-slate-200 truncate font-medium">${step.name}</span>
+            </div>
+
+            <!-- Bar Track -->
+            <div class="flex-1 h-7 bg-slate-950/60 rounded-md border border-slate-800/80 relative overflow-hidden flex items-center">
+              <div 
+                style="left: ${leftPercent}%; width: ${widthPercent}%;"
+                class="absolute h-5 rounded ${barColor} border shadow-sm flex items-center px-2 text-[10px] font-mono text-white font-semibold whitespace-nowrap overflow-hidden transition-all duration-300"
+              >
+                ${step.durationMs}ms
+              </div>
+            </div>
+
+            <div class="w-16 text-right font-mono text-[11px] text-slate-400 flex-shrink-0">
+              ${step.durationMs}ms
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+      renderStepInspector(steps[selectedStepIndex] || steps[0]);
+    }
+
+    function selectStep(idx) {
+      selectedStepIndex = idx;
+      const steps = activeWorkflow?.output?.timeline || getDefaultSteps(activeWorkflow?.status);
+      renderWaterfall(steps);
+    }
+
+    function renderStepInspector(step) {
+      if (!step) return;
+      document.getElementById('selected-step-badge').textContent = `${step.name} (${step.durationMs}ms)`;
+
+      const body = document.getElementById('step-inspector-body');
+      body.innerHTML = `
+        <div class="grid grid-cols-2 gap-2 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80 font-mono">
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase">Step Name</span>
+            <span class="font-bold text-slate-200">${step.name}</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase">Type</span>
+            <span class="text-emerald-400 font-semibold uppercase">${step.kind || 'do'}</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase">Status</span>
+            <span class="text-slate-200 capitalize">${step.status}</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase">Duration</span>
+            <span class="text-slate-200 font-semibold">${step.durationMs}ms</span>
+          </div>
+        </div>
+
+        <div>
+          <span class="text-[11px] font-semibold text-slate-400 block mb-1.5 uppercase">Step Return Value / Output</span>
+          <pre class="bg-slate-900 p-3 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300 max-h-48 overflow-auto">${JSON.stringify(step.output || { memoized: true, value: "step completed" }, null, 2)}</pre>
+        </div>
+
+        ${step.sleepSpec ? `
+          <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-300">
+            <span class="font-semibold block mb-0.5 text-[11px]">⏰ Durable Timer Triggered</span>
+            <span class="text-xs">Cell scheduled an alarm for <code>${step.sleepSpec}</code> and entered dormant state. Rehydrated automatically via Direct VPC without losing state.</span>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    function getStatusBadge(status) {
+      switch (status) {
+        case 'complete':
+          return {
+            badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30',
+            dotClass: 'bg-emerald-400'
+          };
+        case 'waiting':
+          return {
+            badgeClass: 'bg-amber-500/10 text-amber-400 border border-amber-500/30',
+            dotClass: 'bg-amber-400'
+          };
+        case 'running':
+          return {
+            badgeClass: 'bg-blue-500/10 text-blue-400 border border-blue-500/30',
+            dotClass: 'bg-blue-400'
+          };
+        default:
+          return {
+            badgeClass: 'bg-rose-500/10 text-rose-400 border border-rose-500/30',
+            dotClass: 'bg-rose-400'
+          };
+      }
+    }
+
+    function copyActiveId() {
+      if (activeWorkflow?.id) {
+        navigator.clipboard.writeText(activeWorkflow.id);
+        alert("Copied workflow ID: " + activeWorkflow.id);
+      }
+    }
+
+    function copyOutputJson() {
+      const code = document.getElementById('json-output').textContent;
+      navigator.clipboard.writeText(code);
+      alert("Workflow JSON copied to clipboard!");
+    }
+
+    function openTriggerModal() {
+      document.getElementById('trigger-modal').classList.remove('hidden');
+    }
+
+    function closeTriggerModal() {
+      document.getElementById('trigger-modal').classList.add('hidden');
+    }
+
+    async function submitTriggerWorkflow() {
+      const btn = document.getElementById('btn-submit-trigger');
+      btn.classList.add('opacity-50', 'pointer-events-none');
+      
+      const name = document.getElementById('modal-wf-name').value.trim();
+      const itemsStr = document.getElementById('modal-wf-items').value.trim();
+      const items = itemsStr.split(',').map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x));
+
+      try {
+        const res = await fetch('/api/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, items })
+        });
+        const data = await res.json();
+        closeTriggerModal();
+
+        if (data.workflowId) {
+          // Immediately select and start polling
+          await fetchWorkflows();
+          selectWorkflow(data.workflowId);
+        }
+      } catch (err) {
+        alert("Failed to trigger workflow: " + err);
+      } finally {
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+      }
+    }
+  </script>
+</body>
+</html>
