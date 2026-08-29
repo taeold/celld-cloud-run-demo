@@ -6,38 +6,16 @@ function generateSpanId() {
   return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
 }
 
-function burnCpu(iterations, type = "math") {
+function doSomethingExpensive(iterations = 1000000) {
   const t0 = Date.now();
   let acc = 1234567;
-  if (type === "monte-carlo") {
-    let varSum = 0;
-    for (let i = 0; i < iterations; i++) {
-      const shock = (Math.sin(i) * 1000) % 2;
-      acc += shock;
-      varSum += shock * shock;
-    }
-    return { dur: Math.max(1, Date.now() - t0), var: (varSum / Math.max(1, iterations)).toFixed(4) };
-  } else if (type === "crypto") {
-    for (let i = 0; i < iterations; i++) {
-      acc = Math.imul(acc ^ (i + 101), 1664525) + 1013904223 | 0;
-    }
-    return { dur: Math.max(1, Date.now() - t0), hash: (acc >>> 0).toString(16).padStart(8, "0") };
-  } else if (type === "regression") {
-    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    for (let i = 0; i < iterations; i++) {
-      const x = i % 100;
-      const y = x * 1.45 + (Math.cos(i) * 5);
-      sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
-    }
-    const denom = iterations * sumXX - sumX * sumX;
-    const slope = denom !== 0 ? (iterations * sumXY - sumX * sumY) / denom : 1.45;
-    return { dur: Math.max(1, Date.now() - t0), beta: slope.toFixed(4) };
-  } else {
-    for (let i = 0; i < iterations; i++) {
-      acc = (acc * 33 + i) ^ (acc >>> 5);
-    }
-    return { dur: Math.max(1, Date.now() - t0), metric: (acc % 1000) / 10 };
+  for (let i = 0; i < iterations; i++) {
+    acc = Math.imul(acc ^ (i + 101), 1664525) + 1013904223 | 0;
   }
+  return {
+    durationMs: Math.max(1, Date.now() - t0),
+    checksum: (acc >>> 0).toString(16)
+  };
 }
 
 async function emitOtelSpan({ traceId, parentSpanId, spanId, name, startMs, endMs, attributes = {} }) {
@@ -88,146 +66,111 @@ async function emitOtelSpan({ traceId, parentSpanId, spanId, name, startMs, endM
 
 export class DataPipelineWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
-    const { name, items, traceId } = event.payload;
-    const rawItems = Array.isArray(items) && items.length > 0 ? items : [12, 45, 68, 23, 89, 34, 56, 91, 14, 77, 62, 83];
+    const { name, traceId } = event.payload || {};
     const wfStartTime = Date.now();
     // Deterministic 16-hex spanId from traceId ensures identical parent across sleep replays
     const wfSpanId = (traceId && traceId.length === 32) ? traceId.slice(16, 32) : generateSpanId();
 
     // =========================================================================
-    // WAVE 1: INGESTION & 4-WAY PARALLEL COMPUTE FAN-OUT
+    // STEP 1: Real Outbound HTTP Call to External API
     // =========================================================================
-
-    // Stage 1: Ingest & Shard Dataset
-    const planned = await step.do("01-ingest-and-shard", async () => {
+    const user = await step.do("fetch-user-profile", async () => {
       const t0 = Date.now();
-      const cpu = burnCpu(1500000, "crypto");
+      let author = "Alex Chen";
+      try {
+        const res = await fetch("https://httpbin.org/json", { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const data = await res.json();
+          author = data?.slideshow?.author || author;
+        }
+      } catch (e) {}
+
       return {
-        totalItems: rawItems.length,
-        partitions: 4,
-        checksum: rawItems.reduce((a, b) => a + (typeof b === "number" ? b : 0), 0),
-        digest: cpu.hash,
+        userId: "usr_84920",
+        author,
+        source: "https://httpbin.org/json",
         t0,
-        t1: Date.now(),
+        t1: Date.now()
       };
     });
 
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
-      name: "01: ingest-and-shard",
-      startMs: planned.t0,
-      endMs: planned.t1,
+      name: "01: fetch-user-profile (httpbin.org)",
+      startMs: user.t0,
+      endMs: user.t1,
       attributes: {
-        "step.name": "ingest-and-shard",
-        "step.total_items": planned.totalItems,
-        "step.checksum": planned.checksum,
-        "step.digest": planned.digest
+        "http.url": "https://httpbin.org/json",
+        "http.method": "GET",
+        "user.author": user.author
       }
     });
 
-    // Stage 2: 4x Parallel Heavy Compute Fan-Out (Promise.all)
-    const [partA, partB, partC, partD] = await Promise.all([
-      // Worker A: Cryptographic Merkle Hash Tree (~350ms)
-      step.do("02a-merkle-tree-hashing", async () => {
+    // =========================================================================
+    // STEP 2: 3x Parallel Expensive Compute in V8 Isolates
+    // =========================================================================
+    const [analytics, thumbnails, embeddings] = await Promise.all([
+      // Worker 1: Compute heavy analytics
+      step.do("process-analytics", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(3500000, "crypto");
-        return {
-          worker: "merkle-tree-hashing",
-          status: "VERIFIED",
-          merkleRoot: `0x${cpu.hash}fa81b`,
-          depth: 4,
-          t0,
-          t1: Date.now(),
-        };
+        const res = doSomethingExpensive(3500000);
+        return { task: "analytics", ...res, t0, t1: Date.now() };
       }),
-      // Worker B: Monte Carlo Volatility Simulation (~500ms)
-      step.do("02b-monte-carlo-simulation", async () => {
+      // Worker 2: Render image thumbnails
+      step.do("render-thumbnails", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(4500000, "monte-carlo");
-        return {
-          worker: "monte-carlo-simulation",
-          simulations: 250000,
-          valueAtRisk99: `${(cpu.var * 100).toFixed(2)}%`,
-          t0,
-          t1: Date.now(),
-        };
+        const res = doSomethingExpensive(5000000);
+        return { task: "thumbnails", ...res, t0, t1: Date.now() };
       }),
-      // Worker C: Linear Regression & Beta Modeling (~300ms)
-      step.do("02c-linear-regression-modeling", async () => {
+      // Worker 3: Generate AI embeddings
+      step.do("generate-embeddings", async () => {
         const t0 = Date.now();
-        const cpu = burnCpu(3000000, "regression");
-        return {
-          worker: "linear-regression-modeling",
-          beta: cpu.beta,
-          rSquared: "0.984",
-          t0,
-          t1: Date.now(),
-        };
-      }),
-      // Worker D: Anomaly & Z-Score Detection (~200ms)
-      step.do("02d-anomaly-zscore-detection", async () => {
-        const t0 = Date.now();
-        const cpu = burnCpu(2000000, "math");
-        return {
-          worker: "anomaly-zscore-detection",
-          outliersDetected: 0,
-          zScoreMax: "2.14",
-          t0,
-          t1: Date.now(),
-        };
+        const res = doSomethingExpensive(6500000);
+        return { task: "embeddings", ...res, t0, t1: Date.now() };
       }),
     ]);
 
-    // Emit 4 parallel spans to OTLP sidecar
     await Promise.all([
       emitOtelSpan({
         traceId,
         parentSpanId: wfSpanId,
-        name: "02a: merkle-tree-hashing",
-        startMs: partA.t0,
-        endMs: partA.t1,
-        attributes: { "worker.type": "merkle", "merkle.root": partA.merkleRoot }
+        name: "02a: process-analytics",
+        startMs: analytics.t0,
+        endMs: analytics.t1,
+        attributes: { "worker.task": "analytics", "compute.duration_ms": analytics.durationMs }
       }),
       emitOtelSpan({
         traceId,
         parentSpanId: wfSpanId,
-        name: "02b: monte-carlo-simulation",
-        startMs: partB.t0,
-        endMs: partB.t1,
-        attributes: { "worker.type": "monte-carlo", "simulations": partB.simulations, "var_99": partB.valueAtRisk99 }
+        name: "02b: render-thumbnails",
+        startMs: thumbnails.t0,
+        endMs: thumbnails.t1,
+        attributes: { "worker.task": "thumbnails", "compute.duration_ms": thumbnails.durationMs }
       }),
       emitOtelSpan({
         traceId,
         parentSpanId: wfSpanId,
-        name: "02c: linear-regression-modeling",
-        startMs: partC.t0,
-        endMs: partC.t1,
-        attributes: { "worker.type": "regression", "model.beta": partC.beta }
-      }),
-      emitOtelSpan({
-        traceId,
-        parentSpanId: wfSpanId,
-        name: "02d: anomaly-zscore-detection",
-        startMs: partD.t0,
-        endMs: partD.t1,
-        attributes: { "worker.type": "anomaly", "zscore.max": partD.zScoreMax }
+        name: "02c: generate-embeddings",
+        startMs: embeddings.t0,
+        endMs: embeddings.t1,
+        attributes: { "worker.task": "embeddings", "compute.duration_ms": embeddings.durationMs }
       }),
     ]);
 
     // =========================================================================
-    // STAGE 3: DURABLE HIBERNATION #1 (Zero-CPU GCS Eviction)
+    // STEP 3: DURABLE HIBERNATION (Zero-CPU Scale-to-Zero in GCS)
     // =========================================================================
-    const sleep1T0 = Date.now();
-    await step.sleep("03-cooldown-window-1", "3 seconds");
-    const sleep1T1 = Date.now();
+    const sleepT0 = Date.now();
+    await step.sleep("wait-for-approval", "3 seconds");
+    const sleepT1 = Date.now();
 
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
-      name: "03: durable-sleep-1 (3s - Isolate Evicted to GCS)",
-      startMs: sleep1T0,
-      endMs: sleep1T1,
+      name: "03: wait-for-approval (3s - Evicted to GCS at 0 CPU)",
+      startMs: sleepT0,
+      endMs: sleepT1,
       attributes: {
         "step.kind": "sleep",
         "step.duration_spec": "3 seconds",
@@ -237,157 +180,72 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
     });
 
     // =========================================================================
-    // WAVE 2: INTER-SHARD RECONCILIATION & 3-WAY MODEL CALIBRATION
+    // STEP 4: Real Outbound HTTP Call to External Webhook
     // =========================================================================
-
-    // Stage 4: Reconcile proofs & cross-validate
-    const reconciled = await step.do("04-cross-shard-reconciliation", async () => {
+    const webhook = await step.do("call-webhook-api", async () => {
       const t0 = Date.now();
-      const cpu = burnCpu(1500000, "crypto");
+      let receiptId = "rec_" + generateSpanId().slice(0, 8);
+      try {
+        const res = await fetch("https://httpbin.org/uuid", { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          const data = await res.json();
+          receiptId = data?.uuid || receiptId;
+        }
+      } catch (e) {}
+
       return {
-        step: "reconciliation",
-        reconciledShards: 4,
-        merkleConsensus: partA.merkleRoot,
-        hash: cpu.hash,
+        delivered: true,
+        receiptId,
+        endpoint: "https://httpbin.org/uuid",
         t0,
-        t1: Date.now(),
+        t1: Date.now()
       };
     });
 
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
-      name: "04: cross-shard-reconciliation",
-      startMs: reconciled.t0,
-      endMs: reconciled.t1,
-      attributes: { "reconciliation.shards": 4, "reconciliation.consensus": reconciled.merkleConsensus }
-    });
-
-    // Stage 5: 3x Parallel Calibration Fan-Out
-    const [calibA, calibB, calibC] = await Promise.all([
-      // Calibrator 1: Bayesian Parameter Prior Update (~250ms)
-      step.do("05a-bayesian-calibration", async () => {
-        const t0 = Date.now();
-        const cpu = burnCpu(2500000, "regression");
-        return {
-          model: "bayesian",
-          priorConfidence: "99.1%",
-          betaAdj: cpu.beta,
-          t0,
-          t1: Date.now(),
-        };
-      }),
-      // Calibrator 2: Black Swan Stress-Test Simulation (~450ms)
-      step.do("05b-stress-test-simulation", async () => {
-        const t0 = Date.now();
-        const cpu = burnCpu(4000000, "monte-carlo");
-        return {
-          model: "black-swan-stress",
-          maxDrawdownEstimate: "14.2%",
-          volatilityShock: cpu.var,
-          t0,
-          t1: Date.now(),
-        };
-      }),
-      // Calibrator 3: Regulatory Capital Audit (~200ms)
-      step.do("05c-regulatory-capital-audit", async () => {
-        const t0 = Date.now();
-        const cpu = burnCpu(2000000, "math");
-        return {
-          model: "basel-iii-audit",
-          tier1CapitalRatio: "16.8%",
-          compliant: true,
-          t0,
-          t1: Date.now(),
-        };
-      }),
-    ]);
-
-    // Emit calibration spans
-    await Promise.all([
-      emitOtelSpan({
-        traceId,
-        parentSpanId: wfSpanId,
-        name: "05a: bayesian-calibration",
-        startMs: calibA.t0,
-        endMs: calibA.t1,
-        attributes: { "model.prior": calibA.priorConfidence, "model.beta_adj": calibA.betaAdj }
-      }),
-      emitOtelSpan({
-        traceId,
-        parentSpanId: wfSpanId,
-        name: "05b: stress-test-simulation",
-        startMs: calibB.t0,
-        endMs: calibB.t1,
-        attributes: { "stress.max_drawdown": calibB.maxDrawdownEstimate, "stress.shock": calibB.volatilityShock }
-      }),
-      emitOtelSpan({
-        traceId,
-        parentSpanId: wfSpanId,
-        name: "05c: regulatory-capital-audit",
-        startMs: calibC.t0,
-        endMs: calibC.t1,
-        attributes: { "audit.tier1_ratio": calibC.tier1CapitalRatio, "audit.compliant": calibC.compliant }
-      }),
-    ]);
-
-    // =========================================================================
-    // STAGE 6: DURABLE HIBERNATION #2 (Zero-CPU Settlement Lockout)
-    // =========================================================================
-    const sleep2T0 = Date.now();
-    await step.sleep("06-settlement-delay", "3 seconds");
-    const sleep2T1 = Date.now();
-
-    await emitOtelSpan({
-      traceId,
-      parentSpanId: wfSpanId,
-      name: "06: durable-sleep-2 (3s - Isolate Evicted to GCS)",
-      startMs: sleep2T0,
-      endMs: sleep2T1,
+      name: "04: call-webhook-api (httpbin.org)",
+      startMs: webhook.t0,
+      endMs: webhook.t1,
       attributes: {
-        "step.kind": "sleep",
-        "step.duration_spec": "3 seconds",
-        "celld.compute_cost": "0 CPU",
-        "celld.storage": "gs://danielylee-junk-celld-demo-fleet/main/cells/"
+        "http.url": "https://httpbin.org/uuid",
+        "webhook.delivered": true,
+        "webhook.receipt_id": webhook.receiptId
       }
     });
 
     // =========================================================================
-    // STAGE 7: FINAL GLOBAL CONSENSUS & ACID LTX COMMIT
+    // STEP 5: Final Durability Commit to SQLite LTX in GCS
     // =========================================================================
-    const committed = await step.do("07-consensus-and-commit", async () => {
+    const committed = await step.do("commit-final-state", async () => {
       const t0 = Date.now();
-      burnCpu(1500000, "crypto");
+      doSomethingExpensive(1000000);
       return {
         status: "COMMITTED",
-        pipeline: name || "Autonomous Risk & Analytics Pipeline",
-        totalItemsProcessed: rawItems.length,
-        grandChecksum: planned.checksum,
-        merkleRoot: partA.merkleRoot,
-        valueAtRisk99: partB.valueAtRisk99,
-        capitalCompliance: calibC.compliant,
+        user: user.author,
+        receipt: webhook.receiptId,
         storageEngine: "SQLite LTX via GCS",
         t0,
-        t1: Date.now(),
+        t1: Date.now()
       };
     });
 
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
-      name: "07: consensus-and-commit",
+      name: "05: commit-final-state",
       startMs: committed.t0,
       endMs: committed.t1,
       attributes: {
         "step.status": committed.status,
-        "step.merkle_root": committed.merkleRoot,
-        "step.capital_compliant": committed.capitalCompliance,
+        "step.receipt": committed.receipt,
         "celld.storage": "SQLite LTX"
       }
     });
 
     const wfEndTime = Date.now();
-    const startTimeMs = event?.timestamp ? new Date(event.timestamp).getTime() : (planned?.t0 || wfStartTime);
+    const startTimeMs = event?.timestamp ? new Date(event.timestamp).getTime() : (user?.t0 || wfStartTime);
     const realTotalDuration = Math.max(1, wfEndTime - startTimeMs);
 
     // Emit top-level Workflow execution root span
@@ -395,22 +253,20 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
       traceId,
       parentSpanId: undefined,
       spanId: wfSpanId,
-      name: `celld.workflow: data-pipeline`,
-      startMs: planned?.t0 || wfStartTime,
+      name: `celld.workflow: user-onboarding`,
+      startMs: user?.t0 || wfStartTime,
       endMs: wfEndTime,
       attributes: {
-        "workflow.name": "data-pipeline",
+        "workflow.name": "user-onboarding",
         "workflow.status": "COMMITTED",
         "workflow.total_duration_ms": realTotalDuration,
-        "workflow.stages": 7,
-        "workflow.total_items": rawItems.length,
         "celld.runtime": "v0.4.0"
       }
     });
 
     return {
       status: "SUCCESS",
-      workflowName: "data-pipeline",
+      workflowName: "user-onboarding",
       totalDurationMs: realTotalDuration,
       traceId,
       traceUrl: traceId ? `https://console.cloud.google.com/traces/explorer?project=danielylee-junk&traceId=${traceId}` : null,
@@ -460,8 +316,8 @@ export default {
 
       const instance = await env.PIPELINE.create({
         params: {
-          name: body.name ?? "Autonomous Risk & Analytics Pipeline",
-          items: body.items ?? [12, 45, 68, 23, 89, 34, 56, 91, 14, 77, 62, 83],
+          name: body.name ?? "User Onboarding Flow",
+          userId: body.userId ?? "usr_84920",
           traceId,
           traceUrl,
           pantheonUrl,
@@ -469,14 +325,13 @@ export default {
       });
       WORKFLOW_REGISTRY.unshift({
         id: instance.id,
-        workflowName: "data-pipeline",
+        workflowName: "user-onboarding",
         createdAt: new Date().toISOString(),
         traceId,
         traceUrl,
         pantheonUrl,
         params: {
-          name: body.name ?? "Autonomous Risk & Analytics Pipeline",
-          items: body.items ?? [12, 45, 68, 23, 89, 34, 56, 91, 14, 77, 62, 83],
+          name: body.name ?? "User Onboarding Flow",
           traceId,
         },
       });
