@@ -325,7 +325,6 @@ export default {
       }
 
       const traceUrl = traceId ? `https://console.cloud.google.com/traces/explorer?project=danielylee-junk&traceId=${traceId}` : null;
-      const pantheonUrl = traceId ? `https://pantheon.corp.google.com/traces/explorer;query=%7B%22timeSeriesQuery%22:%7B%22traceQuery%22:%7B%22resourceContainer%22:%22projects%2Fdanielylee-junk%2Flocations%2Fglobal%2FtraceScopes%2F_Default%22%7D%7D%7D;traceId=${traceId}?project=danielylee-junk` : null;
 
       const instance = await env.PIPELINE.create({
         params: {
@@ -333,7 +332,6 @@ export default {
           userId: body.userId ?? "usr_84920",
           traceId,
           traceUrl,
-          pantheonUrl,
         },
       });
       WORKFLOW_REGISTRY.unshift({
@@ -342,7 +340,6 @@ export default {
         createdAt: new Date().toISOString(),
         traceId,
         traceUrl,
-        pantheonUrl,
         params: {
           name: body.name ?? "User Onboarding Flow",
           traceId,
@@ -355,7 +352,6 @@ export default {
         workflowId: instance.id,
         traceId,
         traceUrl,
-        pantheonUrl,
         checkUrl: `/status?id=${instance.id}`,
       });
     }

@@ -285,12 +285,7 @@
           </div>
           <div class="flex items-center gap-3 text-[13px]">
             <a id="proof-trace-url" href="#" target="_blank" class="text-accent-default-light dark:text-accent-default-dark hover:underline flex items-center gap-1 font-medium">
-              <span>Cloud Trace Explorer</span>
-              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-            </a>
-            <span class="text-fg-secondary-light dark:text-fg-secondary-dark">·</span>
-            <a id="proof-pantheon-url" href="#" target="_blank" class="text-fg-secondary-light dark:text-fg-secondary-dark hover:text-fg-primary-light dark:hover:text-fg-primary-dark hover:underline flex items-center gap-1">
-              <span>Pantheon</span>
+              <span>View in Cloud Trace</span>
               <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
             </a>
           </div>
@@ -362,14 +357,13 @@
       const wfId = triggerData.workflowId;
       const traceId = triggerData.traceId;
       const traceUrl = triggerData.traceUrl;
-      const pantheonUrl = triggerData.pantheonUrl;
 
       // Update UI with real Workflow Instance ID
       document.getElementById('run-id-label').textContent = wfId ? `run ${wfId.slice(0, 8)}` : 'dispatching';
-      if (traceId) {
+      if (traceId && traceUrl) {
         const traceLink = document.getElementById('trace-header-link');
         traceLink.classList.remove('hidden');
-        traceLink.href = traceUrl || pantheonUrl || '#';
+        traceLink.href = traceUrl;
       }
 
       // STEP 1: fetch-user-profile (Outbound HTTP)
@@ -472,9 +466,6 @@
         document.getElementById('trace-timestamp').textContent = new Date().toLocaleTimeString();
         if (finalTraceUrl) {
           document.getElementById('proof-trace-url').href = finalTraceUrl;
-        }
-        if (pantheonUrl) {
-          document.getElementById('proof-pantheon-url').href = pantheonUrl;
         }
       }
 
