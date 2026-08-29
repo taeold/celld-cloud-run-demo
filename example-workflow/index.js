@@ -1,15 +1,73 @@
 import { WorkflowEntrypoint } from "cloudflare:workers";
 
+function generateSpanId() {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function emitOtelSpan({ traceId, parentSpanId, spanId, name, startMs, endMs, attributes = {} }) {
+  if (!traceId || traceId.length !== 32) return;
+  const sid = spanId || generateSpanId();
+  const startNano = (BigInt(Math.floor(startMs)) * 1000000n).toString();
+  const endNano = (BigInt(Math.ceil(endMs)) * 1000000n).toString();
+  
+  const span = {
+    traceId: traceId.toLowerCase(),
+    spanId: sid.toLowerCase(),
+    name,
+    kind: 1, // SPAN_KIND_INTERNAL
+    startTimeUnixNano: startNano,
+    endTimeUnixNano: endNano,
+    attributes: Object.entries(attributes).map(([key, val]) => {
+      if (typeof val === "number") return { key, value: { intValue: String(val) } };
+      if (typeof val === "boolean") return { key, value: { boolValue: val } };
+      return { key, value: { stringValue: String(val) } };
+    })
+  };
+  if (parentSpanId && parentSpanId.length === 16) {
+    span.parentSpanId = parentSpanId.toLowerCase();
+  }
+
+  const payload = {
+    resourceSpans: [{
+      resource: {
+        attributes: [
+          { key: "service.name", value: { stringValue: "celld-workflow-demo" } }
+        ]
+      },
+      scopeSpans: [{
+        scope: { name: "celld.workflows", version: "0.4.0" },
+        spans: [span]
+      }]
+    }]
+  };
+
+  try {
+    console.log(`[OTEL] Emitting span: ${name}, traceId: ${traceId}, parent: ${parentSpanId}`);
+    const res = await fetch("http://127.0.0.1:4318/v1/traces", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    console.log(`[OTEL] Result for ${name}: status ${res.status}`);
+  } catch (err) {
+    console.error(`[OTEL] Failed to emit span ${name}:`, err);
+  }
+}
+
 export class DataPipelineWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
-    const { name, items, traceId } = event.payload;
+    const { name, items, traceId, parentSpanId } = event.payload;
     const rawItems = Array.isArray(items) && items.length > 0 ? items : [12, 45, 68, 23, 89, 34, 56, 91, 14, 77];
+    const wfStartTime = Date.now();
+    const wfSpanId = generateSpanId();
 
     // Stage 1: Ingest & Partition
     const planned = await step.do("ingest-and-partition", async () => {
       const t0 = Date.now();
       const n = Math.ceil(rawItems.length / 3);
-      return {
+      const res = {
         totalItems: rawItems.length,
         partitions: [
           rawItems.slice(0, n),
@@ -20,6 +78,21 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
         t0,
         t1: Date.now(),
       };
+      return res;
+    });
+
+    // Emit Step 1 span
+    await emitOtelSpan({
+      traceId,
+      parentSpanId: wfSpanId,
+      name: "step: ingest-and-partition",
+      startMs: planned.t0,
+      endMs: planned.t1,
+      attributes: {
+        "step.name": "ingest-and-partition",
+        "step.total_items": planned.totalItems,
+        "step.checksum": planned.checksum
+      }
     });
 
     // Stage 2: Parallel Fan-Out (3 Concurrent Workers)
@@ -66,8 +139,53 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
       }),
     ]);
 
+    // Emit Step 2 parallel spans
+    await Promise.all([
+      emitOtelSpan({
+        traceId,
+        parentSpanId: wfSpanId,
+        name: "step: transform-partition-a",
+        startMs: partA.t0,
+        endMs: partA.t1,
+        attributes: { "step.partition": 0, "step.count": partA.count, "step.sum": partA.sum }
+      }),
+      emitOtelSpan({
+        traceId,
+        parentSpanId: wfSpanId,
+        name: "step: transform-partition-b",
+        startMs: partB.t0,
+        endMs: partB.t1,
+        attributes: { "step.partition": 1, "step.count": partB.count, "step.sum": partB.sum, "step.min": partB.min, "step.max": partB.max }
+      }),
+      emitOtelSpan({
+        traceId,
+        parentSpanId: wfSpanId,
+        name: "step: transform-partition-c",
+        startMs: partC.t0,
+        endMs: partC.t1,
+        attributes: { "step.partition": 2, "step.count": partC.count, "step.sum": partC.sum, "step.average": String(partC.average) }
+      }),
+    ]);
+
     // Stage 3: Durable Sleep Cooldown (Zero-CPU GCS Hibernate)
+    const sleepT0 = Date.now();
     await step.sleep("durable-cooldown", "2 seconds");
+    const sleepT1 = Date.now();
+
+    // Emit Step 3 hibernate span
+    await emitOtelSpan({
+      traceId,
+      parentSpanId: wfSpanId,
+      name: "step: durable-cooldown (2s sleep)",
+      startMs: sleepT0,
+      endMs: sleepT1,
+      attributes: {
+        "step.kind": "sleep",
+        "step.duration_spec": "2 seconds",
+        "celld.compute_cost": "0 CPU",
+        "celld.storage": "gs://danielylee-junk-celld-demo-fleet/main/cells/"
+      }
+    });
 
     // Stage 4: Integrity Verification
     const verified = await step.do("verify-integrity", {
@@ -87,6 +205,20 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
       };
     });
 
+    // Emit Step 4 span
+    await emitOtelSpan({
+      traceId,
+      parentSpanId: wfSpanId,
+      name: "step: verify-integrity",
+      startMs: verified.t0,
+      endMs: verified.t1,
+      attributes: {
+        "step.integrity_valid": true,
+        "step.verified_partitions": 3,
+        "step.checksum": verified.checksum
+      }
+    });
+
     // Stage 5: Aggregate and Commit
     const finalized = await step.do("aggregate-and-commit", async () => {
       const t0 = Date.now();
@@ -104,7 +236,41 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
       };
     });
 
-    // Construct sequential/parallel timeline
+    // Emit Step 5 span
+    await emitOtelSpan({
+      traceId,
+      parentSpanId: wfSpanId,
+      name: "step: aggregate-and-commit",
+      startMs: finalized.t0,
+      endMs: finalized.t1,
+      attributes: {
+        "step.status": finalized.status,
+        "step.grand_sum": finalized.grandSum,
+        "step.mean": String(finalized.mean),
+        "celld.commit": "SQLite LTX"
+      }
+    });
+
+    const wfEndTime = Date.now();
+
+    // Emit top-level Workflow execution span
+    await emitOtelSpan({
+      traceId,
+      parentSpanId: parentSpanId || undefined,
+      spanId: wfSpanId,
+      name: `celld.workflow: data-pipeline`,
+      startMs: wfStartTime,
+      endMs: wfEndTime,
+      attributes: {
+        "workflow.name": "data-pipeline",
+        "workflow.status": "COMPLETED",
+        "workflow.total_duration_ms": wfEndTime - wfStartTime,
+        "workflow.total_items": rawItems.length,
+        "celld.runtime": "v0.4.0"
+      }
+    });
+
+    // Construct sequential/parallel timeline for frontend
     const s1Dur = Math.max(1, planned.t1 - planned.t0);
     const s2aDur = Math.max(1, partA.t1 - partA.t0);
     const s2bDur = Math.max(1, partB.t1 - partB.t0);
@@ -232,10 +398,28 @@ export default {
 
       const traceContext = request.headers.get("x-cloud-trace-context") || request.headers.get("traceparent") || "";
       let traceId = "";
+      let parentSpanId = "";
       if (traceContext.includes("/")) {
-        traceId = traceContext.split("/")[0];
+        const parts = traceContext.split("/");
+        traceId = parts[0];
+        if (parts[1]) {
+          const rawSpan = parts[1].split(";")[0].trim();
+          if (/^\d+$/.test(rawSpan)) {
+            try {
+              parentSpanId = BigInt(rawSpan).toString(16).padStart(16, "0");
+            } catch (e) {
+              parentSpanId = rawSpan.padStart(16, "0");
+            }
+          } else if (/^[0-9a-fA-F]{1,16}$/.test(rawSpan)) {
+            parentSpanId = rawSpan.toLowerCase().padStart(16, "0");
+          }
+        }
       } else if (traceContext.startsWith("00-")) {
-        traceId = traceContext.split("-")[1];
+        const parts = traceContext.split("-");
+        traceId = parts[1];
+        if (parts[2]) {
+          parentSpanId = parts[2].toLowerCase();
+        }
       }
 
       const traceUrl = traceId ? `https://console.cloud.google.com/traces/explorer?project=danielylee-junk&traceId=${traceId}` : null;
@@ -246,6 +430,7 @@ export default {
           name: body.name ?? "Cloud Run User",
           items: body.items ?? [10, 20, 30, 40, 50],
           traceId,
+          parentSpanId,
           traceUrl,
           pantheonUrl,
         },
@@ -255,12 +440,14 @@ export default {
         workflowName: "data-pipeline",
         createdAt: new Date().toISOString(),
         traceId,
+        parentSpanId,
         traceUrl,
         pantheonUrl,
         params: {
           name: body.name ?? "Cloud Run User",
           items: body.items ?? [10, 20, 30, 40, 50],
           traceId,
+          parentSpanId,
         },
       });
       if (WORKFLOW_REGISTRY.length > 50) WORKFLOW_REGISTRY.pop();
@@ -269,6 +456,7 @@ export default {
         success: true,
         workflowId: instance.id,
         traceId,
+        parentSpanId,
         traceUrl,
         pantheonUrl,
         checkUrl: `/status?id=${instance.id}`,
@@ -283,17 +471,28 @@ export default {
         const status = await instance.status();
         return Response.json(status);
       } catch (err) {
-        return Response.json({ error: err.message }, { status: 500 });
+        return Response.json({ error: String(err) }, { status: 500 });
       }
     }
 
-    if (url.pathname === "/api/workflows") {
-      return Response.json({
-        workflows: WORKFLOW_REGISTRY,
-      });
+    if (url.pathname === "/test-otel") {
+      try {
+        const res = await fetch("http://127.0.0.1:4318/v1/traces", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resourceSpans: [] })
+        });
+        const text = await res.text();
+        return Response.json({ status: res.status, text });
+      } catch (err) {
+        return Response.json({ error: String(err), stack: err.stack }, { status: 500 });
+      }
     }
 
-    return new Response("Not found", { status: 404 });
+    if (url.pathname === "/list") {
+      return Response.json(WORKFLOW_REGISTRY);
+    }
+
+    return new Response("Not found", { status: 400 });
   },
 };
-
