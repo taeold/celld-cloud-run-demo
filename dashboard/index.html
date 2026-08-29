@@ -31,17 +31,17 @@
             status: {
               success: { 
                 fg: { light: '#1a7f37', dark: '#3fb950' }, 
-                bg: { light: '#dafbe1', dark: 'rgba(46, 160, 67, 0.12)' }, 
+                bg: { light: '#dafbe1', dark: 'rgba(46, 160, 67, 0.15)' }, 
                 border: { light: '#4ac26b', dark: '#238636' } 
               },
               attention: { 
                 fg: { light: '#9a6700', dark: '#d29922' }, 
-                bg: { light: '#fff8c5', dark: 'rgba(187, 128, 9, 0.12)' }, 
+                bg: { light: '#fff8c5', dark: 'rgba(187, 128, 9, 0.15)' }, 
                 border: { light: '#d4a72c', dark: '#9e6a03' } 
               },
               danger: { 
                 fg: { light: '#cf222e', dark: '#f85149' }, 
-                bg: { light: '#ffebe9', dark: 'rgba(248, 81, 73, 0.12)' }, 
+                bg: { light: '#ffebe9', dark: 'rgba(248, 81, 73, 0.15)' }, 
                 border: { light: '#ff8182', dark: '#da3633' } 
               }
             }
@@ -58,10 +58,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     body {
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
-      font-size: 13.5px;
-      line-height: 1.55;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     }
     .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -70,223 +73,242 @@
 </head>
 <body class="h-full flex flex-col bg-canvas-light dark:bg-canvas-dark text-fg-primary-light dark:text-fg-primary-dark transition-colors duration-150">
 
-  <!-- Header -->
+  <!-- Header: 56px minimalist chrome -->
   <header class="h-14 border-b border-border-muted-light dark:border-border-muted-dark bg-canvas-light dark:bg-canvas-dark px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
     <div class="flex items-baseline gap-2.5">
       <span class="font-semibold text-[14px] text-fg-primary-light dark:text-fg-primary-dark">Celld Workflows</span>
-      <span class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark hidden sm:inline">Cloudflare Workflows on Cloud Run</span>
+      <span class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark hidden sm:inline">Cloudflare Workflows on Cloud Run</span>
     </div>
 
-    <div class="flex items-center gap-3 text-[12px]">
-      <span class="px-2 py-0.5 rounded text-[11px] font-mono border border-border-default-light dark:border-border-default-dark text-fg-secondary-light dark:text-fg-secondary-dark">
-        Fleet: us-west1
+    <div class="flex items-center gap-4 text-[13px]">
+      <span class="text-fg-secondary-light dark:text-fg-secondary-dark text-[12px] hidden md:inline">
+        fleet us-west1 · Direct VPC 10.0.0.0/28
       </span>
-      <button onclick="toggleTheme()" class="text-fg-secondary-light dark:text-fg-secondary-dark hover:text-fg-primary-light dark:hover:text-fg-primary-dark transition px-2 py-1" title="Toggle theme">
+      <button onclick="toggleTheme()" class="text-fg-secondary-light dark:text-fg-secondary-dark hover:text-fg-primary-light dark:hover:text-fg-primary-dark transition" title="Toggle theme">
         <i id="theme-icon" class="fa-regular fa-moon"></i>
       </button>
     </div>
   </header>
 
-  <!-- Main Viewport: Centered to 840px -->
+  <!-- Main Viewport: Bounded to 880px, borderless-first -->
   <main class="flex-1 overflow-y-auto custom-scrollbar">
-    <div class="max-w-[840px] w-full mx-auto px-6 py-8 md:py-10 space-y-6">
+    <div class="max-w-[880px] w-full mx-auto px-6 py-8 md:py-10 space-y-8">
 
-      <!-- Hero Header -->
-      <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 border-b border-border-muted-light dark:border-border-muted-dark pb-6">
-        <div class="space-y-1.5">
-          <div class="flex items-center gap-2">
-            <h1 class="text-[20px] font-semibold tracking-tight text-fg-primary-light dark:text-fg-primary-dark">
-              Durable execution with celld
+      <!-- Section 1: Hero & Action (Content over Chrome) -->
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div class="space-y-2">
+            <h1 class="text-[24px] sm:text-[26px] font-semibold tracking-tight text-fg-primary-light dark:text-fg-primary-dark leading-tight">
+              Serverless durable workflow execution.
             </h1>
-            <span id="live-wfid-pill" class="px-1.5 py-0.5 rounded text-[11px] font-mono border border-border-default-light dark:border-border-default-dark text-fg-secondary-light dark:text-fg-secondary-dark">
-              Fleet Ready
-            </span>
-            <a id="trace-header-pill" href="#" target="_blank" class="hidden px-1.5 py-0.5 rounded text-[11px] font-mono border border-accent-default-light dark:border-accent-default-dark text-accent-default-light dark:text-accent-default-dark hover:underline">
-              🔍 Trace: <span id="trace-pill-id">...</span> ↗
-            </a>
+            <p class="text-[14px] text-fg-secondary-light dark:text-fg-secondary-dark leading-relaxed max-w-[620px]">
+              Execute multi-step Cloudflare Workflows in V8 isolates on Google Cloud Run. During <code class="mono text-[13px] text-fg-primary-light dark:text-fg-primary-dark font-medium">step.sleep()</code>, isolates evict to Cloud Storage at 0 CPU and resume from SQLite LTX snapshots via Direct VPC alarm.
+            </p>
           </div>
-          <p class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark max-w-[560px]">
-            Cloudflare Workflows running on Cloud Run. Steps execute in V8 isolates; <code class="text-fg-primary-light dark:text-fg-primary-dark font-medium">step.sleep()</code> evicts to GCS at 0 CPU and resumes over Direct VPC alarm.
-          </p>
+
+          <button id="btn-trigger" onclick="runDemoFlow()" class="h-9 px-4 rounded-[6px] bg-accent-default-light hover:bg-accent-hover-light dark:bg-accent-default-dark dark:hover:bg-accent-hover-dark text-white text-[13px] font-semibold transition flex items-center justify-center space-x-1.5 shrink-0 self-start">
+            <span>Run pipeline</span>
+            <i class="fa-solid fa-arrow-right text-[11px]"></i>
+          </button>
         </div>
 
-        <button id="btn-trigger" onclick="runDemoFlow()" class="h-9 px-4 rounded-[6px] bg-accent-default-light hover:bg-accent-hover-light dark:bg-accent-default-dark dark:hover:bg-accent-hover-dark text-white text-[13px] font-semibold transition flex items-center justify-center space-x-1.5 shrink-0">
-          <span>▶ Run Workflow</span>
-        </button>
+        <!-- Inline metadata strip (Interpuncts over badges) -->
+        <div class="flex items-center gap-2 text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-1">
+          <span id="run-status-dot" class="w-2 h-2 rounded-full bg-fg-secondary-light dark:bg-fg-secondary-dark"></span>
+          <span id="run-status-label" class="mono">Ready to dispatch</span>
+          <span>·</span>
+          <span id="run-id-label" class="mono text-fg-primary-light dark:text-fg-primary-dark">idle</span>
+          <a id="trace-header-link" href="#" target="_blank" class="hidden mono text-accent-default-light dark:text-accent-default-dark hover:underline">
+            · Google Cloud Trace ↗
+          </a>
+        </div>
       </div>
 
-      <!-- Pipeline Execution Stage (Clean GitHub Primer List) -->
+      <!-- Section 2: Text-Forward Pipeline Feed (Hairline divided, unboxed nominal items) -->
       <div class="space-y-3">
-        <div class="flex items-center justify-between text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark px-1">
-          <span>Execution DAG</span>
-          <span id="status-ticker" class="font-mono">Ready to dispatch</span>
+        <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">
+          Execution DAG
         </div>
 
-        <div class="space-y-2">
+        <div class="border-t border-b border-border-muted-light dark:border-border-muted-dark divide-y divide-border-muted-light dark:divide-border-muted-dark">
+          
           <!-- Step 1: Ingest -->
-          <div id="row-step-1" class="rounded-[6px] border border-border-default-light dark:border-border-default-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-3.5 flex items-center justify-between transition-colors">
-            <div class="flex items-center gap-3">
-              <span id="dot-1" class="w-5 h-5 rounded-full border border-border-default-light dark:border-border-default-dark flex items-center justify-center text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">1</span>
+          <div id="row-step-1" class="py-3 flex items-start justify-between gap-4 transition-colors">
+            <div class="flex items-start gap-3">
+              <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">01</span>
               <div>
-                <div class="font-semibold text-[13px] text-fg-primary-light dark:text-fg-primary-dark">step.do("ingest-and-partition")</div>
-                <div id="detail-1" class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Validates 12 numbers into 3 chunks in V8 isolate</div>
-              </div>
-            </div>
-            <span id="time-1" class="font-mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums">1ms</span>
-          </div>
-
-          <!-- Step 2: Parallel Fan-Out (Promise.all) -->
-          <div id="row-step-2" class="rounded-[6px] border border-border-default-light dark:border-border-default-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-3.5 space-y-2.5 transition-colors">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <span id="dot-2" class="w-5 h-5 rounded-full border border-border-default-light dark:border-border-default-dark flex items-center justify-center text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">2</span>
-                <div>
-                  <div class="font-semibold text-[13px] text-fg-primary-light dark:text-fg-primary-dark">Promise.all([ 3x Parallel Workers ])</div>
-                  <div id="detail-2" class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Concurrent map execution across isolate partitions</div>
+                <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
+                  step.do("ingest-and-partition")
+                </div>
+                <div id="detail-1" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
+                  Validates 12 input numbers into 3 chunks in V8 isolate
                 </div>
               </div>
-              <span id="time-2" class="font-mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums">1ms</span>
+            </div>
+            <span id="time-1" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">1ms</span>
+          </div>
+
+          <!-- Step 2: Parallel Fan-Out -->
+          <div id="row-step-2" class="py-3 space-y-2 transition-colors">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex items-start gap-3">
+                <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">02</span>
+                <div>
+                  <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
+                    Promise.all([ 3x Parallel Workers ])
+                  </div>
+                  <div id="detail-2" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
+                    Concurrent map execution across isolate partitions
+                  </div>
+                </div>
+              </div>
+              <span id="time-2" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">1ms</span>
             </div>
 
-            <div class="grid grid-cols-3 gap-2 text-[11px] font-mono">
-              <div id="branch-a" class="rounded border border-border-muted-light dark:border-border-muted-dark bg-canvas-light dark:bg-canvas-dark p-2 flex items-center justify-between text-fg-secondary-light dark:text-fg-secondary-dark">
+            <!-- Clean partition column readouts -->
+            <div class="pl-7 grid grid-cols-3 gap-3 mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">
+              <div id="branch-a" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
                 <span>part-a (sum)</span><span class="tabular-nums">-</span>
               </div>
-              <div id="branch-b" class="rounded border border-border-muted-light dark:border-border-muted-dark bg-canvas-light dark:bg-canvas-dark p-2 flex items-center justify-between text-fg-secondary-light dark:text-fg-secondary-dark">
+              <div id="branch-b" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
                 <span>part-b (extrema)</span><span class="tabular-nums">-</span>
               </div>
-              <div id="branch-c" class="rounded border border-border-muted-light dark:border-border-muted-dark bg-canvas-light dark:bg-canvas-dark p-2 flex items-center justify-between text-fg-secondary-light dark:text-fg-secondary-dark">
+              <div id="branch-c" class="flex justify-between border-b border-border-muted-light dark:border-border-muted-dark pb-1">
                 <span>part-c (avg)</span><span class="tabular-nums">-</span>
               </div>
             </div>
           </div>
 
-          <!-- Step 3: THE MONEY SHOT - Durable Sleep -->
-          <div id="row-sleep" class="rounded-[6px] border border-border-default-light dark:border-border-default-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-3.5 space-y-2.5 transition-colors">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <span id="dot-3" class="w-5 h-5 rounded-full border border-border-default-light dark:border-border-default-dark flex items-center justify-center text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">3</span>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-semibold text-[13px] text-fg-primary-light dark:text-fg-primary-dark">step.sleep("2 seconds")</span>
-                    <span class="px-1.5 py-0.2 rounded text-[10px] font-mono border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark">
+          <!-- Step 3: THE EARNED CONTAINER - Durable Sleep -->
+          <div id="row-sleep" class="py-3 transition-all">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex items-start gap-3">
+                <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">03</span>
+                <div class="space-y-1.5">
+                  <div class="flex items-baseline gap-2">
+                    <span class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
+                      step.sleep("2 seconds")
+                    </span>
+                    <span id="sleep-badge" class="hidden px-1.5 py-0.2 rounded-full text-[10px] mono border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark">
                       0 CPU Billed
                     </span>
                   </div>
-                  <div id="sleep-status-sub" class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">
-                    Isolate evicted from Cloud Run memory · Snapshot in GCS
+                  <div id="sleep-status-sub" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
+                    Isolate evicted from Cloud Run memory · State stored in GCS
                   </div>
                 </div>
               </div>
-              <span id="sleep-timer-text" class="font-mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums">2,000ms</span>
+              <span id="sleep-timer-text" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">2,000ms</span>
             </div>
 
-            <!-- Thin, disciplined progress bar -->
-            <div class="w-full h-1 rounded-full bg-border-muted-light dark:bg-border-muted-dark overflow-hidden">
-              <div id="sleep-progress" class="h-full w-0 bg-status-attention-fg-light dark:bg-status-attention-fg-dark transition-all duration-[2000ms] ease-linear"></div>
-            </div>
-          </div>
-
-          <!-- Step 4: Verify -->
-          <div id="row-step-4" class="rounded-[6px] border border-border-default-light dark:border-border-default-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-3.5 flex items-center justify-between transition-colors">
-            <div class="flex items-center gap-3">
-              <span id="dot-4" class="w-5 h-5 rounded-full border border-border-default-light dark:border-border-default-dark flex items-center justify-center text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">4</span>
-              <div>
-                <div class="font-semibold text-[13px] text-fg-primary-light dark:text-fg-primary-dark">step.do("verify-integrity")</div>
-                <div id="detail-4" class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Resumed via Direct VPC alarm · Checksum verified across wake</div>
+            <!-- Controlled, hairline progress indicator -->
+            <div class="pl-7 pt-2">
+              <div class="w-full h-[2px] bg-border-muted-light dark:bg-border-muted-dark overflow-hidden">
+                <div id="sleep-progress" class="h-full w-0 bg-status-attention-fg-light dark:bg-status-attention-fg-dark transition-all duration-[2000ms] ease-linear"></div>
               </div>
             </div>
-            <span id="time-4" class="font-mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums">1ms</span>
           </div>
 
-          <!-- Step 5: Aggregate -->
-          <div id="row-step-5" class="rounded-[6px] border border-border-default-light dark:border-border-default-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-3.5 flex items-center justify-between transition-colors">
-            <div class="flex items-center gap-3">
-              <span id="dot-5" class="w-5 h-5 rounded-full border border-border-default-light dark:border-border-default-dark flex items-center justify-center text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">5</span>
+          <!-- Step 4: Integrity Verification -->
+          <div id="row-step-4" class="py-3 flex items-start justify-between gap-4 transition-colors">
+            <div class="flex items-start gap-3">
+              <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">04</span>
               <div>
-                <div class="font-semibold text-[13px] text-fg-primary-light dark:text-fg-primary-dark">step.do("aggregate-and-commit")</div>
-                <div id="detail-5" class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Reduces partitions and commits SQLite LTX</div>
+                <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
+                  step.do("verify-integrity")
+                </div>
+                <div id="detail-4" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
+                  Resumed via Direct VPC alarm · Checksum verified across wake
+                </div>
               </div>
             </div>
-            <span id="time-5" class="font-mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums">1ms</span>
+            <span id="time-4" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">1ms</span>
           </div>
+
+          <!-- Step 5: Final Aggregation -->
+          <div id="row-step-5" class="py-3 flex items-start justify-between gap-4 transition-colors">
+            <div class="flex items-start gap-3">
+              <span class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-0.5 w-4">05</span>
+              <div>
+                <div class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
+                  step.do("aggregate-and-commit")
+                </div>
+                <div id="detail-5" class="text-[13px] text-fg-secondary-light dark:text-fg-secondary-dark">
+                  Reduces partitions and commits final SQLite LTX snapshot
+                </div>
+              </div>
+            </div>
+            <span id="time-5" class="mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5">1ms</span>
+          </div>
+
         </div>
       </div>
 
-      <!-- Completion Banner -->
-      <div id="completion-banner" class="hidden rounded-[6px] border border-status-success-border-light dark:border-status-success-border-dark bg-status-success-bg-light dark:bg-status-success-bg-dark p-3.5 items-center justify-between text-[12.5px] text-status-success-fg-light dark:text-status-success-fg-dark">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-check text-[13px]"></i>
-          <span id="completion-text" class="font-medium">Workflow Complete in 2,004ms · Zero State Loss</span>
-        </div>
-        <span class="font-mono text-[11px]">ACID Committed</span>
-      </div>
-
-      <!-- VERIFIED GOOGLE CLOUD TRACE RECEIPT -->
+      <!-- Section 3: The Earned Verification Surface (Shown only on terminal completion) -->
       <div id="trace-proof-card" class="hidden rounded-[6px] border border-border-default-light dark:border-border-default-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-4 space-y-3">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2 text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">
-            <i class="fa-brands fa-google text-[#4285f4]"></i>
-            <span>Google Cloud Trace Verification</span>
-          </div>
-          <span id="trace-timestamp" class="text-[11px] font-mono text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums"></span>
+          <span class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark font-medium">
+            Google Cloud Trace Verification
+          </span>
+          <span id="trace-timestamp" class="mono text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums"></span>
         </div>
 
-        <div class="rounded-[6px] border border-border-muted-light dark:border-border-muted-dark bg-canvas-light dark:bg-canvas-dark p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div class="space-y-1">
-            <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">Cloud Trace ID</div>
-            <div id="proof-trace-id" class="font-mono text-[12.5px] font-semibold text-fg-primary-light dark:text-fg-primary-dark select-all">...</div>
+        <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 pt-1">
+          <div class="space-y-0.5">
+            <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">Official Trace ID</div>
+            <div id="proof-trace-id" class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark select-all">...</div>
           </div>
-          <div class="flex items-center gap-2">
-            <a id="proof-trace-url" href="#" target="_blank" class="h-8 px-3 rounded-[6px] bg-accent-default-light hover:bg-accent-hover-light dark:bg-accent-default-dark dark:hover:bg-accent-hover-dark text-white text-[12px] font-semibold transition flex items-center space-x-1.5">
-              <span>Open Cloud Trace</span>
+          <div class="flex items-center gap-3 text-[13px]">
+            <a id="proof-trace-url" href="#" target="_blank" class="text-accent-default-light dark:text-accent-default-dark hover:underline flex items-center gap-1 font-medium">
+              <span>Cloud Trace Explorer</span>
               <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
             </a>
-            <a id="proof-pantheon-url" href="#" target="_blank" class="h-8 px-3 rounded-[6px] border border-border-default-light dark:border-border-default-dark hover:bg-surface-subtle-light dark:hover:bg-surface-subtle-dark text-fg-primary-light dark:text-fg-primary-dark text-[12px] transition flex items-center space-x-1.5">
+            <span class="text-fg-secondary-light dark:text-fg-secondary-dark">·</span>
+            <a id="proof-pantheon-url" href="#" target="_blank" class="text-fg-secondary-light dark:text-fg-secondary-dark hover:text-fg-primary-light dark:hover:text-fg-primary-dark hover:underline flex items-center gap-1">
               <span>Pantheon</span>
               <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
             </a>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11.5px] pt-1">
-          <div class="text-fg-secondary-light dark:text-fg-secondary-dark">
-            Storage Engine: <span class="font-mono text-fg-primary-light dark:text-fg-primary-dark">SQLite LTX in GCS</span>
+        <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-2 border-t border-border-muted-light dark:border-border-muted-dark flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <span>Snapshot: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">gs://danielylee-junk-celld-demo-fleet/main/cells/</code></span>
+          <span>Transit: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">Direct VPC 10.0.0.0/28</code></span>
+        </div>
+      </div>
+
+      <!-- Section 4: Three Core Metrics (Clean sentence case, no cards) -->
+      <div class="pt-2">
+        <div class="grid grid-cols-3 gap-6 pt-4 border-t border-border-muted-light dark:border-border-muted-dark">
+          <div class="space-y-0.5">
+            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Active compute</div>
+            <div id="score-compute" class="mono text-[22px] font-semibold text-status-success-fg-light dark:text-status-success-fg-dark tabular-nums">4ms</div>
+            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Paid Cloud Run CPU time</div>
           </div>
-          <div class="text-fg-secondary-light dark:text-fg-secondary-dark">
-            Network Transit: <span class="font-mono text-fg-primary-light dark:text-fg-primary-dark">Direct VPC 10.0.0.0/28</span>
+
+          <div class="space-y-0.5">
+            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Dormant sleep</div>
+            <div id="score-sleep" class="mono text-[22px] font-semibold text-status-attention-fg-light dark:text-status-attention-fg-dark tabular-nums">2,000ms</div>
+            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">0 CPU / Evicted to GCS</div>
+          </div>
+
+          <div class="space-y-0.5">
+            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Durability</div>
+            <div id="score-storage" class="mono text-[22px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">SQLite LTX</div>
+            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">ACID transaction log</div>
           </div>
         </div>
       </div>
 
-      <!-- 3-Metric Scorecard -->
-      <div class="grid grid-cols-3 gap-4 pt-4 border-t border-border-muted-light dark:border-border-muted-dark">
-        <div class="space-y-1">
-          <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark uppercase tracking-wider">Active Compute</div>
-          <div id="score-compute" class="text-[20px] font-semibold font-mono text-status-success-fg-light dark:text-status-success-fg-dark tabular-nums">4ms</div>
-          <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">Paid Cloud Run time</div>
-        </div>
-
-        <div class="space-y-1">
-          <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark uppercase tracking-wider">Dormant Sleep</div>
-          <div id="score-sleep" class="text-[20px] font-semibold font-mono text-status-attention-fg-light dark:text-status-attention-fg-dark tabular-nums">2,000ms</div>
-          <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">0 CPU / Evicted to GCS</div>
-        </div>
-
-        <div class="space-y-1">
-          <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark uppercase tracking-wider">Durability</div>
-          <div id="score-storage" class="text-[20px] font-semibold font-mono text-fg-primary-light dark:text-fg-primary-dark">SQLite LTX</div>
-          <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">ACID Transaction Log</div>
-        </div>
+      <!-- Section 5: Expandable Raw Fleet JSON (Folded disclosure) -->
+      <div class="pt-2">
+        <details id="raw-json-details" class="hidden text-[12px]">
+          <summary class="cursor-pointer font-medium text-fg-secondary-light dark:text-fg-secondary-dark hover:text-fg-primary-light dark:hover:text-fg-primary-dark">
+            ▶ Raw execution payload from Cloud Run fleet
+          </summary>
+          <pre id="raw-json-view" class="mono mt-2 rounded-[6px] border border-border-muted-light dark:border-border-muted-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-3 text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark max-h-56 overflow-y-auto select-all leading-relaxed"></pre>
+        </details>
       </div>
-
-      <!-- Expandable Raw Fleet JSON -->
-      <details id="raw-json-details" class="hidden rounded-[6px] border border-border-muted-light dark:border-border-muted-dark bg-canvas-light dark:bg-canvas-dark p-3 text-[11px]">
-        <summary class="cursor-pointer font-medium text-accent-default-light dark:text-accent-default-dark hover:underline">
-          View Raw Cloud Run Execution Payload (Real JSON from Fleet)
-        </summary>
-        <pre id="raw-json-view" class="font-mono mt-2 text-fg-secondary-light dark:text-fg-secondary-dark max-h-48 overflow-y-auto select-all leading-relaxed"></pre>
-      </details>
 
     </div>
   </main>
@@ -316,16 +338,19 @@
 
       const btn = document.getElementById('btn-trigger');
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs mr-1"></i> Dispatching...';
-      document.getElementById('status-ticker').textContent = 'Dispatching to Cloud Run...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs mr-1.5"></i> Running';
+      
+      const dot = document.getElementById('run-status-dot');
+      dot.className = 'w-2 h-2 rounded-full bg-accent-default-light dark:bg-accent-default-dark animate-pulse';
+      document.getElementById('run-status-label').textContent = 'Dispatching to Cloud Run...';
 
       resetVisuals();
 
-      // 1. Generate FRESH, REAL dynamic input numbers for this execution
+      // 1. Generate dynamic real numbers for execution
       const items = Array.from({ length: 12 }, () => Math.floor(Math.random() * 85) + 15);
       const expectedChecksum = items.reduce((a, b) => a + b, 0);
 
-      // Slices for the 3 parallel isolate partitions
+      // Partitions for the 3 concurrent isolate workers
       const n = Math.ceil(items.length / 3);
       const pA = items.slice(0, n);
       const pB = items.slice(n, 2 * n);
@@ -340,7 +365,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          name: "Live Run " + new Date().toLocaleTimeString(), 
+          name: "Pipeline Run " + new Date().toLocaleTimeString(), 
           items 
         })
       });
@@ -350,13 +375,12 @@
       const traceUrl = triggerData.traceUrl;
       const pantheonUrl = triggerData.pantheonUrl;
 
-      // Update UI with real Workflow Instance ID and Cloud Trace Pill
-      document.getElementById('live-wfid-pill').textContent = wfId ? `ID: ${wfId.slice(0, 8)}...` : 'Dispatching';
+      // Update UI with real Workflow Instance ID
+      document.getElementById('run-id-label').textContent = wfId ? `run ${wfId.slice(0, 8)}` : 'dispatching';
       if (traceId) {
-        const tracePill = document.getElementById('trace-header-pill');
-        tracePill.classList.remove('hidden');
-        tracePill.href = traceUrl || pantheonUrl || '#';
-        document.getElementById('trace-pill-id').textContent = traceId.slice(0, 8) + '...';
+        const traceLink = document.getElementById('trace-header-link');
+        traceLink.classList.remove('hidden');
+        traceLink.href = traceUrl || pantheonUrl || '#';
       }
 
       // STEP 1: Real Ingest & Partition
@@ -373,23 +397,22 @@
       await sleep(100);
       completeStep(2);
 
-      // STEP 3: REAL DURABLE SLEEP (2.0 seconds)
-      const sleepBox = document.getElementById('row-sleep');
+      // STEP 3: REAL DURABLE SLEEP (2.0 seconds) - Earns attention accent
       const sleepProgress = document.getElementById('sleep-progress');
       const sleepTimerText = document.getElementById('sleep-timer-text');
       const sleepStatusSub = document.getElementById('sleep-status-sub');
-      const dot3 = document.getElementById('dot-3');
+      const sleepBadge = document.getElementById('sleep-badge');
 
-      sleepBox.classList.add('border-status-attention-border-light', 'dark:border-status-attention-border-dark', 'bg-status-attention-bg-light', 'dark:bg-status-attention-bg-dark');
-      dot3.className = 'w-5 h-5 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark text-white flex items-center justify-center text-[11px] font-semibold';
+      sleepBadge.classList.remove('hidden');
       sleepProgress.style.width = '100%';
       sleepStatusSub.textContent = '⚡ Isolate evicted to GCS · Cloud Run at 0 CPU (Scale-to-Zero)';
-      document.getElementById('status-ticker').textContent = 'Sleeping (0 compute)...';
+      document.getElementById('run-status-label').textContent = 'Dormant sleep (0 compute)...';
+      dot.className = 'w-2 h-2 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark animate-ping';
 
       const sleepStartTime = Date.now();
       let completedData = null;
 
-      // Live poll the REAL Cloud Run status endpoint while sleeping
+      // Live poll Cloud Run backend
       const pollInterval = setInterval(async () => {
         try {
           const r = await fetch(`/api/workflow/${wfId}`);
@@ -413,7 +436,7 @@
         }
       }, 100);
 
-      // Wait until Cloud Run alarm wakes up the cell
+      // Wait until Cloud Run alarm fires
       while (!completedData || (Date.now() - sleepStartTime) < 2000) {
         await sleep(100);
       }
@@ -422,12 +445,11 @@
       clearInterval(pollInterval);
 
       sleepTimerText.textContent = '2,000ms';
-      sleepStatusSub.textContent = '⚡ Woke via Direct VPC Alarm! Rehydrated state from GCS.';
-      sleepBox.classList.remove('border-status-attention-border-light', 'dark:border-status-attention-border-dark', 'bg-status-attention-bg-light', 'dark:bg-status-attention-bg-dark');
-      dot3.className = 'w-5 h-5 rounded-full bg-status-success-fg-light dark:bg-status-success-fg-dark text-white flex items-center justify-center text-[11px] font-semibold';
-      document.getElementById('status-ticker').textContent = 'Rehydrating & committing...';
+      sleepStatusSub.textContent = '⚡ Resumed via Direct VPC alarm · Rehydrated state from GCS';
+      document.getElementById('run-status-label').textContent = 'Rehydrated · finalizing...';
+      dot.className = 'w-2 h-2 rounded-full bg-accent-default-light dark:bg-accent-default-dark animate-pulse';
 
-      // Extract REAL outputs from Cloud Run response
+      // Extract outputs from Cloud Run response
       const out = completedData.output || {};
       const timeline = out.timeline || [];
       const verifyStep = timeline.find(s => s.name === 'verify-integrity') || {};
@@ -450,14 +472,11 @@
       document.getElementById('detail-5').textContent = `Committed to SQLite LTX: grandSum ${agg.grandSum || expectedChecksum}, mean ${agg.mean || (expectedChecksum/12).toFixed(2)}`;
       completeStep(5);
 
-      // Final Completion Flash
-      const banner = document.getElementById('completion-banner');
-      banner.classList.remove('hidden');
-      banner.classList.add('flex');
-      document.getElementById('completion-text').textContent = `Workflow ${wfId.slice(0, 8)}... Complete in ${totalMs}ms · Zero State Loss`;
-      document.getElementById('status-ticker').textContent = 'Execution finished';
+      // Nominal Completion: Invisibility rule - quiet status indicator
+      dot.className = 'w-2 h-2 rounded-full bg-status-success-fg-light dark:bg-status-success-fg-dark';
+      document.getElementById('run-status-label').textContent = `Complete in ${totalMs}ms`;
 
-      // Display Verified Google Cloud Trace Receipt
+      // Display Verified Google Cloud Trace Surface (Earned container on terminal completion)
       if (finalTraceId) {
         const proofCard = document.getElementById('trace-proof-card');
         proofCard.classList.remove('hidden');
@@ -475,35 +494,23 @@
       document.getElementById('score-compute').textContent = `${computeMs}ms`;
       document.getElementById('score-sleep').textContent = '2,000ms';
 
-      // Populate raw JSON disclosure for full transparency
+      // Populate raw JSON disclosure
       document.getElementById('raw-json-view').textContent = JSON.stringify(completedData, null, 2);
       document.getElementById('raw-json-details').classList.remove('hidden');
 
       btn.disabled = false;
-      btn.innerHTML = '<span>▶ Run Again</span>';
+      btn.innerHTML = '<span>Run pipeline</span><i class="fa-solid fa-arrow-right text-[11px]"></i>';
       isRunning = false;
     }
 
     function activateStep(n) {
       const row = document.getElementById(`row-step-${n}`);
       if (row) {
-        row.classList.add('border-accent-default-light', 'dark:border-accent-default-dark');
-      }
-      const dot = document.getElementById(`dot-1`);
-      if (dot && n === 1) {
-        dot.className = 'w-5 h-5 rounded-full bg-accent-default-light dark:bg-accent-default-dark text-white flex items-center justify-center text-[11px] font-semibold';
+        row.classList.add('text-fg-primary-light', 'dark:text-fg-primary-dark');
       }
     }
 
     function completeStep(n) {
-      const row = document.getElementById(`row-step-${n}`);
-      if (row) {
-        row.classList.remove('border-accent-default-light', 'dark:border-accent-default-dark');
-      }
-      const dot = document.getElementById(`dot-${n}`);
-      if (dot) {
-        dot.className = 'w-5 h-5 rounded-full bg-status-success-fg-light dark:bg-status-success-fg-dark text-white flex items-center justify-center text-[11px] font-semibold';
-      }
       const time = document.getElementById(`time-${n}`);
       if (time) {
         time.classList.remove('text-fg-secondary-light', 'dark:text-fg-secondary-dark');
@@ -513,33 +520,20 @@
 
     function resetVisuals() {
       [1, 2, 4, 5].forEach(n => {
-        const row = document.getElementById(`row-step-${n}`);
-        if (row) {
-          row.classList.remove('border-accent-default-light', 'dark:border-accent-default-dark');
-        }
-        const dot = document.getElementById(`dot-${n}`);
-        if (dot) {
-          dot.className = 'w-5 h-5 rounded-full border border-border-default-light dark:border-border-default-dark flex items-center justify-center text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark';
-        }
         const time = document.getElementById(`time-${n}`);
         if (time) {
-          time.className = 'font-mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums';
+          time.className = 'mono text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums shrink-0 pt-0.5';
         }
       });
 
-      const sleepBox = document.getElementById('row-sleep');
-      sleepBox.classList.remove('border-status-attention-border-light', 'dark:border-status-attention-border-dark', 'bg-status-attention-bg-light', 'dark:bg-status-attention-bg-dark');
-      const dot3 = document.getElementById('dot-3');
-      dot3.className = 'w-5 h-5 rounded-full border border-border-default-light dark:border-border-default-dark flex items-center justify-center text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark';
+      document.getElementById('sleep-badge').classList.add('hidden');
       document.getElementById('sleep-progress').style.width = '0%';
       document.getElementById('sleep-timer-text').textContent = '2,000ms';
-      document.getElementById('sleep-status-sub').textContent = 'Isolate evicted from Cloud Run memory · Snapshot in GCS';
+      document.getElementById('sleep-status-sub').textContent = 'Isolate evicted from Cloud Run memory · State stored in GCS';
 
-      document.getElementById('completion-banner').classList.add('hidden');
-      document.getElementById('completion-banner').classList.remove('flex');
       document.getElementById('trace-proof-card').classList.add('hidden');
-      document.getElementById('trace-header-pill').classList.add('hidden');
-      document.getElementById('detail-1').textContent = 'Validates 12 numbers into 3 chunks in V8 isolate';
+      document.getElementById('trace-header-link').classList.add('hidden');
+      document.getElementById('detail-1').textContent = 'Validates 12 input numbers into 3 chunks in V8 isolate';
       document.getElementById('detail-4').textContent = 'Resumed via Direct VPC alarm · Checksum verified across wake';
     }
 
