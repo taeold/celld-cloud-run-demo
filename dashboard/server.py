@@ -49,6 +49,23 @@ def get_auth_token():
     now = time.time()
     if _token_cache["token"] and _token_cache["expires"] > now:
         return _token_cache["token"]
+    
+    # 1. Try metadata server (Cloud Run runtime)
+    try:
+        req = urllib.request.Request(
+            f"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience={INGRESS_URL}",
+            headers={"Metadata-Flavor": "Google"}
+        )
+        with urllib.request.urlopen(req, timeout=1) as resp:
+            token = resp.read().decode("utf-8").strip()
+            if token:
+                _token_cache["token"] = token
+                _token_cache["expires"] = now + 1800
+                return token
+    except Exception:
+        pass
+
+    # 2. Fallback to local gcloud CLI (local development)
     try:
         cmd = ["gcloud", "auth", "print-identity-token"]
         token = subprocess.check_output(cmd, text=True).strip()
