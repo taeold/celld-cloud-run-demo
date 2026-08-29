@@ -30,9 +30,13 @@ def load_cache():
     if os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE, "r") as f:
-                _workflow_cache = json.load(f)
+                disk = json.load(f)
+                with _lock:
+                    for k, v in disk.items():
+                        if k not in _workflow_cache:
+                            _workflow_cache[k] = v
         except Exception:
-            _workflow_cache = {}
+            pass
 
 def save_cache():
     try:
