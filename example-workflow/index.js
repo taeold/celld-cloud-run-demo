@@ -58,10 +58,11 @@ async function emitOtelSpan({ traceId, parentSpanId, spanId, name, startMs, endM
 
 export class DataPipelineWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
-    const { name, items, traceId, parentSpanId } = event.payload;
+    const { name, items, traceId } = event.payload;
     const rawItems = Array.isArray(items) && items.length > 0 ? items : [12, 45, 68, 23, 89, 34, 56, 91, 14, 77];
     const wfStartTime = Date.now();
-    const wfSpanId = generateSpanId();
+    // Deterministic 16-hex spanId from traceId ensures identical parent across sleep replays
+    const wfSpanId = (traceId && traceId.length === 32) ? traceId.slice(16, 32) : generateSpanId();
 
     // Stage 1: Ingest & Partition
     const planned = await step.do("ingest-and-partition", async () => {
@@ -253,10 +254,10 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
 
     const wfEndTime = Date.now();
 
-    // Emit top-level Workflow execution span
+    // Emit top-level Workflow execution span (root span for this workflow instance)
     await emitOtelSpan({
       traceId,
-      parentSpanId: parentSpanId || undefined,
+      parentSpanId: undefined,
       spanId: wfSpanId,
       name: `celld.workflow: data-pipeline`,
       startMs: wfStartTime,
