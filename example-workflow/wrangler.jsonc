@@ -5,8 +5,8 @@
   "workflows": [
     {
       "binding": "PIPELINE",
-      "name": "data-pipeline",
-      "class_name": "DataPipelineWorkflow"
+      "name": "user-onboarding",
+      "class_name": "UserOnboardingWorkflow"
     }
   ]
 }

@@ -64,7 +64,7 @@ async function emitOtelSpan({ traceId, parentSpanId, spanId, name, startMs, endM
   } catch (err) {}
 }
 
-export class DataPipelineWorkflow extends WorkflowEntrypoint {
+export class UserOnboardingWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const { name, traceId } = event.payload || {};
     const wfStartTime = Date.now();
