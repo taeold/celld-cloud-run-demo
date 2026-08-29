@@ -3,98 +3,104 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 export class DataPipelineWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const { name, items } = event.payload;
-    const timeline = [];
-    const runStart = Date.now();
 
     // Step 1: Ingest and validate data
-    const s1Start = Date.now();
     const validated = await step.do("validate-input", async () => {
-      const stepStart = Date.now();
+      const t0 = Date.now();
       if (!items || !Array.isArray(items)) {
         throw new Error("Invalid items array");
       }
       return {
         itemCount: items.length,
-        receivedAt: new Date().toISOString(),
-        internalExecMs: Date.now() - stepStart,
+        t0,
+        t1: Date.now(),
       };
-    });
-    timeline.push({
-      name: "validate-input",
-      kind: "step",
-      status: "completed",
-      startOffsetMs: 0,
-      durationMs: Math.max(1, Date.now() - s1Start),
-      startedAt: new Date(s1Start).toISOString(),
-      completedAt: new Date().toISOString(),
-      output: validated,
     });
 
     // Step 2: Sleep briefly to demonstrate durable workflow timer
-    const s2Start = Date.now();
     await step.sleep("wait-briefly", "2 seconds");
-    timeline.push({
-      name: "wait-briefly",
-      kind: "sleep",
-      sleepSpec: "2 seconds",
-      status: "completed",
-      startOffsetMs: s2Start - runStart,
-      durationMs: Math.max(2000, Date.now() - s2Start),
-      startedAt: new Date(s2Start).toISOString(),
-      completedAt: new Date().toISOString(),
-    });
 
     // Step 3: Process items
-    const s3Start = Date.now();
     const processed = await step.do("process-items", async () => {
+      const t0 = Date.now();
       const sum = items.reduce((acc, x) => acc + (typeof x === "number" ? x : 0), 0);
       const uppercaseName = (name || "anonymous").toUpperCase();
       return {
         processedBy: uppercaseName,
         totalSum: sum,
         average: items.length > 0 ? sum / items.length : 0,
-        completedAt: new Date().toISOString(),
+        t0,
+        t1: Date.now(),
       };
-    });
-    timeline.push({
-      name: "process-items",
-      kind: "step",
-      status: "completed",
-      startOffsetMs: s3Start - runStart,
-      durationMs: Math.max(1, Date.now() - s3Start),
-      startedAt: new Date(s3Start).toISOString(),
-      completedAt: new Date().toISOString(),
-      output: processed,
     });
 
     // Step 4: Finalize report
-    const s4Start = Date.now();
     const summary = await step.do("finalize-report", async () => {
+      const t0 = Date.now();
       return {
         status: "SUCCESS",
         metadata: validated,
         result: processed,
+        t0,
+        t1: Date.now(),
       };
     });
-    timeline.push({
-      name: "finalize-report",
-      kind: "step",
-      status: "completed",
-      startOffsetMs: s4Start - runStart,
-      durationMs: Math.max(1, Date.now() - s4Start),
-      startedAt: new Date(s4Start).toISOString(),
-      completedAt: new Date().toISOString(),
-      output: summary,
-    });
+
+    const s1Duration = Math.max(1, validated.t1 - validated.t0);
+    const s2Duration = 2000;
+    const s3Duration = Math.max(1, processed.t1 - processed.t0);
+    const s4Duration = Math.max(1, summary.t1 - summary.t0);
+
+    const s1Start = 0;
+    const s2Start = s1Start + s1Duration;
+    const s3Start = s2Start + s2Duration;
+    const s4Start = s3Start + s3Duration;
+    const totalMs = s4Start + s4Duration;
+
+    const timeline = [
+      {
+        name: "validate-input",
+        kind: "step",
+        status: "completed",
+        startOffsetMs: s1Start,
+        durationMs: s1Duration,
+        output: { itemCount: validated.itemCount }
+      },
+      {
+        name: "wait-briefly",
+        kind: "sleep",
+        sleepSpec: "2 seconds",
+        status: "completed",
+        startOffsetMs: s2Start,
+        durationMs: s2Duration
+      },
+      {
+        name: "process-items",
+        kind: "step",
+        status: "completed",
+        startOffsetMs: s3Start,
+        durationMs: s3Duration,
+        output: { processedBy: processed.processedBy, totalSum: processed.totalSum, average: processed.average }
+      },
+      {
+        name: "finalize-report",
+        kind: "step",
+        status: "completed",
+        startOffsetMs: s4Start,
+        durationMs: s4Duration,
+        output: { status: "SUCCESS", totalSum: processed.totalSum }
+      }
+    ];
 
     return {
       status: "SUCCESS",
       workflowName: "data-pipeline",
-      totalDurationMs: Date.now() - runStart,
-      startedAt: new Date(runStart).toISOString(),
-      completedAt: new Date().toISOString(),
+      totalDurationMs: totalMs,
       timeline,
-      summary,
+      summary: {
+        metadata: { itemCount: validated.itemCount },
+        result: { processedBy: processed.processedBy, totalSum: processed.totalSum, average: processed.average }
+      },
     };
   }
 }

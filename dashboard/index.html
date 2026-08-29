@@ -26,9 +26,10 @@
       --danger-text: #cf222e;
       --danger-bg: #ffebe9;
       --danger-border: #ff8182;
-      --timeline-bar-default: #0969da;
-      --timeline-bar-sleep: #9a6700;
-      --timeline-bar-success: #1a7f37;
+      --span-root: #54aeff;
+      --span-do: #0969da;
+      --span-sleep: #9a6700;
+      --span-success: #1a7f37;
       --shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.04);
     }
 
@@ -53,9 +54,10 @@
       --danger-text: #f85149;
       --danger-bg: rgba(248, 81, 73, 0.15);
       --danger-border: #da3633;
-      --timeline-bar-default: #2f81f7;
-      --timeline-bar-sleep: #d29922;
-      --timeline-bar-success: #3fb950;
+      --span-root: #388bfd;
+      --span-do: #2f81f7;
+      --span-sleep: #d29922;
+      --span-success: #3fb950;
       --shadow-sm: 0 1px 0 rgba(1, 4, 9, 0.1);
     }
 
@@ -402,7 +404,7 @@
       gap: 24px;
     }
 
-    /* Card Panels */
+    /* Panels */
     .panel {
       background-color: var(--surface-subtle);
       border: 1px solid var(--border-default);
@@ -424,53 +426,106 @@
       color: var(--text-primary);
     }
 
-    /* Waterfall Timeline */
-    .timeline-container {
-      padding: 16px;
+    /* =========================================================
+       AUTHENTIC TRACE WATERFALL CANVAS (Gantt / Chrome DevTools)
+       ========================================================= */
+    .waterfall-canvas {
+      position: relative;
       background-color: var(--canvas-default);
+      border-top: 1px solid var(--border-muted);
+      display: flex;
+      flex-direction: column;
     }
 
-    .timeline-ruler {
+    /* Grid overlay extending through all rows */
+    .waterfall-grid-overlay {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 260px; /* offset of tree column */
+      right: 90px; /* offset of duration column */
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .waterfall-grid-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      border-left: 1px dashed var(--border-muted);
+    }
+
+    .waterfall-ruler-row {
       display: flex;
-      justify-content: space-between;
+      align-items: center;
+      height: 28px;
+      background-color: var(--surface-subtle);
+      border-bottom: 1px solid var(--border-default);
       font-family: ui-monospace, monospace;
       font-size: 11px;
       color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-muted);
-      padding-bottom: 6px;
-      margin-bottom: 12px;
+      user-select: none;
+      z-index: 2;
     }
 
-    .step-rows {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .waterfall-ruler-label-col {
+      width: 260px;
+      padding: 0 16px;
+      font-weight: 600;
+      flex-shrink: 0;
     }
 
-    .step-row {
+    .waterfall-ruler-track {
+      flex: 1;
+      position: relative;
+      height: 100%;
+    }
+
+    .ruler-tick {
+      position: absolute;
+      top: 6px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    .waterfall-ruler-duration-col {
+      width: 90px;
+      text-align: right;
+      padding-right: 16px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* Waterfall Rows */
+    .span-row {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 6px 8px;
-      border-radius: 6px;
+      height: 36px;
+      border-bottom: 1px solid var(--border-muted);
+      position: relative;
       cursor: pointer;
       transition: background-color 150ms ease;
+      z-index: 2;
     }
 
-    .step-row:hover {
+    .span-row:hover {
       background-color: var(--surface-subtle);
     }
 
-    .step-row.selected {
+    .span-row.selected {
       background-color: var(--accent-subtle);
-      outline: 1px solid var(--accent-border);
+      box-shadow: inset 2px 0 0 var(--accent);
     }
 
-    .step-name-col {
-      width: 140px;
+    .span-tree-col {
+      width: 260px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-family: ui-monospace, monospace;
       font-size: 13px;
-      font-weight: 500;
       color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
@@ -478,51 +533,91 @@
       flex-shrink: 0;
     }
 
-    .step-track {
-      flex: 1;
-      height: 24px;
-      background-color: var(--surface-subtle);
-      border: 1px solid var(--border-muted);
-      border-radius: 4px;
-      position: relative;
-      overflow: hidden;
+    .tree-icon {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-family: ui-monospace, monospace;
     }
 
-    .step-bar {
-      position: absolute;
-      top: 2px;
-      bottom: 2px;
-      border-radius: 3px;
-      background-color: var(--timeline-bar-default);
-      color: #ffffff;
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
+    .span-type-tag {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
       font-weight: 500;
+    }
+
+    .span-timeline-track {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Cascading Floating Span Bar */
+    .span-bar {
+      position: absolute;
+      height: 18px;
+      border-radius: 3px;
       display: flex;
       align-items: center;
       padding: 0 6px;
+      font-family: ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 600;
+      color: #ffffff;
       white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: var(--shadow-sm);
+      transition: outline 150ms ease;
     }
 
-    .step-bar.sleep {
-      background-color: var(--timeline-bar-sleep);
+    .span-bar:hover {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
     }
 
-    .step-bar.success {
-      background-color: var(--timeline-bar-success);
+    .span-bar.root {
+      background-color: transparent;
+      border: 2px solid var(--span-root);
+      color: var(--text-primary);
+      height: 20px;
     }
 
-    .step-duration-col {
-      width: 70px;
+    .span-bar.do {
+      background-color: var(--span-do);
+    }
+
+    .span-bar.sleep {
+      background-color: var(--span-sleep);
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.1) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+    }
+
+    .span-bar.success {
+      background-color: var(--span-success);
+    }
+
+    .span-duration-col {
+      width: 90px;
       text-align: right;
+      padding-right: 16px;
       font-family: ui-monospace, monospace;
       font-size: 12px;
       color: var(--text-secondary);
       flex-shrink: 0;
     }
 
-    /* Inspector & Payload 2-Column Grid */
+    /* 2-Column Inspector */
     .grid-duo {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -549,7 +644,7 @@
 
     .prop-table td:first-child {
       color: var(--text-secondary);
-      width: 110px;
+      width: 120px;
       font-weight: 500;
     }
 
@@ -715,7 +810,7 @@
             <span class="stat-value">data-pipeline</span>
           </div>
           <div class="stat-block">
-            <span class="stat-label">Duration</span>
+            <span class="stat-label">Total Duration</span>
             <span class="stat-value tabular-nums" id="stat-duration">-</span>
           </div>
           <div class="stat-block">
@@ -728,28 +823,49 @@
       <!-- Execution Body -->
       <div class="scroll-body">
 
-        <!-- Waterfall Panel -->
+        <!-- Unified Waterfall Canvas Panel -->
         <div class="panel">
           <div class="panel-header">
-            <span class="panel-title">Step Execution Timeline</span>
-            <span style="font-size: 12px; color: var(--text-secondary);">Select a step to inspect payload</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="panel-title">Execution Trace Waterfall</span>
+              <span class="badge badge-muted">Durable Replay</span>
+            </div>
+            <span style="font-size: 12px; color: var(--text-secondary);">Sequential spans showing cascade & sleep wait</span>
           </div>
 
-          <div class="timeline-container">
-            <div class="timeline-ruler tabular-nums">
-              <span>0ms (start)</span>
-              <span>500ms</span>
-              <span>1,000ms</span>
-              <span>1,500ms</span>
-              <span>2,000ms (alarm trigger)</span>
-              <span>2,500ms</span>
+          <div class="waterfall-canvas" id="waterfall-canvas">
+            
+            <!-- Time Ruler Header -->
+            <div class="waterfall-ruler-row">
+              <div class="waterfall-ruler-label-col">Span / Step Hierarchy</div>
+              <div class="waterfall-ruler-track tabular-nums" id="ruler-ticks">
+                <span class="ruler-tick" style="left: 0%;">0ms</span>
+                <span class="ruler-tick" style="left: 20%;">500ms</span>
+                <span class="ruler-tick" style="left: 40%;">1,000ms</span>
+                <span class="ruler-tick" style="left: 60%;">1,500ms</span>
+                <span class="ruler-tick" style="left: 80%;">2,000ms</span>
+                <span class="ruler-tick" style="left: 100%;">2,500ms</span>
+              </div>
+              <div class="waterfall-ruler-duration-col">Duration</div>
             </div>
 
-            <div class="step-rows" id="step-rows">
-              <div style="padding: 24px; text-align: center; color: var(--text-secondary); font-size: 13px;">
+            <!-- Background Grid Overlay -->
+            <div class="waterfall-grid-overlay">
+              <div class="waterfall-grid-line" style="left: 0%;"></div>
+              <div class="waterfall-grid-line" style="left: 20%;"></div>
+              <div class="waterfall-grid-line" style="left: 40%;"></div>
+              <div class="waterfall-grid-line" style="left: 60%;"></div>
+              <div class="waterfall-grid-line" style="left: 80%;"></div>
+              <div class="waterfall-grid-line" style="left: 100%;"></div>
+            </div>
+
+            <!-- Waterfall Rows Container -->
+            <div id="span-rows" style="display: flex; flex-direction: column;">
+              <div style="padding: 32px; text-align: center; color: var(--text-secondary); font-size: 13px;">
                 No execution selected.
               </div>
             </div>
+
           </div>
         </div>
 
@@ -759,12 +875,12 @@
           <!-- Left: Selected Step Details -->
           <div class="panel">
             <div class="panel-header">
-              <span class="panel-title">Step Inspector</span>
+              <span class="panel-title">Span Inspector</span>
               <span id="inspector-step-name" class="badge badge-muted">None selected</span>
             </div>
             <div class="panel-body" id="inspector-body">
               <div style="padding: 24px; text-align: center; color: var(--text-secondary); font-size: 13px;">
-                Click any step in the timeline above to view execution inputs and outputs.
+                Click any span bar above to inspect inputs, outputs, and durable replay states.
               </div>
             </div>
           </div>
@@ -804,21 +920,21 @@
 
         <div class="form-group">
           <label class="form-label">Job Name</label>
-          <input id="form-name" type="text" class="input-text" value="Production Verification Run">
+          <input id="form-name" type="text" class="input-text" value="Production Trace Demo">
         </div>
 
         <div class="form-group">
           <label class="form-label">Items Array (Numbers)</label>
-          <input id="form-items" type="text" class="input-text mono" value="15, 30, 45, 60, 75">
+          <input id="form-items" type="text" class="input-text mono" value="10, 20, 30, 40, 50">
         </div>
 
         <details>
-          <summary>View workflow step plan (4 steps)</summary>
+          <summary>View workflow step sequence</summary>
           <ol style="margin-left: 20px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-top: 4px;">
-            <li><code>validate-input</code>: parameter validation</li>
-            <li><code>wait-briefly</code>: durable sleep (2.0s alarm)</li>
-            <li><code>process-items</code>: reduction & average computation</li>
-            <li><code>finalize-report</code>: commit to SQLite & GCS</li>
+            <li><code>validate-input</code>: parameter validation (step.do)</li>
+            <li><code>wait-briefly</code>: durable sleep 2.0s alarm (step.sleep)</li>
+            <li><code>process-items</code>: reduction & aggregation (step.do)</li>
+            <li><code>finalize-report</code>: commit to SQLite & GCS (step.do)</li>
           </ol>
         </details>
       </div>
@@ -833,12 +949,12 @@
   <script>
     let workflows = [];
     let currentId = null;
-    let selectedStepIdx = 0;
+    let selectedSpanIdx = 1; // Default to first step
     let filterStatus = 'all';
+    let cachedWaterfall = [];
 
     window.addEventListener('DOMContentLoaded', () => {
       fetchWorkflows();
-      // Poll active runs
       setInterval(() => {
         const active = workflows.find(w => w.id === currentId);
         if (active && (active.status === 'waiting' || active.status === 'running')) {
@@ -905,7 +1021,7 @@
       container.innerHTML = items.map(w => {
         const activeClass = w.id === currentId ? 'active' : '';
         const badgeClass = w.status === 'complete' ? 'badge-success' : (w.status === 'waiting' ? 'badge-warning' : 'badge-danger');
-        const duration = w.output?.totalDurationMs ? `${w.output.totalDurationMs}ms` : (w.status === 'complete' ? '2.1s' : 'In flight');
+        const duration = w.output?.totalDurationMs ? `${w.output.totalDurationMs}ms` : (w.status === 'complete' ? '~2.05s' : 'In flight');
 
         return `
           <div class="run-item ${activeClass}" onclick="selectRun('${w.id}')">
@@ -924,6 +1040,7 @@
 
     async function selectRun(id) {
       currentId = id;
+      selectedSpanIdx = 1;
       renderList();
       try {
         const res = await fetch(`/api/workflow/${id}`);
@@ -960,87 +1077,150 @@
       pill.className = `badge ${data.status === 'complete' ? 'badge-success' : (data.status === 'waiting' ? 'badge-warning' : 'badge-danger')}`;
 
       const out = data.output || {};
-      document.getElementById('stat-duration').textContent = out.totalDurationMs ? `${out.totalDurationMs}ms` : (data.status === 'complete' ? '~2050ms' : 'Active');
-      document.getElementById('stat-started').textContent = out.startedAt ? new Date(out.startedAt).toLocaleTimeString() : 'Just now';
-
-      const steps = out.timeline || [
-        { name: "validate-input", kind: "step", status: "completed", startOffsetMs: 0, durationMs: 12, output: { status: "valid" } },
-        { name: "wait-briefly", kind: "sleep", status: data.status === 'waiting' ? "waiting" : "completed", startOffsetMs: 15, durationMs: 2000 },
-        { name: "process-items", kind: "step", status: data.status === 'complete' ? "completed" : "pending", startOffsetMs: 2018, durationMs: 28, output: { processed: true } },
-        { name: "finalize-report", kind: "step", status: data.status === 'complete' ? "completed" : "pending", startOffsetMs: 2050, durationMs: 10, output: { report: "committed" } }
+      const rawSteps = out.timeline || [
+        { name: "validate-input", kind: "step", status: "completed", durationMs: 14, output: { status: "valid" } },
+        { name: "wait-briefly", kind: "sleep", sleepSpec: "2 seconds", status: data.status === 'waiting' ? "waiting" : "completed", durationMs: 2000 },
+        { name: "process-items", kind: "step", status: data.status === 'complete' ? "completed" : "pending", durationMs: 26, output: { processed: true } },
+        { name: "finalize-report", kind: "step", status: data.status === 'complete' ? "completed" : "pending", durationMs: 12, output: { report: "committed" } }
       ];
 
-      renderWaterfall(steps);
+      // Build sequential cascading spans
+      let cumOffset = 0;
+      const spans = [];
+
+      // Add Root span
+      const totalEstimated = rawSteps.reduce((acc, s) => acc + (s.durationMs || 10), 0);
+      const totalDuration = out.totalDurationMs && out.totalDurationMs > totalEstimated ? out.totalDurationMs : totalEstimated;
+
+      spans.push({
+        name: "data-pipeline (root)",
+        kind: "root",
+        status: data.status,
+        startOffsetMs: 0,
+        durationMs: totalDuration,
+        isRoot: true,
+        output: out.summary || out
+      });
+
+      // Add child steps
+      rawSteps.forEach((s, i) => {
+        const dur = s.durationMs || 15;
+        const offset = (s.startOffsetMs && s.startOffsetMs > 0) ? s.startOffsetMs : cumOffset;
+        cumOffset = offset + dur;
+        spans.push({
+          ...s,
+          startOffsetMs: offset,
+          durationMs: dur,
+          isRoot: false
+        });
+      });
+
+      cachedWaterfall = spans;
+
+      document.getElementById('stat-duration').textContent = `${totalDuration}ms`;
+      document.getElementById('stat-started').textContent = out.startedAt ? new Date(out.startedAt).toLocaleTimeString() : 'Just now';
+
+      renderWaterfall(spans, totalDuration);
       document.getElementById('output-block').textContent = JSON.stringify(data, null, 2);
     }
 
-    function renderWaterfall(steps) {
-      const container = document.getElementById('step-rows');
-      const totalMs = 2600;
+    function renderWaterfall(spans, totalWindowMs) {
+      const container = document.getElementById('span-rows');
+      const maxWindow = Math.max(2200, totalWindowMs * 1.05);
 
-      container.innerHTML = steps.map((s, idx) => {
-        const leftPct = Math.min(94, (s.startOffsetMs / totalMs) * 100);
-        const widthPct = Math.max(3, Math.min(100 - leftPct, (s.durationMs / totalMs) * 100));
-        const selClass = idx === selectedStepIdx ? 'selected' : '';
-        const barClass = s.kind === 'sleep' ? 'sleep' : (s.name === 'finalize-report' ? 'success' : '');
+      container.innerHTML = spans.map((s, idx) => {
+        const isSelected = idx === selectedSpanIdx;
+        const leftPct = Math.max(0, Math.min(96, (s.startOffsetMs / maxWindow) * 100));
+        const widthPct = Math.max(2, Math.min(100 - leftPct, (s.durationMs / maxWindow) * 100));
+
+        let barClass = "do";
+        if (s.isRoot) barClass = "root";
+        else if (s.kind === "sleep") barClass = "sleep";
+        else if (s.name === "finalize-report") barClass = "success";
+
+        const treePrefix = s.isRoot ? "●" : (idx === spans.length - 1 ? "└─" : "├─");
+        const typeTag = s.isRoot ? "workflow" : (s.kind === "sleep" ? "step.sleep" : "step.do");
 
         return `
-          <div class="step-row ${selClass}" onclick="selectStep(${idx})">
-            <div class="step-name-col">${s.name}</div>
-            <div class="step-track">
-              <div class="step-bar ${barClass} tabular-nums" style="left: ${leftPct}%; width: ${widthPct}%;">
+          <div class="span-row ${isSelected ? 'selected' : ''}" onclick="selectSpan(${idx})">
+            <!-- Hierarchy tree name -->
+            <div class="span-tree-col">
+              <span class="tree-icon">${treePrefix}</span>
+              <span style="font-weight: ${s.isRoot ? '600' : '400'};">${s.name}</span>
+              <span class="span-type-tag">${typeTag}</span>
+            </div>
+
+            <!-- Gantt canvas with floating cascading span -->
+            <div class="span-timeline-track">
+              <div 
+                class="span-bar ${barClass} tabular-nums" 
+                style="left: ${leftPct}%; width: ${widthPct}%;"
+                title="${s.name}: ${s.durationMs}ms (starts at +${s.startOffsetMs}ms)"
+              >
                 ${s.durationMs}ms
               </div>
             </div>
-            <div class="step-duration-col tabular-nums">${s.durationMs}ms</div>
+
+            <!-- Duration -->
+            <div class="span-duration-col tabular-nums">
+              ${s.durationMs}ms
+            </div>
           </div>
         `;
       }).join('');
 
-      renderInspector(steps[selectedStepIdx] || steps[0]);
+      renderInspector(spans[selectedSpanIdx] || spans[1] || spans[0]);
     }
 
-    function selectStep(idx) {
-      selectedStepIdx = idx;
-      const active = workflows.find(w => w.id === currentId);
-      const steps = active?.output?.timeline || [
-        { name: "validate-input", kind: "step", status: "completed", startOffsetMs: 0, durationMs: 12 },
-        { name: "wait-briefly", kind: "sleep", status: "completed", startOffsetMs: 15, durationMs: 2000 },
-        { name: "process-items", kind: "step", status: "completed", startOffsetMs: 2018, durationMs: 28 },
-        { name: "finalize-report", kind: "step", status: "completed", startOffsetMs: 2050, durationMs: 10 }
-      ];
-      renderWaterfall(steps);
+    function selectSpan(idx) {
+      selectedSpanIdx = idx;
+      const rootSpan = cachedWaterfall[0];
+      renderWaterfall(cachedWaterfall, rootSpan ? rootSpan.durationMs : 2500);
     }
 
-    function renderInspector(step) {
-      if (!step) return;
-      document.getElementById('inspector-step-name').textContent = step.name;
+    function renderInspector(span) {
+      if (!span) return;
+      document.getElementById('inspector-step-name').textContent = span.name;
       const body = document.getElementById('inspector-body');
+
+      const isRoot = span.isRoot;
+      const endOffset = span.startOffsetMs + span.durationMs;
 
       body.innerHTML = `
         <table class="prop-table">
           <tr>
-            <td>Name</td>
-            <td>${step.name}</td>
+            <td>Span Name</td>
+            <td><strong>${span.name}</strong></td>
           </tr>
           <tr>
-            <td>Type</td>
-            <td>${step.kind === 'sleep' ? 'step.sleep' : 'step.do'}</td>
+            <td>Span Kind</td>
+            <td><code>${span.kind || 'step.do'}</code></td>
           </tr>
           <tr>
             <td>Status</td>
-            <td>${step.status}</td>
+            <td><span class="badge ${span.status === 'complete' || span.status === 'completed' ? 'badge-success' : 'badge-warning'}">${span.status}</span></td>
           </tr>
           <tr>
-            <td>Duration</td>
-            <td class="tabular-nums">${step.durationMs}ms</td>
+            <td>Relative Offset</td>
+            <td class="tabular-nums">+${span.startOffsetMs}ms → +${endOffset}ms</td>
           </tr>
-          ${step.sleepSpec ? `<tr><td>Timer</td><td>${step.sleepSpec} (alarm)</td></tr>` : ''}
+          <tr>
+            <td>Span Duration</td>
+            <td class="tabular-nums" style="font-weight: 600; color: var(--accent);">${span.durationMs}ms</td>
+          </tr>
+          ${span.sleepSpec ? `
+            <tr>
+              <td>Durable Alarm</td>
+              <td style="color: var(--warning-text);">${span.sleepSpec} timer (hibernates to GCS)</td>
+            </tr>
+          ` : ''}
         </table>
 
         <div>
-          <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Return Value / Output</div>
-          <pre class="code-block">${JSON.stringify(step.output || { status: step.status, duration: step.durationMs }, null, 2)}</pre>
+          <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">
+            ${isRoot ? 'Workflow Summary & Results' : 'Step Return Value (Stored in SQLite)'}
+          </div>
+          <pre class="code-block">${JSON.stringify(span.output || { status: span.status, duration: span.durationMs }, null, 2)}</pre>
         </div>
       `;
     }
