@@ -201,20 +201,18 @@
           <!-- Worker 2A -->
           <div id="row-step-2a" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"process-analytics"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(3500000)),
+              step.<span class="c-fn">do</span>(<span class="c-str">"process-analytics"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(2500000)),
             </div>
             <span id="badge-2a" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              350ms CPU
             </span>
           </div>
 
           <!-- Worker 2B -->
           <div id="row-step-2b" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"render-thumbnails"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(5000000)),
+              step.<span class="c-fn">do</span>(<span class="c-str">"render-thumbnails"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(4500000)),
             </div>
             <span id="badge-2b" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              500ms CPU
             </span>
           </div>
 
@@ -224,7 +222,6 @@
               step.<span class="c-fn">do</span>(<span class="c-str">"generate-embeddings"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(6500000)),
             </div>
             <span id="badge-2c" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              650ms CPU
             </span>
           </div>
 

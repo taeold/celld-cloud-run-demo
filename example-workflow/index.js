@@ -6,17 +6,15 @@ function generateSpanId() {
   return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function doSomethingExpensive(rounds = 3000) {
+function doSomethingExpensive(iterations = 4500000) {
   const t0 = Date.now();
-  let data = new Uint8Array(512);
-  crypto.getRandomValues(data);
-  for (let i = 0; i < rounds; i++) {
-    const hash = await crypto.subtle.digest("SHA-256", data);
-    data = new Uint8Array(hash);
+  let acc = 0;
+  for (let i = 0; i < iterations; i++) {
+    acc += Math.sin(i) * Math.cos(i);
   }
   return {
     durationMs: Math.max(1, Date.now() - t0),
-    hash: Array.from(data.slice(0, 4), b => b.toString(16).padStart(2, "0")).join("")
+    checksum: acc.toFixed(4)
   };
 }
 
@@ -116,19 +114,19 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       // Worker 1: Compute heavy analytics
       step.do("process-analytics", async () => {
         const t0 = Date.now();
-        const res = await doSomethingExpensive(1500);
+        const res = doSomethingExpensive(2500000);
         return { task: "analytics", ...res, t0, t1: Date.now() };
       }),
       // Worker 2: Render image thumbnails
       step.do("render-thumbnails", async () => {
         const t0 = Date.now();
-        const res = await doSomethingExpensive(3000);
+        const res = doSomethingExpensive(4500000);
         return { task: "thumbnails", ...res, t0, t1: Date.now() };
       }),
       // Worker 3: Generate AI embeddings
       step.do("generate-embeddings", async () => {
         const t0 = Date.now();
-        const res = await doSomethingExpensive(4500);
+        const res = doSomethingExpensive(6500000);
         return { task: "embeddings", ...res, t0, t1: Date.now() };
       }),
     ]);
@@ -222,7 +220,7 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     // =========================================================================
     const committed = await step.do("commit-final-state", async () => {
       const t0 = Date.now();
-      await doSomethingExpensive(600);
+      doSomethingExpensive(1000000);
       return {
         status: "COMMITTED",
         user: user.author,
