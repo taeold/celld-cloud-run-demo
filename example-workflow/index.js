@@ -168,14 +168,13 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
-      name: "03: wait-for-approval (3s - Evicted to GCS at 0 CPU)",
+      name: "03: wait-for-approval (3s sleep at 0 CPU)",
       startMs: sleepT0,
       endMs: sleepT1,
       attributes: {
         "step.kind": "sleep",
         "step.duration_spec": "3 seconds",
         "celld.compute_cost": "0 CPU",
-        "celld.storage": "gs://danielylee-junk-celld-demo-fleet/main/cells/"
       }
     });
 
@@ -216,7 +215,7 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     });
 
     // =========================================================================
-    // STEP 5: Final Durability Commit to SQLite LTX in GCS
+    // STEP 5: Final state commit
     // =========================================================================
     const committed = await step.do("commit-final-state", async () => {
       const t0 = Date.now();
@@ -225,7 +224,6 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
         status: "COMMITTED",
         user: user.author,
         receipt: webhook.receiptId,
-        storageEngine: "SQLite LTX via GCS",
         t0,
         t1: Date.now()
       };
@@ -240,7 +238,6 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       attributes: {
         "step.status": committed.status,
         "step.receipt": committed.receipt,
-        "celld.storage": "SQLite LTX"
       }
     });
 

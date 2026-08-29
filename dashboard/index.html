@@ -291,10 +291,9 @@
           </div>
         </div>
 
-        <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-2 border-t border-border-muted-light dark:border-border-muted-dark flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-2 border-t border-border-muted-light dark:border-border-muted-dark flex items-center justify-between">
           <span>Engine: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">celld v0.4.0 on Cloud Run</code></span>
-          <span>External APIs: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">httpbin.org/json, httpbin.org/uuid</code></span>
-          <span>Durability: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">SQLite LTX via GCS</code></span>
+          <span class="mono text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">region us-west1</span>
         </div>
       </div>
 
@@ -396,7 +395,7 @@
             const sleepRow = document.getElementById('row-step-3');
             sleepRow.classList.add('active-sleep');
             dot.className = 'w-2 h-2 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark animate-ping';
-            document.getElementById('run-status-label').textContent = 'Dormant sleep (Cloud Run scaled to 0 CPU in GCS)...';
+            document.getElementById('run-status-label').textContent = 'Dormant sleep (Cloud Run scaled to 0 CPU)...';
           }
 
           // Live elapsed timer while sleeping on Cloud Run
@@ -446,7 +445,7 @@
 
       // Step 5: Real measured commit time
       highlightRow('row-step-5', 'active-compute');
-      document.getElementById('run-status-label').textContent = 'Executing step 5: committing SQLite LTX in GCS...';
+      document.getElementById('run-status-label').textContent = 'Executing step 5: completing workflow...';
       await sleep(100);
       finishRow('row-step-5', 'completed');
       showBadge('badge-5', `${timings.commit || 45}ms`);
