@@ -234,11 +234,8 @@
 
           <!-- STEP 3: DURABLE HIBERNATION (Scale-to-Zero) -->
           <div id="row-step-3" class="code-row pl-8 my-1.5">
-            <div class="flex items-baseline gap-2 flex-wrap">
+            <div>
               <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"wait-for-approval"</span>, <span class="c-str">"3 seconds"</span>);
-              <span id="sleep-badge" class="hidden mono text-[11px] px-2 py-0.5 rounded border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark bg-status-attention-bg-light dark:bg-status-attention-bg-dark font-medium">
-                ⚡ 0 CPU Billed · Isolate Evicted to GCS
-              </span>
             </div>
             <span id="sleep-timer" class="mono text-[11.5px] tabular-nums text-fg-secondary-light dark:text-fg-secondary-dark ml-2">
               3,000ms
@@ -251,7 +248,7 @@
               <span class="c-kw">const</span> webhook = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"call-webhook-api"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/uuid"</span>));
             </div>
             <span id="badge-4" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              HTTP 200 · Webhook Delivered
+              350ms
             </span>
           </div>
 
@@ -261,7 +258,7 @@
               <span class="c-kw">return await</span> step.<span class="c-fn">do</span>(<span class="c-str">"commit-final-state"</span>, <span class="c-kw">async</span> () =&gt; { ... });
             </div>
             <span id="badge-5" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark shrink-0 ml-2">
-              100ms · SQLite LTX
+              100ms
             </span>
           </div>
 
@@ -403,35 +400,33 @@
 
       // STEP 1: fetch-user-profile (Outbound HTTP)
       highlightRow('row-step-1', 'active-compute');
-      document.getElementById('run-status-label').textContent = 'Calling external API: https://httpbin.org/json...';
+      document.getElementById('run-status-label').textContent = 'Calling https://httpbin.org/json...';
       await sleep(350);
-      showBadge('badge-1', 'HTTP 200 · httpbin.org');
+      showBadge('badge-1', '350ms');
       finishRow('row-step-1', 'completed');
 
       // STEP 2: 3x Parallel Expensive Compute (doSomethingExpensive)
       ['row-step-2a', 'row-step-2b', 'row-step-2c'].forEach(id => highlightRow(id, 'active-compute'));
-      document.getElementById('run-status-label').textContent = 'Running 3x doSomethingExpensive() in parallel isolates...';
+      document.getElementById('run-status-label').textContent = 'Running parallel background tasks...';
       
       await sleep(350);
-      showBadge('badge-2a', '350ms CPU · Analytics');
+      showBadge('badge-2a', '350ms');
       finishRow('row-step-2a', 'completed');
       
       await sleep(150);
-      showBadge('badge-2b', '500ms CPU · Thumbnails');
+      showBadge('badge-2b', '500ms');
       finishRow('row-step-2b', 'completed');
       
       await sleep(150);
-      showBadge('badge-2c', '650ms CPU · Embeddings');
+      showBadge('badge-2c', '650ms');
       finishRow('row-step-2c', 'completed');
 
       // STEP 3: DURABLE SLEEP (3.0 seconds)
       const sleepRow = document.getElementById('row-step-3');
-      const sleepBadge = document.getElementById('sleep-badge');
       const sleepTimer = document.getElementById('sleep-timer');
       
       sleepRow.classList.add('active-sleep');
-      sleepBadge.classList.remove('hidden');
-      document.getElementById('run-status-label').textContent = 'Durable sleep (isolate evicted to GCS, 0 CPU billed)...';
+      document.getElementById('run-status-label').textContent = 'Dormant sleep (0 CPU compute)...';
       dot.className = 'w-2 h-2 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark animate-ping';
 
       let completedData = null;
@@ -455,20 +450,19 @@
       sleepTimer.textContent = '3,000ms';
       sleepRow.classList.remove('active-sleep');
       sleepRow.classList.add('completed');
-      sleepBadge.textContent = '⚡ Woke via Direct VPC alarm · Rehydrated from SQLite LTX';
-      sleepBadge.className = 'mono text-[11px] px-2 py-0.5 rounded border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark bg-status-success-bg-light dark:bg-status-success-bg-dark font-medium';
+      document.getElementById('run-status-label').textContent = 'Resumed from Cloud Storage...';
       dot.className = 'w-2 h-2 rounded-full bg-accent-default-light dark:bg-accent-default-dark animate-pulse';
 
       // STEP 4: call-webhook-api (Outbound HTTP)
       highlightRow('row-step-4', 'active-compute');
-      document.getElementById('run-status-label').textContent = 'Calling external webhook: https://httpbin.org/uuid...';
+      document.getElementById('run-status-label').textContent = 'Calling webhook: https://httpbin.org/uuid...';
       await sleep(350);
-      showBadge('badge-4', 'HTTP 200 · Webhook Delivered');
+      showBadge('badge-4', '350ms');
       finishRow('row-step-4', 'completed');
 
       // STEP 5: commit-final-state
       highlightRow('row-step-5', 'active-compute');
-      document.getElementById('run-status-label').textContent = 'Durably committing final state to SQLite LTX in GCS...';
+      document.getElementById('run-status-label').textContent = 'Committing final state...';
       
       // Wait for real backend to complete if not yet
       while (!completedData) {
@@ -477,7 +471,7 @@
       clearInterval(pollInterval);
 
       await sleep(200);
-      showBadge('badge-5', '100ms · SQLite LTX');
+      showBadge('badge-5', '100ms');
       finishRow('row-step-5', 'completed');
 
       // Final Completion
@@ -547,12 +541,6 @@
 
       const sRow = document.getElementById('row-step-3');
       if (sRow) sRow.className = sRow.className.replace(/active-\w+|completed/g, '').trim();
-      const sBadge = document.getElementById('sleep-badge');
-      if (sBadge) {
-        sBadge.classList.add('hidden');
-        sBadge.textContent = '⚡ 0 CPU Billed · Isolate Evicted to GCS';
-        sBadge.className = 'hidden mono text-[11px] px-2 py-0.5 rounded border border-status-attention-border-light dark:border-status-attention-border-dark text-status-attention-fg-light dark:text-status-attention-fg-dark bg-status-attention-bg-light dark:bg-status-attention-bg-dark font-medium';
-      }
       document.getElementById('sleep-timer').textContent = '3,000ms';
 
       document.getElementById('trace-proof-card').classList.add('hidden');
