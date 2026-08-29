@@ -112,7 +112,7 @@
 
     <div class="flex items-center gap-4 text-[13px]">
       <span class="text-fg-secondary-light dark:text-fg-secondary-dark text-[12px] hidden md:inline">
-        fleet us-west1 · Direct VPC 10.0.0.0/28
+        us-west1 · Cloud Run fleet
       </span>
       <button onclick="toggleTheme()" class="text-fg-secondary-light dark:text-fg-secondary-dark hover:text-fg-primary-light dark:hover:text-fg-primary-dark transition" title="Toggle theme">
         <i id="theme-icon" class="fa-regular fa-moon"></i>
@@ -129,10 +129,10 @@
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div class="space-y-2">
             <h1 class="text-[24px] sm:text-[26px] font-semibold tracking-tight text-fg-primary-light dark:text-fg-primary-dark leading-tight">
-              Cloudflare Workflows running on celld & Cloud Run.
+              Cloudflare Workflows on Google Cloud Run.
             </h1>
             <p class="text-[14px] text-fg-secondary-light dark:text-fg-secondary-dark leading-relaxed max-w-[660px]">
-              Direct execution of <code class="mono text-[13px] text-fg-primary-light dark:text-fg-primary-dark font-medium">WorkflowEntrypoint</code> in V8 isolates. Makes real outbound HTTP calls, runs heavy parallel compute in isolates, and evicts to GCS at 0 CPU during <code class="mono text-[13px] text-fg-primary-light dark:text-fg-primary-dark font-medium">step.sleep()</code>.
+              Run standard Cloudflare Workflows on your own Cloud Run containers. Scale to zero during sleeps with zero idle compute costs, and resume automatically with full state preserved.
             </p>
           </div>
 
