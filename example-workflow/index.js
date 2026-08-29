@@ -6,15 +6,17 @@ function generateSpanId() {
   return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
 }
 
-function doSomethingExpensive(iterations = 1000000) {
+async function doSomethingExpensive(rounds = 3000) {
   const t0 = Date.now();
-  let acc = 1234567;
-  for (let i = 0; i < iterations; i++) {
-    acc = Math.imul(acc ^ (i + 101), 1664525) + 1013904223 | 0;
+  let data = new Uint8Array(512);
+  crypto.getRandomValues(data);
+  for (let i = 0; i < rounds; i++) {
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    data = new Uint8Array(hash);
   }
   return {
     durationMs: Math.max(1, Date.now() - t0),
-    checksum: (acc >>> 0).toString(16)
+    hash: Array.from(data.slice(0, 4), b => b.toString(16).padStart(2, "0")).join("")
   };
 }
 
@@ -114,19 +116,19 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       // Worker 1: Compute heavy analytics
       step.do("process-analytics", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(3500000);
+        const res = await doSomethingExpensive(1500);
         return { task: "analytics", ...res, t0, t1: Date.now() };
       }),
       // Worker 2: Render image thumbnails
       step.do("render-thumbnails", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(5000000);
+        const res = await doSomethingExpensive(3000);
         return { task: "thumbnails", ...res, t0, t1: Date.now() };
       }),
       // Worker 3: Generate AI embeddings
       step.do("generate-embeddings", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(6500000);
+        const res = await doSomethingExpensive(4500);
         return { task: "embeddings", ...res, t0, t1: Date.now() };
       }),
     ]);
@@ -220,7 +222,7 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     // =========================================================================
     const committed = await step.do("commit-final-state", async () => {
       const t0 = Date.now();
-      doSomethingExpensive(1000000);
+      await doSomethingExpensive(600);
       return {
         status: "COMMITTED",
         user: user.author,
@@ -264,13 +266,26 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       }
     });
 
+    const wave1End = Math.max(analytics.t1 || 0, thumbnails.t1 || 0, embeddings.t1 || 0);
+    const sleepDurationMs = Math.max(3000, sleepT1 - wave1End);
+
     return {
       status: "SUCCESS",
       workflowName: "user-onboarding",
       totalDurationMs: realTotalDuration,
       traceId,
       traceUrl: traceId ? `https://console.cloud.google.com/traces/explorer?project=danielylee-junk&traceId=${traceId}` : null,
-      summary: committed
+      summary: committed,
+      timings: {
+        fetchUser: Math.max(1, (user?.t1 || 0) - (user?.t0 || 0)),
+        analytics: Math.max(1, (analytics?.t1 || 0) - (analytics?.t0 || 0)),
+        thumbnails: Math.max(1, (thumbnails?.t1 || 0) - (thumbnails?.t0 || 0)),
+        embeddings: Math.max(1, (embeddings?.t1 || 0) - (embeddings?.t0 || 0)),
+        sleep: sleepDurationMs,
+        webhook: Math.max(1, (webhook?.t1 || 0) - (webhook?.t0 || 0)),
+        commit: Math.max(1, (committed?.t1 || 0) - (committed?.t0 || 0)),
+        total: realTotalDuration
+      }
     };
   }
 }

@@ -7,6 +7,11 @@
       "binding": "PIPELINE",
       "name": "user-onboarding",
       "class_name": "UserOnboardingWorkflow"
+    },
+    {
+      "binding": "DATA_PIPELINE",
+      "name": "data-pipeline",
+      "class_name": "UserOnboardingWorkflow"
     }
   ]
 }
