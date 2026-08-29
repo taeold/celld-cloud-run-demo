@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Celld Workflow Observability Dashboard Server
-Connects to GCS bucket and Cloud Run Ingress to provide a span-like execution waterfall.
+Discovers workflows directly from GCS bucket LTX records and queries Cloud Run Ingress.
 """
 
 import http.server
@@ -11,6 +11,7 @@ import re
 import socketserver
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
 import urllib.error
@@ -18,8 +19,27 @@ import urllib.error
 PORT = int(os.environ.get("PORT", 8888))
 GCS_BUCKET = os.environ.get("CELLD_BUCKET", "gs://danielylee-junk-celld-demo-fleet/main")
 INGRESS_URL = os.environ.get("CELLD_INGRESS_URL", "https://celld-demo-ingress-hqfdpj7xha-uw.a.run.app")
+CACHE_FILE = "/tmp/celld_workflow_cache.json"
 
 _token_cache = {"token": None, "expires": 0}
+_workflow_cache = {}
+_lock = threading.Lock()
+
+def load_cache():
+    global _workflow_cache
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "r") as f:
+                _workflow_cache = json.load(f)
+        except Exception:
+            _workflow_cache = {}
+
+def save_cache():
+    try:
+        with open(CACHE_FILE, "w") as f:
+            json.dump(_workflow_cache, f, indent=2)
+    except Exception as e:
+        print(f"Error saving cache: {e}", file=sys.stderr)
 
 def get_auth_token():
     now = time.time()
@@ -53,28 +73,39 @@ def call_ingress(path, method="GET", body=None):
     except Exception as e:
         return {"error": str(e)}
 
-def list_gcs_workflow_cells():
-    cells = []
+def scan_gcs_for_workflow_ids():
+    """Scans GCS LTX files to discover all workflow instance UUIDs."""
+    print("Scanning GCS bucket for workflow cells...", flush=True)
+    discovered = set()
     try:
-        cmd = [
-            "gcloud", "storage", "ls",
-            f"{GCS_BUCKET.rstrip('/')}/cells/__Workflow.*"
-        ]
-        out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
-        for line in out.splitlines():
-            line = line.strip().rstrip("/")
-            if not line:
+        cmd = ["gcloud", "storage", "ls", f"{GCS_BUCKET.rstrip('/')}/cells/__Workflow.*/**.ltx"]
+        files = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).splitlines()
+        for f in files:
+            f = f.strip()
+            if not f:
                 continue
-            m = re.search(r"(__Workflow\.[^/:]+):([a-f0-9]+)", line)
-            if m:
-                cells.append({
-                    "workflowClass": m.group(1),
-                    "cellId": m.group(2),
-                    "fullPath": line
-                })
+            out = subprocess.check_output(["gcloud", "storage", "cat", f], stderr=subprocess.DEVNULL)
+            uuids = re.findall(rb"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}", out)
+            for u in uuids:
+                discovered.add(u.decode("utf-8"))
     except Exception as e:
-        print(f"Error listing GCS cells: {e}", file=sys.stderr)
-    return cells
+        print(f"Error scanning GCS: {e}", file=sys.stderr)
+    
+    with _lock:
+        for wf_id in discovered:
+            if wf_id not in _workflow_cache:
+                # Query status from ingress
+                status_res = call_ingress(f"/status?id={wf_id}")
+                if "error" not in status_res:
+                    _workflow_cache[wf_id] = {
+                        "id": wf_id,
+                        "workflowName": "data-pipeline",
+                        "status": status_res.get("status", "complete"),
+                        "output": status_res.get("output"),
+                        "error": status_res.get("error")
+                    }
+        save_cache()
+    print(f"GCS scan complete. Discovered {len(_workflow_cache)} total workflow instances.", flush=True)
 
 class DashboardHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -105,32 +136,23 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if url_path == "/api/workflows":
-            # 1. Fetch live in-memory registry from Ingress
-            ingress_runs = call_ingress("/api/workflows")
-            registry_map = {}
-            if isinstance(ingress_runs, dict) and "workflows" in ingress_runs:
-                for item in ingress_runs["workflows"]:
-                    registry_map[item["id"]] = item
-
-            # 2. Fetch GCS cell records
-            cells = list_gcs_workflow_cells()
-            
+            load_cache()
+            # Refresh active or pending runs
             runs = []
-            for wf_id, reg in registry_map.items():
-                status_res = call_ingress(f"/status?id={wf_id}")
-                runs.append({
-                    "id": wf_id,
-                    "workflowName": reg.get("workflowName", "data-pipeline"),
-                    "createdAt": reg.get("createdAt", ""),
-                    "params": reg.get("params", {}),
-                    "status": status_res.get("status", "unknown"),
-                    "output": status_res.get("output"),
-                    "error": status_res.get("error")
-                })
+            with _lock:
+                for wf_id, record in list(_workflow_cache.items()):
+                    if record.get("status") in ("waiting", "running", "queued"):
+                        fresh = call_ingress(f"/status?id={wf_id}")
+                        if "error" not in fresh:
+                            record.update(fresh)
+                    runs.append(record)
+            
+            # Sort newest first
+            runs.sort(key=lambda x: x.get("output", {}).get("startedAt", "") if isinstance(x.get("output"), dict) else "", reverse=True)
 
             self.send_json(200, {
                 "bucket": GCS_BUCKET,
-                "totalCells": len(cells),
+                "totalRuns": len(runs),
                 "workflows": runs
             })
             return
@@ -138,13 +160,25 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         if url_path.startswith("/api/workflow/"):
             wf_id = url_path.split("/")[-1]
             status_res = call_ingress(f"/status?id={wf_id}")
-            self.send_json(200, {
-                "id": wf_id,
-                "status": status_res.get("status", "unknown"),
-                "rollback": status_res.get("rollback"),
-                "output": status_res.get("output"),
-                "error": status_res.get("error")
-            })
+            if "error" not in status_res:
+                with _lock:
+                    if wf_id in _workflow_cache:
+                        _workflow_cache[wf_id].update(status_res)
+                    else:
+                        _workflow_cache[wf_id] = {
+                            "id": wf_id,
+                            "workflowName": "data-pipeline",
+                            **status_res
+                        }
+                    save_cache()
+                self.send_json(200, {
+                    "id": wf_id,
+                    **status_res
+                })
+            else:
+                # Return cached if available
+                cached = _workflow_cache.get(wf_id, {"id": wf_id, "error": status_res.get("error")})
+                self.send_json(200, cached)
             return
 
         super().do_GET()
@@ -160,6 +194,17 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                     pass
             
             res = call_ingress("/create", method="POST", body=body)
+            if res.get("workflowId"):
+                wf_id = res["workflowId"]
+                with _lock:
+                    _workflow_cache[wf_id] = {
+                        "id": wf_id,
+                        "workflowName": "data-pipeline",
+                        "status": "waiting",
+                        "output": None,
+                        "error": None
+                    }
+                    save_cache()
             self.send_json(200, res)
             return
 
@@ -187,6 +232,11 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(payload)
 
 def main():
+    load_cache()
+    # Start initial GCS scan in background thread
+    t = threading.Thread(target=scan_gcs_for_workflow_ids, daemon=True)
+    t.start()
+
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("0.0.0.0", PORT), DashboardHandler) as httpd:
         print(f"===========================================================")
