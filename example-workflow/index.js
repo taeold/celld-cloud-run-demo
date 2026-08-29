@@ -72,7 +72,9 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     const wfSpanId = (traceId && traceId.length === 32) ? traceId.slice(16, 32) : generateSpanId();
 
     // =========================================================================
+    // =========================================================================
     // STEP 1: Real Outbound HTTP Call to External API
+    // (emitOtelSpan inside step.do ensures it only emits ONCE, never on replay)
     // =========================================================================
     const user = await step.do("fetch-user-profile", async () => {
       const t0 = Date.now();
@@ -84,93 +86,104 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
           author = data?.slideshow?.author || author;
         }
       } catch (e) {}
+      const t1 = Date.now();
+
+      await emitOtelSpan({
+        traceId,
+        parentSpanId: wfSpanId,
+        name: "01: fetch-user-profile (httpbin.org)",
+        startMs: t0,
+        endMs: t1,
+        attributes: {
+          "http.url": "https://httpbin.org/json",
+          "http.method": "GET",
+          "user.author": author
+        }
+      });
 
       return {
         userId: "usr_84920",
         author,
         source: "https://httpbin.org/json",
         t0,
-        t1: Date.now()
+        t1
       };
-    });
-
-    await emitOtelSpan({
-      traceId,
-      parentSpanId: wfSpanId,
-      name: "01: fetch-user-profile (httpbin.org)",
-      startMs: user.t0,
-      endMs: user.t1,
-      attributes: {
-        "http.url": "https://httpbin.org/json",
-        "http.method": "GET",
-        "user.author": user.author
-      }
     });
 
     // =========================================================================
     // STEP 2: 3x Parallel Expensive Compute in V8 Isolates
+    // (emitOtelSpan inside each worker callback ensures exactly ONE emission)
     // =========================================================================
     const [analytics, thumbnails, embeddings] = await Promise.all([
       // Worker 1: Compute heavy analytics
       step.do("process-analytics", async () => {
         const t0 = Date.now();
         const res = doSomethingExpensive(2500000);
-        return { task: "analytics", ...res, t0, t1: Date.now() };
+        const t1 = Date.now();
+
+        await emitOtelSpan({
+          traceId,
+          parentSpanId: wfSpanId,
+          name: "02a: process-analytics",
+          startMs: t0,
+          endMs: t1,
+          attributes: { "worker.task": "analytics", "compute.duration_ms": t1 - t0 }
+        });
+
+        return { task: "analytics", ...res, t0, t1 };
       }),
+
       // Worker 2: Render image thumbnails
       step.do("render-thumbnails", async () => {
         const t0 = Date.now();
         const res = doSomethingExpensive(4500000);
-        return { task: "thumbnails", ...res, t0, t1: Date.now() };
+        const t1 = Date.now();
+
+        await emitOtelSpan({
+          traceId,
+          parentSpanId: wfSpanId,
+          name: "02b: render-thumbnails",
+          startMs: t0,
+          endMs: t1,
+          attributes: { "worker.task": "thumbnails", "compute.duration_ms": t1 - t0 }
+        });
+
+        return { task: "thumbnails", ...res, t0, t1 };
       }),
+
       // Worker 3: Generate AI embeddings
       step.do("generate-embeddings", async () => {
         const t0 = Date.now();
         const res = doSomethingExpensive(6500000);
-        return { task: "embeddings", ...res, t0, t1: Date.now() };
-      }),
-    ]);
+        const t1 = Date.now();
 
-    await Promise.all([
-      emitOtelSpan({
-        traceId,
-        parentSpanId: wfSpanId,
-        name: "02a: process-analytics",
-        startMs: analytics.t0,
-        endMs: analytics.t1,
-        attributes: { "worker.task": "analytics", "compute.duration_ms": analytics.durationMs }
-      }),
-      emitOtelSpan({
-        traceId,
-        parentSpanId: wfSpanId,
-        name: "02b: render-thumbnails",
-        startMs: thumbnails.t0,
-        endMs: thumbnails.t1,
-        attributes: { "worker.task": "thumbnails", "compute.duration_ms": thumbnails.durationMs }
-      }),
-      emitOtelSpan({
-        traceId,
-        parentSpanId: wfSpanId,
-        name: "02c: generate-embeddings",
-        startMs: embeddings.t0,
-        endMs: embeddings.t1,
-        attributes: { "worker.task": "embeddings", "compute.duration_ms": embeddings.durationMs }
+        await emitOtelSpan({
+          traceId,
+          parentSpanId: wfSpanId,
+          name: "02c: generate-embeddings",
+          startMs: t0,
+          endMs: t1,
+          attributes: { "worker.task": "embeddings", "compute.duration_ms": t1 - t0 }
+        });
+
+        return { task: "embeddings", ...res, t0, t1 };
       }),
     ]);
 
     // =========================================================================
-    // STEP 3: DURABLE HIBERNATION (Zero-CPU Scale-to-Zero in GCS)
+    // STEP 3: DURABLE HIBERNATION (Scale-to-Zero at 0 CPU)
     // =========================================================================
-    const sleepT0 = Date.now();
+    const wave1End = Math.max(analytics?.t1 || 0, thumbnails?.t1 || 0, embeddings?.t1 || 0);
     await step.sleep("wait-for-approval", "3 seconds");
-    const sleepT1 = Date.now();
+    const wakeTime = Date.now();
 
+    // Emitted only on Drive 2 after waking up, covering full dormant duration
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
       name: "03: wait-for-approval (3s sleep at 0 CPU)",
-      startMs: sleepT0,
-      endMs: sleepT1,
+      startMs: wave1End,
+      endMs: wakeTime,
       attributes: {
         "step.kind": "sleep",
         "step.duration_spec": "3 seconds",
@@ -191,27 +204,28 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
           receiptId = data?.uuid || receiptId;
         }
       } catch (e) {}
+      const t1 = Date.now();
+
+      await emitOtelSpan({
+        traceId,
+        parentSpanId: wfSpanId,
+        name: "04: call-webhook-api (httpbin.org)",
+        startMs: t0,
+        endMs: t1,
+        attributes: {
+          "http.url": "https://httpbin.org/uuid",
+          "webhook.delivered": true,
+          "webhook.receipt_id": receiptId
+        }
+      });
 
       return {
         delivered: true,
         receiptId,
         endpoint: "https://httpbin.org/uuid",
         t0,
-        t1: Date.now()
+        t1
       };
-    });
-
-    await emitOtelSpan({
-      traceId,
-      parentSpanId: wfSpanId,
-      name: "04: call-webhook-api (httpbin.org)",
-      startMs: webhook.t0,
-      endMs: webhook.t1,
-      attributes: {
-        "http.url": "https://httpbin.org/uuid",
-        "webhook.delivered": true,
-        "webhook.receipt_id": webhook.receiptId
-      }
     });
 
     // =========================================================================
@@ -220,25 +234,27 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     const committed = await step.do("commit-final-state", async () => {
       const t0 = Date.now();
       doSomethingExpensive(1000000);
+      const t1 = Date.now();
+
+      await emitOtelSpan({
+        traceId,
+        parentSpanId: wfSpanId,
+        name: "05: commit-final-state",
+        startMs: t0,
+        endMs: t1,
+        attributes: {
+          "step.status": "COMMITTED",
+          "step.receipt": webhook.receiptId,
+        }
+      });
+
       return {
         status: "COMMITTED",
         user: user.author,
         receipt: webhook.receiptId,
         t0,
-        t1: Date.now()
+        t1
       };
-    });
-
-    await emitOtelSpan({
-      traceId,
-      parentSpanId: wfSpanId,
-      name: "05: commit-final-state",
-      startMs: committed.t0,
-      endMs: committed.t1,
-      attributes: {
-        "step.status": committed.status,
-        "step.receipt": committed.receipt,
-      }
     });
 
     const wfEndTime = Date.now();
@@ -261,8 +277,7 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       }
     });
 
-    const wave1End = Math.max(analytics.t1 || 0, thumbnails.t1 || 0, embeddings.t1 || 0);
-    const sleepDurationMs = Math.max(3000, sleepT1 - wave1End);
+    const sleepDurationMs = Math.max(3000, wakeTime - wave1End);
 
     return {
       status: "SUCCESS",
