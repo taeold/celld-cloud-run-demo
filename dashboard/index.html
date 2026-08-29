@@ -3,19 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>data-pipeline - Celld Workflows</title>
+  <title>Celld Workflows - Interactive Demo Console</title>
   <style>
-    /* =========================================================================
-       GitHub Primer & Artifax Semantic Design System
-       ========================================================================= */
+    :root[data-theme="dark"] {
+      --bg-page: #090d13;
+      --bg-surface: #0d1117;
+      --bg-surface-elevated: #161b22;
+      --bg-surface-inset: #04070b;
+      --border-subtle: #21262d;
+      --border-default: #30363d;
+      --border-hover: #484f58;
+      --text-main: #e6edf3;
+      --text-muted: #7d8590;
+      --text-secondary: #484f58;
+      --accent: #2f81f7;
+      --accent-hover: #4493f8;
+      --accent-subtle: rgba(56, 139, 253, 0.12);
+      --accent-border: #388bfd;
+      --success-text: #3fb950;
+      --success-bg: rgba(46, 160, 67, 0.12);
+      --success-border: #238636;
+      --warning-text: #d29922;
+      --warning-bg: rgba(187, 128, 9, 0.12);
+      --warning-border: #9e6a03;
+      --danger-text: #f85149;
+      --danger-bg: rgba(248, 81, 73, 0.12);
+      --danger-border: #da3633;
+    }
+
     :root[data-theme="light"] {
-      --canvas-default: #ffffff;
-      --surface-subtle: #f6f8fa;
-      --surface-elevated: #ffffff;
+      --bg-page: #f6f8fa;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #f6f8fa;
+      --bg-surface-inset: #f0f3f6;
+      --border-subtle: #e1e4e8;
       --border-default: #d0d7de;
-      --border-muted: #e1e4e8;
-      --text-primary: #1f2328;
-      --text-secondary: #656d76;
+      --border-hover: #8c959f;
+      --text-main: #1f2328;
+      --text-muted: #656d76;
+      --text-secondary: #8c959f;
       --accent: #0969da;
       --accent-hover: #0854ad;
       --accent-subtle: #ddf4ff;
@@ -29,33 +55,6 @@
       --danger-text: #cf222e;
       --danger-bg: #ffebe9;
       --danger-border: #ff8182;
-      --code-bg: #f6f8fa;
-      --grid-line: #e1e4e8;
-    }
-
-    :root[data-theme="dark"] {
-      --canvas-default: #0d1117;
-      --surface-subtle: #161b22;
-      --surface-elevated: #21262d;
-      --border-default: #30363d;
-      --border-muted: #21262d;
-      --text-primary: #e6edf3;
-      --text-secondary: #7d8590;
-      --accent: #2f81f7;
-      --accent-hover: #4493f8;
-      --accent-subtle: rgba(56, 139, 253, 0.15);
-      --accent-border: #388bfd;
-      --success-text: #3fb950;
-      --success-bg: rgba(46, 160, 67, 0.15);
-      --success-border: #238636;
-      --warning-text: #d29922;
-      --warning-bg: rgba(187, 128, 9, 0.15);
-      --warning-border: #9e6a03;
-      --danger-text: #f85149;
-      --danger-bg: rgba(248, 81, 73, 0.15);
-      --danger-border: #da3633;
-      --code-bg: #161b22;
-      --grid-line: #21262d;
     }
 
     * {
@@ -66,10 +65,10 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.5;
-      color: var(--text-primary);
-      background-color: var(--canvas-default);
+      color: var(--text-main);
+      background-color: var(--bg-page);
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -78,7 +77,7 @@
     }
 
     code, pre, .mono {
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
       font-size: 12px;
     }
 
@@ -86,82 +85,91 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Top Navigation (GitHub Header baseline) */
-    .top-header {
+    /* Top Console Header */
+    .console-header {
       height: 48px;
-      background-color: var(--surface-subtle);
+      background-color: var(--bg-surface);
       border-bottom: 1px solid var(--border-default);
-      padding: 0 24px;
+      padding: 0 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
     }
 
-    .nav-breadcrumbs {
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
     }
 
-    .nav-breadcrumbs a {
+    .brand-pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background-color: var(--accent-subtle);
       color: var(--accent);
-      text-decoration: none;
+      border: 1px solid var(--accent-border);
     }
 
-    .nav-breadcrumbs a:hover {
-      text-decoration: underline;
-    }
-
-    .nav-breadcrumbs .sep {
-      color: var(--text-secondary);
-    }
-
-    .nav-breadcrumbs .current {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .nav-meta {
+    .cluster-status-ticker {
       display: flex;
       align-items: center;
       gap: 16px;
       font-size: 12px;
-      color: var(--text-secondary);
+      color: var(--text-muted);
     }
 
-    .nav-actions {
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.active { background-color: var(--success-text); }
+    .status-dot.sleep { background-color: var(--warning-text); animation: pulse 1.5s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .controls-group {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    /* Buttons */
     .btn {
-      height: 32px;
+      height: 30px;
       padding: 0 12px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       border-radius: 6px;
       border: 1px solid var(--border-default);
-      background-color: var(--surface-elevated);
-      color: var(--text-primary);
+      background-color: var(--bg-surface-elevated);
+      color: var(--text-main);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: background-color 150ms ease, border-color 150ms ease;
+      transition: background-color 120ms ease, border-color 120ms ease;
     }
 
     .btn:hover {
-      background-color: var(--surface-subtle);
-      border-color: var(--border-default);
-    }
-
-    .btn:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
+      background-color: var(--border-subtle);
+      border-color: var(--border-hover);
     }
 
     .btn-primary {
@@ -176,30 +184,64 @@
       border-color: var(--accent-hover);
     }
 
-    .btn-sm {
-      height: 28px;
-      padding: 0 8px;
-      font-size: 12px;
+    .btn-run {
+      background-color: #238636;
+      border-color: #2ea043;
+      color: #ffffff;
+      font-weight: 600;
     }
 
-    /* Status Badges */
+    .btn-run:hover {
+      background-color: #2ea043;
+      border-color: #3fb950;
+    }
+
+    /* Main Console Viewport */
+    .console-stage {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      overflow: hidden;
+      background-color: var(--bg-page);
+    }
+
+    /* LEFT STAGE: The Workflow Graph & Live Visualizer */
+    .stage-left {
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px 24px;
+      gap: 18px;
+      background-color: var(--bg-surface);
+    }
+
+    /* Hero Run Bar */
+    .run-summary-bar {
+      background-color: var(--bg-surface-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .run-id-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
       padding: 2px 8px;
       border-radius: 9999px;
       border: 1px solid transparent;
-      line-height: 1.4;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      display: inline-block;
     }
 
     .badge-success {
@@ -207,347 +249,331 @@
       background-color: var(--success-bg);
       border-color: var(--success-border);
     }
-    .badge-success .status-dot { background-color: var(--success-text); }
 
     .badge-warning {
       color: var(--warning-text);
       background-color: var(--warning-bg);
       border-color: var(--warning-border);
     }
-    .badge-warning .status-dot { background-color: var(--warning-text); }
 
-    .badge-danger {
-      color: var(--danger-text);
-      background-color: var(--danger-bg);
-      border-color: var(--danger-border);
-    }
-    .badge-danger .status-dot { background-color: var(--danger-text); }
-
-    .badge-muted {
-      color: var(--text-secondary);
-      background-color: var(--surface-subtle);
-      border-color: var(--border-default);
-    }
-
-    /* Bounded Main Content Container */
-    .page-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px 32px;
-    }
-
-    .page-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    /* Execution Header Card */
-    .exec-header {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      border-bottom: 1px solid var(--border-muted);
-      padding-bottom: 16px;
-    }
-
-    .exec-header-top {
+    .run-stats-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
-    .exec-title-row {
+    /* THE VISUAL WORKFLOW PIPELINE CANVAS */
+    .pipeline-canvas {
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      background-color: var(--bg-page);
+      padding: 16px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 12px;
     }
 
-    .exec-title {
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .exec-meta-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .exec-meta-row .sep {
-      color: var(--border-default);
-    }
-
-    /* Cards and Panels */
-    .card {
-      background-color: var(--canvas-default);
-      border: 1px solid var(--border-default);
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    .card-header {
-      padding: 12px 16px;
-      background-color: var(--surface-subtle);
-      border-bottom: 1px solid var(--border-muted);
+    .canvas-title-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-    }
-
-    .card-title {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
-      color: var(--text-primary);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    /* Clean Steps Table */
-    table.data-table {
-      width: 100%;
-      border-collapse: collapse;
+    /* Pipeline Step Nodes */
+    .pipeline-nodes-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .stage-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 120ms ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .stage-card:hover {
+      border-color: var(--border-hover);
+      background-color: var(--bg-surface-elevated);
+    }
+
+    .stage-card.active {
+      border-color: var(--accent);
+      background-color: var(--accent-subtle);
+      outline: 1px solid var(--accent-border);
+    }
+
+    .stage-card.running {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-subtle);
+    }
+
+    .stage-left-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .stage-number {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: var(--bg-surface-elevated);
+      border: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .stage-title {
+      font-weight: 600;
+      font-family: ui-monospace, monospace;
       font-size: 13px;
+      color: var(--text-main);
     }
 
-    table.data-table th {
-      background-color: var(--surface-subtle);
-      color: var(--text-secondary);
-      font-weight: 600;
-      text-align: left;
-      padding: 8px 16px;
-      border-bottom: 1px solid var(--border-default);
+    .stage-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Fan-out Parallel Group Container */
+    .parallel-fanout-container {
+      margin-left: 30px;
+      border-left: 2px solid var(--border-default);
+      padding-left: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .parallel-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       font-size: 12px;
     }
 
-    table.data-table td {
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border-muted);
-      color: var(--text-primary);
-      vertical-align: top;
+    .parallel-card:hover {
+      border-color: var(--border-hover);
     }
 
-    table.data-table tr.step-row:hover td {
-      background-color: var(--surface-subtle);
-      cursor: pointer;
-    }
-
-    table.data-table tr.step-row.active td {
+    .parallel-card.active {
+      border-color: var(--accent);
       background-color: var(--accent-subtle);
     }
 
-    .step-name-cell {
+    /* Durable Sleep Highlight Box */
+    .sleep-callout {
+      background-color: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      border-radius: 6px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .sleep-callout.active {
+      outline: 2px solid var(--warning-border);
+    }
+
+    .sleep-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sleep-title {
+      font-weight: 600;
+      color: var(--warning-text);
+      font-size: 12px;
+    }
+
+    .sleep-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Flow Connector Line */
+    .flow-link {
+      width: 2px;
+      height: 12px;
+      background-color: var(--border-default);
+      margin-left: 20px;
+    }
+
+    /* RIGHT STAGE: Inspector & LTX Telemetry */
+    .stage-right {
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px 24px;
+      gap: 16px;
+      background-color: var(--bg-page);
+    }
+
+    .inspector-panel {
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      background-color: var(--bg-surface);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-title-bar {
+      padding: 10px 14px;
+      background-color: var(--bg-surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .meta-table td {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .meta-table td:first-child {
+      color: var(--text-muted);
+      width: 130px;
+    }
+
+    .meta-table td:last-child {
       font-family: ui-monospace, monospace;
+      color: var(--text-main);
       font-weight: 500;
     }
 
-    .step-chevron {
-      color: var(--text-secondary);
-      font-size: 10px;
-      width: 14px;
-      display: inline-block;
-      transition: transform 150ms ease;
-    }
-
-    .step-chevron.expanded {
-      transform: rotate(90deg);
-    }
-
-    /* Step Inline Drawer */
-    .step-drawer {
-      display: none;
-      background-color: var(--surface-subtle);
-      border-top: 1px solid var(--border-muted);
-      padding: 14px 16px;
-      font-size: 12px;
-    }
-
-    .step-drawer.open {
-      display: block;
-    }
-
-    .drawer-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    pre.json-box {
-      background-color: var(--code-bg);
-      border: 1px solid var(--border-default);
-      border-radius: 6px;
+    pre.payload-block {
+      background-color: var(--bg-surface-inset);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
       padding: 10px 12px;
       font-family: ui-monospace, monospace;
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1.45;
-      color: var(--text-primary);
+      color: var(--text-main);
       overflow-x: auto;
-      max-height: 200px;
+      max-height: 220px;
       user-select: text;
     }
 
-    /* =========================================================================
-       Gantt Trace Waterfall (Minimalist, Proportional, Zero Slop)
-       ========================================================================= */
-    .waterfall-card {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .waterfall-ruler {
-      display: flex;
-      justify-content: space-between;
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-muted);
-      padding-bottom: 6px;
-      padding-left: 200px; /* aligns with step names */
-      padding-right: 80px; /* aligns with duration */
-    }
-
-    .waterfall-canvas {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .waterfall-grid-line {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 1px;
-      background-color: var(--grid-line);
-      pointer-events: none;
-    }
-
-    .waterfall-row {
+    /* Bottom Executions Ticker */
+    .history-drawer {
+      height: 48px;
+      border-top: 1px solid var(--border-default);
+      background-color: var(--bg-surface);
+      padding: 0 20px;
       display: flex;
       align-items: center;
-      height: 32px;
-      border-bottom: 1px solid var(--border-muted);
-      position: relative;
-    }
-
-    .wf-name-col {
-      width: 200px;
-      font-family: ui-monospace, monospace;
-      font-size: 13px;
-      color: var(--text-primary);
-      padding-right: 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      gap: 12px;
       flex-shrink: 0;
+      overflow-x: auto;
     }
 
-    .wf-track-col {
-      flex: 1;
-      height: 100%;
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .wf-bar {
-      position: absolute;
-      height: 16px;
-      border-radius: 3px;
-      background-color: var(--accent);
-      display: flex;
-      align-items: center;
-      padding: 0 6px;
-      font-family: ui-monospace, monospace;
+    .history-label {
       font-size: 11px;
-      font-weight: 500;
-      color: #ffffff;
-      white-space: nowrap;
-    }
-
-    .wf-bar.sleep {
-      background-color: var(--warning-text);
-    }
-
-    .wf-bar.root {
-      background-color: transparent;
-      border: 1px solid var(--accent);
-      color: var(--text-primary);
       font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
-    .wf-dur-col {
-      width: 80px;
-      text-align: right;
-      font-family: ui-monospace, monospace;
-      font-size: 12px;
-      color: var(--text-secondary);
-      flex-shrink: 0;
-    }
-
-    /* Details Disclosure */
-    details {
+    .history-chip {
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 4px;
       border: 1px solid var(--border-default);
-      border-radius: 6px;
-      background-color: var(--canvas-default);
-      overflow: hidden;
-    }
-
-    details summary {
-      padding: 10px 16px;
-      background-color: var(--surface-subtle);
+      background-color: var(--bg-surface-elevated);
+      color: var(--text-main);
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
       cursor: pointer;
-      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 100ms ease;
+    }
+
+    .history-chip:hover {
+      border-color: var(--border-hover);
+    }
+
+    .history-chip.active {
+      border-color: var(--accent);
+      background-color: var(--accent-subtle);
       font-weight: 600;
-      color: var(--text-primary);
-      user-select: none;
     }
 
-    details summary:hover {
-      background-color: var(--surface-elevated);
-    }
-
-    details .details-body {
-      padding: 16px;
-      background-color: var(--canvas-default);
-      border-top: 1px solid var(--border-muted);
-    }
-
-    /* Modal (Trigger Workflow) */
+    /* Trigger Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background-color: rgba(1, 4, 9, 0.6);
+      background-color: rgba(1, 4, 9, 0.7);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 100;
     }
 
-    .modal-backdrop.open {
-      display: flex;
-    }
+    .modal-backdrop.open { display: flex; }
 
-    .modal-card {
+    .modal-dialog {
       width: 440px;
-      background-color: var(--canvas-default);
+      background-color: var(--bg-surface);
       border: 1px solid var(--border-default);
       border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 8px 24px rgba(1, 4, 9, 0.2);
+      box-shadow: 0 12px 32px rgba(1, 4, 9, 0.3);
     }
 
     .modal-header {
       padding: 12px 16px;
-      background-color: var(--surface-subtle);
-      border-bottom: 1px solid var(--border-muted);
+      background-color: var(--bg-surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
       font-weight: 600;
       display: flex;
       align-items: center;
@@ -563,274 +589,260 @@
 
     .modal-footer {
       padding: 12px 16px;
-      background-color: var(--surface-subtle);
-      border-top: 1px solid var(--border-muted);
+      background-color: var(--bg-surface-elevated);
+      border-top: 1px solid var(--border-subtle);
       display: flex;
       justify-content: flex-end;
       gap: 8px;
     }
 
-    .input-control {
+    .input-field {
       height: 32px;
       padding: 0 10px;
-      font-size: 13px;
-      background-color: var(--canvas-default);
+      font-size: 12px;
+      background-color: var(--bg-surface-inset);
       border: 1px solid var(--border-default);
       border-radius: 6px;
-      color: var(--text-primary);
+      color: var(--text-main);
       width: 100%;
     }
 
-    .input-control:focus {
+    .input-field:focus {
       outline: 2px solid var(--accent);
       border-color: var(--accent);
-    }
-
-    /* Filter Tabs */
-    .filter-tabs {
-      display: flex;
-      gap: 4px;
-    }
-
-    .filter-tab {
-      height: 28px;
-      padding: 0 10px;
-      font-size: 12px;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      color: var(--text-secondary);
-      cursor: pointer;
-    }
-
-    .filter-tab.active {
-      background-color: var(--surface-subtle);
-      border-color: var(--border-default);
-      color: var(--text-primary);
-      font-weight: 500;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation Header -->
-  <header class="top-header">
-    <div class="nav-breadcrumbs">
-      <a href="#" onclick="showAllRuns(); return false;">celld</a>
-      <span class="sep">/</span>
-      <a href="#" onclick="showAllRuns(); return false;">workflows</a>
-      <span class="sep">/</span>
-      <span class="current">data-pipeline</span>
+  <!-- Top Console Header -->
+  <header class="console-header">
+    <div class="brand-group">
+      <span class="brand-title">
+        <span>celld</span>
+        <span style="color: var(--text-secondary); font-weight: 400;">/</span>
+        <span>workflows</span>
+        <span class="brand-pill">v0.4.0</span>
+      </span>
     </div>
 
-    <div class="nav-meta">
-      <span>Fleet: <strong>2 Workers active</strong></span>
-      <span>Storage: <strong class="mono">gs://...fleet/main</strong></span>
+    <!-- Cluster Fleet Status -->
+    <div class="cluster-status-ticker">
+      <div>
+        <span class="status-dot active"></span>
+        <span>Fleet: <strong>2 Cloud Run Workers</strong></span>
+      </div>
+      <div>Direct VPC: <strong class="mono">10.0.0.0/28</strong></div>
+      <div>Bucket: <strong class="mono">gs://...fleet/main</strong></div>
     </div>
 
-    <div class="nav-actions">
-      <button onclick="toggleTheme()" class="btn btn-sm" title="Toggle Light/Dark Theme">
-        <span id="theme-text">☼ Theme</span>
+    <!-- Actions -->
+    <div class="controls-group">
+      <button onclick="toggleTheme()" class="btn" title="Toggle Theme">
+        <span id="theme-icon">☼ Theme</span>
       </button>
-      <button onclick="fetchWorkflows()" class="btn btn-sm" id="btn-refresh">
+      <button onclick="fetchWorkflows()" class="btn" id="btn-refresh">
         <span>Refresh</span>
       </button>
-      <button onclick="openTriggerModal()" class="btn btn-primary btn-sm">
-        <span>Trigger workflow</span>
+      <button onclick="triggerDemoRun()" class="btn btn-run" id="btn-run-demo">
+        <span>▶ Run Demo Pipeline</span>
       </button>
     </div>
   </header>
 
-  <!-- Main View Container -->
-  <div class="page-container">
-    <div class="page-content">
+  <!-- The Focused Two-Column Console Stage -->
+  <div class="console-stage">
 
-      <!-- =====================================================================
-           VIEW A: EXECUTION DRILLDOWN (Default)
-           ===================================================================== -->
-      <div id="view-drilldown" style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- LEFT STAGE: Workflow DAG Pipeline & Live Visualizer -->
+    <section class="stage-left">
 
-        <!-- Header -->
-        <div class="exec-header">
-          <div class="exec-header-top">
-            <div class="exec-title-row">
-              <span id="run-status-badge" class="badge badge-success">
-                <span class="status-dot"></span>
-                <span>Complete</span>
-              </span>
-              <h1 class="exec-title mono" id="run-id-title">5be2c111-d943-4069-8599-1d645f3b4cc9</h1>
-              <button onclick="copyCurrentId()" class="btn btn-sm" style="font-size: 11px;">Copy ID</button>
-            </div>
-
-            <div>
-              <button onclick="showAllRuns()" class="btn btn-sm">
-                <span>View all executions</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="exec-meta-row tabular-nums">
-            <span>Started: <strong id="run-started">-</strong></span>
-            <span class="sep">·</span>
-            <span>Duration: <strong id="run-duration" style="color: var(--text-primary);">-</strong></span>
-            <span class="sep">·</span>
-            <span>Trigger: <strong>HTTP POST /create</strong></span>
-            <span class="sep">·</span>
-            <span>Storage: <strong>SQLite LTX</strong></span>
-          </div>
+      <!-- Selected Execution Summary Strip -->
+      <div class="run-summary-bar">
+        <div class="run-id-group">
+          <span id="live-status-pill" class="badge badge-success">
+            <span class="status-dot active"></span>
+            <span>Complete</span>
+          </span>
+          <span class="mono" id="active-id-display" style="font-weight: 600; font-size: 13px;">7a0ffe1a-50c1-40ec-b48d-a36f99fd029b</span>
+          <button onclick="copyActiveId()" class="btn" style="height: 22px; padding: 0 6px; font-size: 11px;">Copy ID</button>
         </div>
 
-        <!-- Section 1: Workflow Steps Table (Interactive Replay View) -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Workflow Steps & Replay Execution</span>
-            <span style="font-size: 12px; color: var(--text-secondary);">Click any step to inspect inputs and return values</span>
-          </div>
-
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th style="width: 260px;">Step</th>
-                <th style="width: 140px;">Type</th>
-                <th style="width: 140px;">Status</th>
-                <th style="width: 140px;">Relative Offset</th>
-                <th style="width: 120px; text-align: right;">Duration</th>
-              </tr>
-            </thead>
-            <tbody id="steps-table-body">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
+        <div class="run-stats-row tabular-nums">
+          <span>Started: <strong id="stat-started">04:18:02 UTC</strong></span>
+          <span>Duration: <strong id="stat-duration" style="color: var(--text-main);">2,004ms</strong></span>
         </div>
-
-        <!-- Section 2: Gantt Waterfall Timeline -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Execution Timeline Waterfall</span>
-            <span style="font-size: 12px; color: var(--text-secondary);">Millisecond trace of sequential step cascade and sleep duration</span>
-          </div>
-
-          <div class="waterfall-card">
-            <div class="waterfall-ruler tabular-nums" id="wf-ruler">
-              <span>0ms</span>
-              <span>500ms</span>
-              <span>1,000ms</span>
-              <span>1,500ms</span>
-              <span>2,000ms</span>
-              <span>2,500ms</span>
-            </div>
-
-            <div class="waterfall-canvas" id="waterfall-canvas">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Section 3: Full Payload Disclosure -->
-        <details>
-          <summary>View Complete Workflow Response Payload (JSON)</summary>
-          <div class="details-body">
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-              <button onclick="copyPayload()" class="btn btn-sm">Copy JSON</button>
-            </div>
-            <pre class="json-box" id="full-payload-box">// Payload will appear here...</pre>
-          </div>
-        </details>
-
       </div>
 
-      <!-- =====================================================================
-           VIEW B: ALL RUNS TABLE (When clicking "View all executions")
-           ===================================================================== -->
-      <div id="view-table" style="display: none; flex-direction: column; gap: 16px;">
-        
-        <div style="display: flex; align-items: center; justify-content: space-between;">
+      <!-- THE INTERACTIVE PIPELINE FLOW GRAPH -->
+      <div class="pipeline-canvas">
+        <div class="canvas-title-row">
+          <span>Execution DAG & State Transitions</span>
+          <span id="flow-status-text" style="font-family: ui-monospace, monospace; text-transform: none; color: var(--success-text);">✓ All 5 Stages Succeeded</span>
+        </div>
+
+        <div class="pipeline-nodes-flow">
+          
+          <!-- Stage 1: Ingest & Partition -->
+          <div class="stage-card" id="node-stage-1" onclick="selectStep('ingest-and-partition')">
+            <div class="stage-left-info">
+              <span class="stage-number">1</span>
+              <div>
+                <div class="stage-title">ingest-and-partition</div>
+                <div class="stage-desc">Validates payload and partitions 12 items into 3 chunks</div>
+              </div>
+            </div>
+            <div class="tabular-nums" style="font-weight: 500; font-size: 12px; color: var(--text-muted);">1ms · step.do</div>
+          </div>
+
+          <div class="flow-link"></div>
+
+          <!-- Stage 2: Fan-out Parallel Workers -->
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px;">
+              Parallel Fan-Out Execution (Promise.all)
+            </div>
+
+            <div class="parallel-fanout-container">
+              <div class="parallel-card" id="node-part-a" onclick="selectStep('transform-partition-a')">
+                <span class="mono">├─ transform-partition-a</span>
+                <span class="tabular-nums" style="color: var(--text-muted);">1ms (partition 0)</span>
+              </div>
+              <div class="parallel-card" id="node-part-b" onclick="selectStep('transform-partition-b')">
+                <span class="mono">├─ transform-partition-b</span>
+                <span class="tabular-nums" style="color: var(--text-muted);">1ms (partition 1)</span>
+              </div>
+              <div class="parallel-card" id="node-part-c" onclick="selectStep('transform-partition-c')">
+                <span class="mono">└─ transform-partition-c</span>
+                <span class="tabular-nums" style="color: var(--text-muted);">1ms (partition 2)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-link"></div>
+
+          <!-- Stage 3: Durable Sleep Cooldown -->
+          <div class="sleep-callout" id="node-stage-3" onclick="selectStep('durable-cooldown')">
+            <div class="sleep-info">
+              <div class="sleep-title" id="sleep-badge-title">⏸ durable-cooldown (2.0s sleep timer)</div>
+              <div class="sleep-subtitle">Isolate evicted from Cloud Run memory · State stored in GCS · 0 CPU consumed</div>
+            </div>
+            <span class="tabular-nums" style="font-weight: 600; font-size: 12px; color: var(--warning-text);">2,000ms</span>
+          </div>
+
+          <div class="flow-link"></div>
+
+          <!-- Stage 4: Integrity Verification -->
+          <div class="stage-card" id="node-stage-4" onclick="selectStep('verify-integrity')">
+            <div class="stage-left-info">
+              <span class="stage-number">4</span>
+              <div>
+                <div class="stage-title">verify-integrity</div>
+                <div class="stage-desc">Recombines checksums with automatic retry policy (3 retries)</div>
+              </div>
+            </div>
+            <div class="tabular-nums" style="font-weight: 500; font-size: 12px; color: var(--text-muted);">1ms · step.do</div>
+          </div>
+
+          <div class="flow-link"></div>
+
+          <!-- Stage 5: Aggregate & Commit -->
+          <div class="stage-card" id="node-stage-5" onclick="selectStep('aggregate-and-commit')">
+            <div class="stage-left-info">
+              <span class="stage-number">5</span>
+              <div>
+                <div class="stage-title">aggregate-and-commit</div>
+                <div class="stage-desc">Computes final sum, mean, variance, and commits LTX to GCS</div>
+              </div>
+            </div>
+            <div class="tabular-nums" style="font-weight: 500; font-size: 12px; color: var(--text-muted);">1ms · step.do</div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT STAGE: Inspector & LTX Storage Telemetry -->
+    <section class="stage-right">
+      
+      <!-- Panel 1: Selected Step Details -->
+      <div class="inspector-panel">
+        <div class="panel-title-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Step Inspector</span>
+            <span class="mono" id="ins-selected-name" style="color: var(--accent); font-weight: 600;">ingest-and-partition</span>
+          </div>
+          <span id="ins-step-type" style="color: var(--text-muted); font-size: 11px;">step.do()</span>
+        </div>
+
+        <div class="panel-body">
+          <table class="meta-table">
+            <tr>
+              <td>Execution Status</td>
+              <td id="ins-status" style="color: var(--success-text);">Completed (Attempt 1 of 1)</td>
+            </tr>
+            <tr>
+              <td>Relative Offset</td>
+              <td id="ins-offset" class="tabular-nums">+0ms from start</td>
+            </tr>
+            <tr>
+              <td>Step Duration</td>
+              <td id="ins-duration" class="tabular-nums" style="font-weight: 600; color: var(--text-main);">1ms</td>
+            </tr>
+            <tr>
+              <td>Durability Engine</td>
+              <td id="ins-durability">SQLite WAL LTX snapshot</td>
+            </tr>
+          </table>
+
           <div>
-            <h2 style="font-size: 18px; font-weight: 600;">Workflow Executions</h2>
-            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">Recent runs discovered from GCS bucket storage</p>
-          </div>
-
-          <div class="filter-tabs">
-            <button onclick="setFilter('all')" id="ftab-all" class="filter-tab active">All</button>
-            <button onclick="setFilter('complete')" id="ftab-complete" class="filter-tab">Complete</button>
-            <button onclick="setFilter('waiting')" id="ftab-waiting" class="filter-tab">Waiting</button>
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">
+              Step Return Value (Memoized in SQLite)
+            </div>
+            <pre class="payload-block" id="ins-payload">// Step output JSON</pre>
           </div>
         </div>
-
-        <div class="card">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th style="width: 140px;">Status</th>
-                <th>Execution ID</th>
-                <th>Trigger</th>
-                <th>Started</th>
-                <th style="text-align: right;">Duration</th>
-              </tr>
-            </thead>
-            <tbody id="all-runs-table-body">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
-        </div>
-
       </div>
 
-    </div>
+      <!-- Panel 2: Final Workflow Aggregation Result -->
+      <div class="inspector-panel">
+        <div class="panel-title-bar">
+          <span>Workflow Execution Summary</span>
+          <button onclick="copyOutput()" class="btn" style="height: 22px; padding: 0 6px; font-size: 11px;">Copy</button>
+        </div>
+
+        <div class="panel-body">
+          <pre class="payload-block" id="full-summary-block" style="max-height: 180px;">// Final aggregated payload</pre>
+        </div>
+      </div>
+
+    </section>
+
   </div>
 
-  <!-- Trigger Workflow Modal -->
-  <div class="modal-backdrop" id="trigger-modal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <span>Trigger New Workflow Execution</span>
-        <button onclick="closeTriggerModal()" class="btn btn-sm" style="border: none; background: transparent;">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <div>
-          <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 4px;">Job Name</label>
-          <input id="modal-name" type="text" class="input-control" value="Verification Run">
-        </div>
-
-        <div>
-          <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 4px;">Items Array (Numbers)</label>
-          <input id="modal-items" type="text" class="input-control mono" value="10, 20, 30, 40, 50">
-        </div>
-
-        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; padding: 8px; background: var(--surface-subtle); border-radius: 4px;">
-          This will trigger a 4-step pipeline: <code>validate-input</code> → <code>wait-briefly (2s sleep)</code> → <code>process-items</code> → <code>finalize-report</code>.
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button onclick="closeTriggerModal()" class="btn">Cancel</button>
-        <button onclick="submitTrigger()" class="btn btn-primary" id="modal-submit-btn">Run workflow</button>
-      </div>
+  <!-- Bottom History Ticker -->
+  <footer class="history-drawer">
+    <span class="history-label">Executions History:</span>
+    <div id="history-chips-container" style="display: flex; gap: 8px;">
+      <!-- Populated with recent runs -->
     </div>
-  </div>
+  </footer>
 
   <script>
     let workflows = [];
-    let currentId = null;
-    let currentFilter = 'all';
-    let expandedStepIndex = 0;
+    let activeWorkflow = null;
+    let activeStepName = "ingest-and-partition";
+    let pollInterval = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       fetchWorkflows();
-      setInterval(() => {
-        const active = workflows.find(w => w.id === currentId);
-        if (active && (active.status === 'waiting' || active.status === 'running')) {
-          refreshCurrent();
-        }
-      }, 2000);
     });
 
     function toggleTheme() {
       const root = document.documentElement;
       const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', next);
-      document.getElementById('theme-text').textContent = next === 'dark' ? '☼ Theme' : '☾ Theme';
+      document.getElementById('theme-icon').textContent = next === 'dark' ? '☼ Theme' : '☾ Theme';
     }
 
     async function fetchWorkflows() {
@@ -840,8 +852,8 @@
         const res = await fetch('/api/workflows');
         const data = await res.json();
         workflows = data.workflows || [];
-        renderAllRunsTable();
-        if (workflows.length > 0 && !currentId) {
+        renderHistoryChips();
+        if (workflows.length > 0 && !activeWorkflow) {
           selectExecution(workflows[0].id);
         }
       } catch (e) {
@@ -851,241 +863,120 @@
       }
     }
 
-    function selectExecution(id) {
-      currentId = id;
-      expandedStepIndex = 0;
-      document.getElementById('view-drilldown').style.display = 'flex';
-      document.getElementById('view-table').style.display = 'none';
+    function renderHistoryChips() {
+      const container = document.getElementById('history-chips-container');
+      container.innerHTML = workflows.slice(0, 10).map(w => {
+        const isSelected = activeWorkflow && activeWorkflow.id === w.id;
+        const isComplete = w.status === 'complete';
+        const dotColor = isComplete ? 'var(--success-text)' : 'var(--warning-text)';
+        const dur = w.output?.totalDurationMs ? `${w.output.totalDurationMs}ms` : (isComplete ? '2.0s' : 'Active');
 
-      const w = workflows.find(x => x.id === id);
-      if (w) renderDrilldown(w);
-
-      fetch(`/api/workflow/${id}`).then(r => r.json()).then(data => {
-        renderDrilldown(data);
-      });
+        return `
+          <button class="history-chip ${isSelected ? 'active' : ''}" onclick="selectExecution('${w.id}')">
+            <span class="status-dot" style="background-color: ${dotColor};"></span>
+            <span>${w.id.slice(0, 8)}...</span>
+            <span style="color: var(--text-muted);">${dur}</span>
+          </button>
+        `;
+      }).join('');
     }
 
-    function showAllRuns() {
-      document.getElementById('view-drilldown').style.display = 'none';
-      document.getElementById('view-table').style.display = 'flex';
-      renderAllRunsTable();
-    }
-
-    async function refreshCurrent() {
-      if (!currentId) return;
+    async function selectExecution(id) {
       try {
-        const res = await fetch(`/api/workflow/${currentId}`);
-        const data = await res.json();
-        const idx = workflows.findIndex(w => w.id === currentId);
-        if (idx !== -1) workflows[idx] = { ...workflows[idx], ...data };
-        renderDrilldown(data);
-        renderAllRunsTable();
+        const res = await fetch(`/api/workflow/${id}`);
+        activeWorkflow = await res.json();
+        renderActiveWorkflow();
+        renderHistoryChips();
       } catch (e) {
         console.error(e);
       }
     }
 
-    function renderDrilldown(data) {
-      document.getElementById('run-id-title').textContent = data.id;
+    function renderActiveWorkflow() {
+      if (!activeWorkflow) return;
+      const w = activeWorkflow;
 
-      const badge = document.getElementById('run-status-badge');
-      const isComplete = data.status === 'complete';
-      const isWaiting = data.status === 'waiting';
+      document.getElementById('active-id-display').textContent = w.id;
 
-      badge.className = `badge ${isComplete ? 'badge-success' : (isWaiting ? 'badge-warning' : 'badge-danger')}`;
-      badge.innerHTML = `<span class="status-dot"></span><span>${isComplete ? 'Complete' : (isWaiting ? 'Waiting (Sleep timer)' : data.status)}</span>`;
+      const isComplete = w.status === 'complete';
+      const isWaiting = w.status === 'waiting';
 
-      const out = data.output || {};
-      const totalDur = out.totalDurationMs ? `${out.totalDurationMs}ms` : (isComplete ? '2,003ms' : 'Active');
-      document.getElementById('run-duration').textContent = totalDur;
-      document.getElementById('run-started').textContent = out.startedAt ? new Date(out.startedAt).toLocaleTimeString() : 'Recent';
-
-      // Full payload JSON box
-      document.getElementById('full-payload-box').textContent = JSON.stringify(data, null, 2);
-
-      // Steps
-      const rawSteps = out.timeline || [
-        { name: "validate-input", kind: "step", status: "completed", durationMs: 1, output: { itemCount: 3 } },
-        { name: "wait-briefly", kind: "sleep", sleepSpec: "2 seconds", status: isWaiting ? "waiting" : "completed", durationMs: 2000 },
-        { name: "process-items", kind: "step", status: isComplete ? "completed" : "pending", durationMs: 1, output: { processedBy: "DEMO", totalSum: 60 } },
-        { name: "finalize-report", kind: "step", status: isComplete ? "completed" : "pending", durationMs: 1, output: { status: "SUCCESS", totalSum: 60 } }
-      ];
-
-      // Sequential cascading offsets
-      let offset = 0;
-      const steps = rawSteps.map(s => {
-        const d = s.durationMs || 1;
-        const start = (s.startOffsetMs !== undefined && s.startOffsetMs > 0) ? s.startOffsetMs : offset;
-        offset = start + d;
-        return { ...s, startOffsetMs: start, durationMs: d };
-      });
-
-      renderStepsTable(steps);
-      renderWaterfall(steps, Math.max(2200, offset));
-    }
-
-    function renderStepsTable(steps) {
-      const tbody = document.getElementById('steps-table-body');
-      let html = '';
-
-      steps.forEach((s, idx) => {
-        const isExpanded = idx === expandedStepIndex;
-        const isComplete = s.status === 'completed';
-        const isWaiting = s.status === 'waiting';
-        const badgeClass = isComplete ? 'badge-success' : (isWaiting ? 'badge-warning' : 'badge-muted');
-
-        html += `
-          <tr class="step-row ${isExpanded ? 'active' : ''}" onclick="toggleStep(${idx})">
-            <td>
-              <div class="step-name-cell">
-                <span class="step-chevron ${isExpanded ? 'expanded' : ''}">▶</span>
-                <span>${s.name}</span>
-              </div>
-            </td>
-            <td><code>${s.kind === 'sleep' ? 'step.sleep' : 'step.do'}</code></td>
-            <td><span class="badge ${badgeClass}"><span class="status-dot"></span><span>${s.status}</span></span></td>
-            <td class="tabular-nums">+${s.startOffsetMs}ms</td>
-            <td class="tabular-nums" style="text-align: right; font-weight: 500;">${s.durationMs}ms</td>
-          </tr>
-          <tr class="step-drawer-row">
-            <td colspan="5" style="padding: 0;">
-              <div class="step-drawer ${isExpanded ? 'open' : ''}">
-                <div class="drawer-grid">
-                  <div>
-                    <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Step Execution Summary</div>
-                    <div style="line-height: 1.6; color: var(--text-primary);">
-                      <div><strong>Step Name:</strong> ${s.name}</div>
-                      <div><strong>Type:</strong> ${s.kind === 'sleep' ? 'Durable sleep timer (2 seconds)' : 'Standard memoized step'}</div>
-                      <div><strong>Storage:</strong> ${s.kind === 'sleep' ? 'Cell alarm scheduled (zero compute during wait)' : 'SQLite KV memoized'}</div>
-                    </div>
-                  </div>
-                  <div>
-                    <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Return Value / Output</div>
-                    <pre class="json-box">${JSON.stringify(s.output || { status: s.status }, null, 2)}</pre>
-                  </div>
-                </div>
-              </div>
-            </td>
-          </tr>
-        `;
-      });
-
-      tbody.innerHTML = html;
-    }
-
-    function toggleStep(idx) {
-      expandedStepIndex = expandedStepIndex === idx ? -1 : idx;
-      const active = workflows.find(w => w.id === currentId);
-      if (active) renderDrilldown(active);
-    }
-
-    function renderWaterfall(steps, totalWindowMs) {
-      const container = document.getElementById('waterfall-canvas');
-      const maxMs = Math.max(2200, totalWindowMs);
-
-      // Gridlines
-      let gridHtml = '';
-      [0, 20, 40, 60, 80, 100].forEach(pct => {
-        gridHtml += `<div class="waterfall-grid-line" style="left: calc(200px + (100% - 280px) * ${pct / 100});"></div>`;
-      });
-
-      // Root workflow row
-      let rowsHtml = `
-        <div class="waterfall-row">
-          <div class="wf-name-col" style="font-weight: 600;">data-pipeline</div>
-          <div class="wf-track-col">
-            <div class="wf-bar root tabular-nums" style="left: 0%; width: 99%;">
-              ${totalWindowMs}ms (total)
-            </div>
-          </div>
-          <div class="wf-dur-col tabular-nums">${totalWindowMs}ms</div>
-        </div>
+      const pill = document.getElementById('live-status-pill');
+      pill.className = `badge ${isComplete ? 'badge-success' : (isWaiting ? 'badge-warning' : 'badge-danger')}`;
+      pill.innerHTML = `
+        <span class="status-dot ${isComplete ? 'active' : (isWaiting ? 'sleep' : '')}"></span>
+        <span>${isComplete ? 'Complete' : (isWaiting ? 'Hibernating in GCS' : w.status)}</span>
       `;
 
-      // Step rows
-      steps.forEach(s => {
-        const leftPct = Math.max(0, Math.min(96, (s.startOffsetMs / maxMs) * 100));
-        const widthPct = Math.max(1.5, Math.min(100 - leftPct, (s.durationMs / maxMs) * 100));
-        const isSleep = s.kind === 'sleep';
+      const out = w.output || {};
+      document.getElementById('stat-duration').textContent = out.totalDurationMs ? `${out.totalDurationMs}ms` : (isComplete ? '2,004ms' : 'In Flight...');
+      document.getElementById('stat-started').textContent = out.startedAt ? new Date(out.startedAt).toLocaleTimeString() : 'Recent';
 
-        rowsHtml += `
-          <div class="waterfall-row">
-            <div class="wf-name-col" style="padding-left: 12px; color: var(--text-secondary); font-size: 12px;">↳ ${s.name}</div>
-            <div class="wf-track-col">
-              <div class="wf-bar ${isSleep ? 'sleep' : ''} tabular-nums" style="left: ${leftPct}%; width: ${widthPct}%;">
-                ${s.durationMs}ms
-              </div>
-            </div>
-            <div class="wf-dur-col tabular-nums">${s.durationMs}ms</div>
-          </div>
-        `;
-      });
+      document.getElementById('flow-status-text').textContent = isComplete ? '✓ All 5 Stages Succeeded' : (isWaiting ? '⏸ Hibernating (2s Sleep)' : 'Running...');
+      document.getElementById('flow-status-text').style.color = isComplete ? 'var(--success-text)' : 'var(--warning-text)';
 
-      container.innerHTML = gridHtml + rowsHtml;
+      document.getElementById('full-summary-block').textContent = JSON.stringify(out.summary || out, null, 2);
+
+      selectStep(activeStepName);
     }
 
-    function renderAllRunsTable() {
-      const tbody = document.getElementById('all-runs-table-body');
-      const filtered = workflows.filter(w => currentFilter === 'all' || w.status === currentFilter);
+    function selectStep(stepName) {
+      activeStepName = stepName;
 
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--text-secondary);">No executions found.</td></tr>`;
-        return;
-      }
+      // Remove active class from all nodes
+      document.querySelectorAll('.stage-card, .parallel-card, .sleep-callout').forEach(el => el.classList.remove('active'));
 
-      tbody.innerHTML = filtered.map(w => {
-        const isComplete = w.status === 'complete';
-        const badgeClass = isComplete ? 'badge-success' : (w.status === 'waiting' ? 'badge-warning' : 'badge-danger');
-        const dur = w.output?.totalDurationMs ? `${w.output.totalDurationMs}ms` : (isComplete ? '2,003ms' : 'Active');
-        const started = w.output?.startedAt ? new Date(w.output.startedAt).toLocaleTimeString() : 'Recent';
+      // Highlight selected node
+      if (stepName === 'ingest-and-partition') document.getElementById('node-stage-1')?.classList.add('active');
+      else if (stepName === 'transform-partition-a') document.getElementById('node-part-a')?.classList.add('active');
+      else if (stepName === 'transform-partition-b') document.getElementById('node-part-b')?.classList.add('active');
+      else if (stepName === 'transform-partition-c') document.getElementById('node-part-c')?.classList.add('active');
+      else if (stepName === 'durable-cooldown') document.getElementById('node-stage-3')?.classList.add('active');
+      else if (stepName === 'verify-integrity') document.getElementById('node-stage-4')?.classList.add('active');
+      else if (stepName === 'aggregate-and-commit') document.getElementById('node-stage-5')?.classList.add('active');
 
-        return `
-          <tr class="step-row" onclick="selectExecution('${w.id}')">
-            <td><span class="badge ${badgeClass}"><span class="status-dot"></span><span>${w.status}</span></span></td>
-            <td><span class="mono" style="font-weight: 600;">${w.id}</span></td>
-            <td style="color: var(--text-secondary);">HTTP POST /create</td>
-            <td class="tabular-nums">${started}</td>
-            <td class="tabular-nums" style="text-align: right; font-weight: 500;">${dur}</td>
-          </tr>
-        `;
-      }).join('');
+      const out = activeWorkflow?.output || {};
+      const timeline = out.timeline || [];
+      const stepData = timeline.find(s => s.name === stepName) || getDefaultStepData(stepName);
+
+      document.getElementById('ins-selected-name').textContent = stepName;
+      document.getElementById('ins-step-type').textContent = stepName === 'durable-cooldown' ? 'step.sleep("2 seconds")' : 'step.do()';
+
+      document.getElementById('ins-status').textContent = `${stepData.status || 'completed'} (Attempt 1 of 1)`;
+      document.getElementById('ins-status').style.color = (stepData.status === 'completed' || activeWorkflow?.status === 'complete') ? 'var(--success-text)' : 'var(--warning-text)';
+
+      document.getElementById('ins-offset').textContent = `+${stepData.startOffsetMs || 0}ms from start`;
+      document.getElementById('ins-duration').textContent = `${stepData.durationMs || 1}ms`;
+
+      document.getElementById('ins-durability').textContent = stepName === 'durable-cooldown' 
+        ? 'Durable isolate eviction (alarm rehydrate via Direct VPC)' 
+        : 'SQLite transaction commit (LTX)';
+
+      document.getElementById('ins-payload').textContent = JSON.stringify(stepData.output || {
+        step: stepName,
+        note: stepName === 'durable-cooldown' ? '0 CPU consumed on Cloud Run during sleep' : 'Replay memoized'
+      }, null, 2);
     }
 
-    function setFilter(filter) {
-      currentFilter = filter;
-      ['all', 'complete', 'waiting'].forEach(f => {
-        const btn = document.getElementById(`ftab-${f}`);
-        if (btn) btn.className = `filter-tab ${f === filter ? 'active' : ''}`;
-      });
-      renderAllRunsTable();
+    function getDefaultStepData(stepName) {
+      if (stepName === 'ingest-and-partition') return { status: 'completed', startOffsetMs: 0, durationMs: 1, output: { totalItems: 12, partitions: 3, checksum: 641 } };
+      if (stepName === 'transform-partition-a') return { status: 'completed', startOffsetMs: 1, durationMs: 1, output: { partition: 0, count: 4, sum: 224 } };
+      if (stepName === 'transform-partition-b') return { status: 'completed', startOffsetMs: 1, durationMs: 1, output: { partition: 1, count: 4, sum: 193, min: 28, max: 61 } };
+      if (stepName === 'transform-partition-c') return { status: 'completed', startOffsetMs: 1, durationMs: 1, output: { partition: 2, count: 4, sum: 224, avg: 56 } };
+      if (stepName === 'durable-cooldown') return { status: 'completed', startOffsetMs: 2, durationMs: 2000 };
+      if (stepName === 'verify-integrity') return { status: 'completed', startOffsetMs: 2002, durationMs: 1, output: { integrityValid: true, verifiedPartitions: 3 } };
+      if (stepName === 'aggregate-and-commit') return { status: 'completed', startOffsetMs: 2003, durationMs: 1, output: { status: 'COMMITTED', grandSum: 641, mean: '53.42' } };
+      return {};
     }
 
-    function copyCurrentId() {
-      if (currentId) {
-        navigator.clipboard.writeText(currentId);
-      }
-    }
-
-    function copyPayload() {
-      const txt = document.getElementById('full-payload-box').textContent;
-      navigator.clipboard.writeText(txt);
-    }
-
-    function openTriggerModal() {
-      document.getElementById('trigger-modal').classList.add('open');
-    }
-
-    function closeTriggerModal() {
-      document.getElementById('trigger-modal').classList.remove('open');
-    }
-
-    async function submitTrigger() {
-      const btn = document.getElementById('modal-submit-btn');
-      btn.textContent = 'Running...';
+    async function triggerDemoRun() {
+      const btn = document.getElementById('btn-run-demo');
+      btn.textContent = 'Running Pipeline...';
       btn.disabled = true;
 
-      const name = document.getElementById('modal-name').value.trim();
-      const items = document.getElementById('modal-items').value.split(',').map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x));
+      // Sample data
+      const items = [15, 82, 33, 94, 55, 61, 28, 49, 70, 11, 44, 99];
+      const name = "Demo Pipeline " + new Date().toLocaleTimeString();
 
       try {
         const res = await fetch('/api/trigger', {
@@ -1094,17 +985,48 @@
           body: JSON.stringify({ name, items })
         });
         const data = await res.json();
-        closeTriggerModal();
+
         if (data.workflowId) {
-          await fetchWorkflows();
-          selectExecution(data.workflowId);
+          activeWorkflow = {
+            id: data.workflowId,
+            status: "waiting",
+            output: null
+          };
+          renderActiveWorkflow();
+
+          // Poll until complete
+          if (pollInterval) clearInterval(pollInterval);
+          pollInterval = setInterval(async () => {
+            const r = await fetch(`/api/workflow/${data.workflowId}`);
+            const fresh = await r.json();
+            activeWorkflow = fresh;
+            renderActiveWorkflow();
+
+            if (fresh.status === 'complete' || fresh.status === 'errored') {
+              clearInterval(pollInterval);
+              pollInterval = null;
+              btn.textContent = '▶ Run Demo Pipeline';
+              btn.disabled = false;
+              fetchWorkflows();
+            }
+          }, 800);
         }
       } catch (e) {
-        alert('Trigger failed: ' + e);
-      } finally {
-        btn.textContent = 'Run workflow';
+        alert("Run failed: " + e);
+        btn.textContent = '▶ Run Demo Pipeline';
         btn.disabled = false;
       }
+    }
+
+    function copyActiveId() {
+      if (activeWorkflow?.id) {
+        navigator.clipboard.writeText(activeWorkflow.id);
+      }
+    }
+
+    function copyOutput() {
+      const txt = document.getElementById('full-summary-block').textContent;
+      navigator.clipboard.writeText(txt);
     }
   </script>
 </body>
