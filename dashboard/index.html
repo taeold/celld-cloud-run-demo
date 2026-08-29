@@ -281,16 +281,6 @@
         </a>
       </div>
 
-      <!-- Section 4: Expandable Raw Fleet JSON -->
-      <div class="pt-2">
-        <details id="raw-json-details" class="hidden text-[12px]">
-          <summary class="cursor-pointer font-medium text-fg-secondary-light dark:text-fg-secondary-dark hover:text-fg-primary-light dark:hover:text-fg-primary-dark">
-            ▶ Raw execution payload from Cloud Run fleet
-          </summary>
-          <pre id="raw-json-view" class="mono mt-2 rounded-[6px] border border-border-muted-light dark:border-border-muted-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-3 text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark max-h-56 overflow-y-auto select-all leading-relaxed"></pre>
-        </details>
-      </div>
-
     </div>
   </main>
 
@@ -450,10 +440,6 @@
           document.getElementById('proof-trace-url').href = finalTraceUrl;
         }
       }
-
-      // Populate raw JSON disclosure
-      document.getElementById('raw-json-view').textContent = JSON.stringify(completedData, null, 2);
-      document.getElementById('raw-json-details').classList.remove('hidden');
 
       btn.disabled = false;
       btn.innerHTML = '<span>Run workflow</span><i class="fa-solid fa-arrow-right text-[11px]"></i>';
