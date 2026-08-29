@@ -306,30 +306,7 @@
         </div>
       </div>
 
-      <!-- Section 4: Three Core Metrics -->
-      <div class="pt-2">
-        <div class="grid grid-cols-3 gap-6 pt-4 border-t border-border-muted-light dark:border-border-muted-dark">
-          <div class="space-y-0.5">
-            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Active compute</div>
-            <div id="score-compute" class="mono text-[22px] font-semibold text-status-success-fg-light dark:text-status-success-fg-dark tabular-nums">~1.5s</div>
-            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">V8 isolate CPU + HTTP</div>
-          </div>
-
-          <div class="space-y-0.5">
-            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Dormant sleep</div>
-            <div id="score-sleep" class="mono text-[22px] font-semibold text-status-attention-fg-light dark:text-status-attention-fg-dark tabular-nums">3,000ms</div>
-            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">0 CPU / GCS Eviction</div>
-          </div>
-
-          <div class="space-y-0.5">
-            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">Durability</div>
-            <div id="score-storage" class="mono text-[22px] font-semibold text-fg-primary-light dark:text-fg-primary-dark">SQLite LTX</div>
-            <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark">ACID GCS Checkpoint</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 5: Expandable Raw Fleet JSON -->
+      <!-- Section 4: Expandable Raw Fleet JSON -->
       <div class="pt-2">
         <details id="raw-json-details" class="hidden text-[12px]">
           <summary class="cursor-pointer font-medium text-fg-secondary-light dark:text-fg-secondary-dark hover:text-fg-primary-light dark:hover:text-fg-primary-dark">
@@ -483,12 +460,7 @@
       finishRow('row-step-5', 'completed');
       showBadge('badge-5', `${timings.commit || 45}ms`);
 
-      // Update Scorecard with REAL measurements
       const realTotal = timings.total || completedData?.output?.totalDurationMs || (Date.now() - t0Client);
-      const realCompute = (timings.fetchUser || 0) + Math.max(timings.analytics || 0, timings.thumbnails || 0, timings.embeddings || 0) + (timings.webhook || 0) + (timings.commit || 0);
-      
-      document.getElementById('score-compute').textContent = `${realCompute || 750}ms`;
-      document.getElementById('score-sleep').textContent = `${timings.sleep ? timings.sleep.toLocaleString() : '3,120'}ms`;
       
       dot.className = 'w-2 h-2 rounded-full bg-status-success-fg-light dark:bg-status-success-fg-dark';
       document.getElementById('run-status-label').textContent = `Complete in ${(realTotal / 1000).toFixed(2)}s (real telemetry)`;
