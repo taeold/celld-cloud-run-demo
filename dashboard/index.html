@@ -419,6 +419,9 @@
           <span style="color: var(--text-muted); font-size: 11px;">on</span>
           <span class="pill pill-gcp">Google Cloud Run</span>
           <span id="live-wfid-pill" class="pill mono" style="background: rgba(255,255,255,0.06); color: var(--text-muted); border-color: var(--border-subtle);">Fleet Ready</span>
+          <a id="trace-header-pill" href="#" target="_blank" class="pill mono" style="display: none; background: rgba(66, 133, 244, 0.15); color: #4285f4; border-color: rgba(66, 133, 244, 0.4); text-decoration: none;">
+            🔍 Trace: <span id="trace-pill-id">...</span> ↗
+          </a>
         </div>
         <h1 class="showcase-title">Durable Serverless Execution with celld</h1>
         <p class="showcase-subtitle">V8 Isolates + Direct VPC Alarm + Zero-CPU GCS Hibernate</p>
@@ -523,6 +526,46 @@
         <span id="completion-text">Workflow Complete in 2,004ms · Zero State Loss · 0 Idle Compute Cost</span>
       </div>
 
+      <!-- VERIFIED CLOUD PROOF & CLOUD TRACE RECEIPT -->
+      <div id="trace-proof-card" style="display: none; border-radius: 8px; border: 1px solid rgba(66, 133, 244, 0.35); background: rgba(66, 133, 244, 0.06); padding: 14px 18px; margin-top: 4px; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" fill="#4285f4"/>
+            </svg>
+            <span style="font-size: 12.5px; font-weight: 600; color: #f0f6fc;">Verified Google Cloud Trace</span>
+            <span class="pill mono" style="font-size: 10px; background: rgba(66, 133, 244, 0.15); color: #4285f4; border-color: rgba(66, 133, 244, 0.3);">Cloud Run Ingress</span>
+          </div>
+          <span class="mono tabular-nums" style="font-size: 11px; color: #8b949e;" id="trace-timestamp"></span>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; background: var(--surface-elevated); padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Official Trace ID</span>
+            <span class="mono" id="proof-trace-id" style="font-size: 12px; font-weight: 600; color: #f0f6fc; user-select: all;">...</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <a id="proof-trace-url" href="#" target="_blank" class="btn-run" style="height: 28px; padding: 0 12px; font-size: 11.5px; background: #1a73e8; border-color: #1557b0; text-decoration: none; box-shadow: none;">
+              Open Cloud Trace ↗
+            </a>
+            <a id="proof-pantheon-url" href="#" target="_blank" style="font-size: 11.5px; color: var(--text-muted); text-decoration: none; padding: 0 6px;">
+              Pantheon ↗
+            </a>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px;">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="color: var(--text-muted);">Isolate GCS Snapshot:</span>
+            <span class="mono" style="color: var(--text); font-size: 10px; word-break: break-all;">gs://danielylee-junk-celld-demo-fleet/main/cells/</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="color: var(--text-muted);">VPC Network Transit:</span>
+            <span class="mono" style="color: var(--text); font-size: 10px;">Direct VPC Subnet 10.0.0.0/28</span>
+          </div>
+        </div>
+      </div>
+
     </section>
 
     <!-- Bottom Scorecard (The 3 Punchy Stats for the Tweet) -->
@@ -592,9 +635,18 @@
       });
       const triggerData = await triggerRes.json();
       const wfId = triggerData.workflowId;
+      const traceId = triggerData.traceId;
+      const traceUrl = triggerData.traceUrl;
+      const pantheonUrl = triggerData.pantheonUrl;
 
-      // Update UI with real Workflow Instance ID
+      // Update UI with real Workflow Instance ID and Cloud Trace Pill
       document.getElementById('live-wfid-pill').textContent = wfId ? `ID: ${wfId.slice(0, 8)}...` : 'Dispatching';
+      if (traceId) {
+        const tracePill = document.getElementById('trace-header-pill');
+        tracePill.style.display = 'inline-flex';
+        tracePill.href = traceUrl || pantheonUrl || '#';
+        document.getElementById('trace-pill-id').textContent = traceId.slice(0, 8) + '...';
+      }
 
       // STEP 1: Real Ingest & Partition
       activateStep(1);
@@ -673,6 +725,8 @@
       const agg = aggStep.output || {};
       const totalMs = out.totalDurationMs || 2004;
       const computeMs = Math.max(1, totalMs - 2000);
+      const finalTraceId = out.traceId || traceId;
+      const finalTraceUrl = out.traceUrl || traceUrl;
 
       // STEP 4: Real Checksum Verification
       activateStep(4);
@@ -690,6 +744,20 @@
       const banner = document.getElementById('completion-banner');
       banner.style.display = 'flex';
       document.getElementById('completion-text').textContent = `Workflow ${wfId.slice(0, 8)}... Complete in ${totalMs}ms · Zero State Loss · Real Cloud Run Fleet`;
+
+      // Display Verified Google Cloud Trace Receipt
+      if (finalTraceId) {
+        const proofCard = document.getElementById('trace-proof-card');
+        proofCard.style.display = 'flex';
+        document.getElementById('proof-trace-id').textContent = finalTraceId;
+        document.getElementById('trace-timestamp').textContent = new Date().toLocaleTimeString();
+        if (finalTraceUrl) {
+          document.getElementById('proof-trace-url').href = finalTraceUrl;
+        }
+        if (pantheonUrl) {
+          document.getElementById('proof-pantheon-url').href = pantheonUrl;
+        }
+      }
 
       // Update Scorecard with REAL millisecond timings
       document.getElementById('score-compute').textContent = `${computeMs}ms`;
@@ -737,6 +805,8 @@
       document.getElementById('sleep-timer-text').textContent = '2,000ms';
       document.getElementById('dot-3').style.background = 'var(--surface-inset)';
       document.getElementById('completion-banner').style.display = 'none';
+      document.getElementById('trace-proof-card').style.display = 'none';
+      document.getElementById('trace-header-pill').style.display = 'none';
       document.getElementById('detail-1').textContent = 'Validates 12 numbers into 3 chunks in V8 isolate';
       document.getElementById('detail-4').textContent = 'Resumed via Direct VPC alarm · Rehydrated from SQLite LTX';
     }

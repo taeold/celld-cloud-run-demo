@@ -2,7 +2,7 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 
 export class DataPipelineWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
-    const { name, items } = event.payload;
+    const { name, items, traceId } = event.payload;
     const rawItems = Array.isArray(items) && items.length > 0 ? items : [12, 45, 68, 23, 89, 34, 56, 91, 14, 77];
 
     // Stage 1: Ingest & Partition
@@ -194,6 +194,8 @@ export class DataPipelineWorkflow extends WorkflowEntrypoint {
       status: "SUCCESS",
       workflowName: "data-pipeline",
       totalDurationMs: totalMs,
+      traceId,
+      traceUrl: traceId ? `https://console.cloud.google.com/traces/explorer?project=danielylee-junk&traceId=${traceId}` : null,
       timeline,
       summary: finalized
     };
@@ -227,19 +229,38 @@ export default {
       try {
         body = await request.json();
       } catch {}
+
+      const traceContext = request.headers.get("x-cloud-trace-context") || request.headers.get("traceparent") || "";
+      let traceId = "";
+      if (traceContext.includes("/")) {
+        traceId = traceContext.split("/")[0];
+      } else if (traceContext.startsWith("00-")) {
+        traceId = traceContext.split("-")[1];
+      }
+
+      const traceUrl = traceId ? `https://console.cloud.google.com/traces/explorer?project=danielylee-junk&traceId=${traceId}` : null;
+      const pantheonUrl = traceId ? `https://pantheon.corp.google.com/traces/explorer;query=%7B%22timeSeriesQuery%22:%7B%22traceQuery%22:%7B%22resourceContainer%22:%22projects%2Fdanielylee-junk%2Flocations%2Fglobal%2FtraceScopes%2F_Default%22%7D%7D%7D;traceId=${traceId}?project=danielylee-junk` : null;
+
       const instance = await env.PIPELINE.create({
         params: {
           name: body.name ?? "Cloud Run User",
           items: body.items ?? [10, 20, 30, 40, 50],
+          traceId,
+          traceUrl,
+          pantheonUrl,
         },
       });
       WORKFLOW_REGISTRY.unshift({
         id: instance.id,
         workflowName: "data-pipeline",
         createdAt: new Date().toISOString(),
+        traceId,
+        traceUrl,
+        pantheonUrl,
         params: {
           name: body.name ?? "Cloud Run User",
           items: body.items ?? [10, 20, 30, 40, 50],
+          traceId,
         },
       });
       if (WORKFLOW_REGISTRY.length > 50) WORKFLOW_REGISTRY.pop();
@@ -247,6 +268,9 @@ export default {
       return Response.json({
         success: true,
         workflowId: instance.id,
+        traceId,
+        traceUrl,
+        pantheonUrl,
         checkUrl: `/status?id=${instance.id}`,
       });
     }
