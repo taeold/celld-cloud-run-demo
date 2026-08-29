@@ -269,32 +269,16 @@
         </div>
       </div>
 
-      <!-- Section 3: Verified Google Cloud Trace Surface -->
-      <div id="trace-proof-card" class="hidden rounded-[6px] border border-border-default-light dark:border-border-default-dark bg-surface-subtle-light dark:bg-surface-subtle-dark p-4 space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark font-medium">
-            Google Cloud Trace Verification · Full Multi-Tier Waterfall
-          </span>
-          <span id="trace-timestamp" class="mono text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark tabular-nums"></span>
+      <!-- Cloud Trace Bar -->
+      <div id="trace-proof-card" class="hidden flex items-center justify-between text-[13px] px-1 py-0.5">
+        <div class="flex items-center gap-2 text-fg-secondary-light dark:text-fg-secondary-dark">
+          <span>Trace ID:</span>
+          <span id="proof-trace-id" class="mono text-fg-primary-light dark:text-fg-primary-dark font-medium select-all">...</span>
         </div>
-
-        <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 pt-1">
-          <div class="space-y-0.5">
-            <div class="text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">Official Trace ID</div>
-            <div id="proof-trace-id" class="mono text-[13px] font-semibold text-fg-primary-light dark:text-fg-primary-dark select-all">...</div>
-          </div>
-          <div class="flex items-center gap-3 text-[13px]">
-            <a id="proof-trace-url" href="#" target="_blank" class="text-accent-default-light dark:text-accent-default-dark hover:underline flex items-center gap-1 font-medium">
-              <span>View in Cloud Trace</span>
-              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-            </a>
-          </div>
-        </div>
-
-        <div class="text-[12px] text-fg-secondary-light dark:text-fg-secondary-dark pt-2 border-t border-border-muted-light dark:border-border-muted-dark flex items-center justify-between">
-          <span>Engine: <code class="mono text-[11px] text-fg-primary-light dark:text-fg-primary-dark">celld v0.4.0 on Cloud Run</code></span>
-          <span class="mono text-[11px] text-fg-secondary-light dark:text-fg-secondary-dark">region us-west1</span>
-        </div>
+        <a id="proof-trace-url" href="#" target="_blank" class="text-accent-default-light dark:text-accent-default-dark hover:underline flex items-center gap-1 font-medium">
+          <span>View in Cloud Trace</span>
+          <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+        </a>
       </div>
 
       <!-- Section 4: Expandable Raw Fleet JSON -->
@@ -462,7 +446,6 @@
         const proofCard = document.getElementById('trace-proof-card');
         proofCard.classList.remove('hidden');
         document.getElementById('proof-trace-id').textContent = finalTraceId;
-        document.getElementById('trace-timestamp').textContent = new Date().toLocaleTimeString();
         if (finalTraceUrl) {
           document.getElementById('proof-trace-url').href = finalTraceUrl;
         }
