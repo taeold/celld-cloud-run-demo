@@ -143,9 +143,6 @@
           <span id="run-status-label" class="mono">Ready to dispatch</span>
           <span>·</span>
           <span id="run-id-label" class="mono text-fg-primary-light dark:text-fg-primary-dark">idle</span>
-          <a id="trace-header-link" href="#" target="_blank" class="hidden mono text-accent-default-light dark:text-accent-default-dark hover:underline">
-            · Google Cloud Trace ↗
-          </a>
         </div>
       </div>
 
@@ -328,11 +325,6 @@
 
       // Update UI with real Workflow Instance ID
       document.getElementById('run-id-label').textContent = wfId ? `run ${wfId.slice(0, 8)}` : 'dispatching';
-      if (traceId && traceUrl) {
-        const traceLink = document.getElementById('trace-header-link');
-        traceLink.classList.remove('hidden');
-        traceLink.href = traceUrl;
-      }
 
       // STEP 1: fetch-user-profile (Outbound HTTP)
       highlightRow('row-step-1', 'active-compute');
@@ -481,7 +473,6 @@
       document.getElementById('sleep-timer').textContent = '3,000ms';
 
       document.getElementById('trace-proof-card').classList.add('hidden');
-      document.getElementById('trace-header-link').classList.add('hidden');
     }
 
     function sleep(ms) {
