@@ -119,7 +119,7 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       // Worker 1: Compute heavy analytics
       step.do("process-analytics", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(2500000);
+        const res = doSomethingExpensive(10000000);
         const t1 = Date.now();
 
         await emitOtelSpan({
@@ -137,7 +137,7 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       // Worker 2: Render image thumbnails
       step.do("render-thumbnails", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(4500000);
+        const res = doSomethingExpensive(18000000);
         const t1 = Date.now();
 
         await emitOtelSpan({
@@ -155,7 +155,7 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       // Worker 3: Generate AI embeddings
       step.do("generate-embeddings", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(6500000);
+        const res = doSomethingExpensive(26000000);
         const t1 = Date.now();
 
         await emitOtelSpan({

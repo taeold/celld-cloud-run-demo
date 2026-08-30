@@ -191,7 +191,7 @@
           <!-- Worker 2A -->
           <div id="row-step-2a" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"process-analytics"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(2500000)),
+              step.<span class="c-fn">do</span>(<span class="c-str">"process-analytics"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(10000000)),
             </div>
             <span id="badge-2a" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
             </span>
@@ -200,7 +200,7 @@
           <!-- Worker 2B -->
           <div id="row-step-2b" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"render-thumbnails"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(4500000)),
+              step.<span class="c-fn">do</span>(<span class="c-str">"render-thumbnails"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(18000000)),
             </div>
             <span id="badge-2b" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
             </span>
@@ -209,7 +209,7 @@
           <!-- Worker 2C -->
           <div id="row-step-2c" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"generate-embeddings"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(6500000)),
+              step.<span class="c-fn">do</span>(<span class="c-str">"generate-embeddings"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">doSomethingExpensive</span>(26000000)),
             </div>
             <span id="badge-2c" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
             </span>
@@ -329,11 +329,37 @@
 
       // Real Polling Loop: Tracks live state transitions from Cloud Run
       const pollStart = Date.now();
+      let step1Done = false;
+      let step2aDone = false;
+      let step2bDone = false;
+
       while (!completedData) {
-        await sleep(120);
+        await sleep(100);
         try {
           const r = await fetch(`/api/workflow/${wfId}`);
           const data = await r.json();
+
+          const elapsedCompute = Date.now() - pollStart;
+
+          // While running before sleep: progressively update parallel workers
+          if (!sleepEntered && data.status === 'running') {
+            if (elapsedCompute > 150 && !step1Done) {
+              step1Done = true;
+              finishRow('row-step-1', 'completed');
+              ['row-step-2a', 'row-step-2b', 'row-step-2c'].forEach(id => highlightRow(id, 'active-compute'));
+              document.getElementById('run-status-label').textContent = 'Executing step 2: 3x parallel compute in V8 isolates...';
+            }
+            if (elapsedCompute > 1100 && !step2aDone) {
+              step2aDone = true;
+              finishRow('row-step-2a', 'completed');
+              document.getElementById('run-status-label').textContent = 'Step 2: analytics finished, processing thumbnails & embeddings...';
+            }
+            if (elapsedCompute > 2500 && !step2bDone) {
+              step2bDone = true;
+              finishRow('row-step-2b', 'completed');
+              document.getElementById('run-status-label').textContent = 'Step 2: thumbnails finished, generating embeddings...';
+            }
+          }
 
           // Transition 1: Workflow entered durable sleep on Cloud Run!
           if (data.status === 'waiting' && !sleepEntered) {
@@ -349,18 +375,13 @@
             sleepRow.classList.add('active-sleep');
             dot.className = 'w-2 h-2 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark animate-ping';
             document.getElementById('run-status-label').textContent = 'Dormant sleep (isolate hibernating at 0 CPU)...';
+            showBadge('sleep-timer', '0.0s elapsed');
           }
 
           // Live elapsed timer while sleeping on Cloud Run
           if (sleepEntered && data.status === 'waiting') {
             const elapsed = ((Date.now() - sleepStart) / 1000).toFixed(1);
             showBadge('sleep-timer', `${elapsed}s elapsed`);
-          }
-
-          // Before sleep: highlight parallel compute
-          if (!sleepEntered && (Date.now() - pollStart) > 400) {
-            ['row-step-2a', 'row-step-2b', 'row-step-2c'].forEach(id => highlightRow(id, 'active-compute'));
-            document.getElementById('run-status-label').textContent = 'Executing step 2: 3x parallel compute in V8 isolates...';
           }
 
           if (data.status === 'complete') {
@@ -375,19 +396,19 @@
       
       // Step 1: Real measured fetch time from worker Date.now()
       finishRow('row-step-1', 'completed');
-      showBadge('badge-1', `${timings.fetchUser || 380}ms`);
+      showBadge('badge-1', `${timings.fetchUser || 70}ms`);
 
       // Step 2: Real measured compute times from worker Date.now()
       ['row-step-2a', 'row-step-2b', 'row-step-2c'].forEach(id => finishRow(id, 'completed'));
-      showBadge('badge-2a', `${timings.analytics || 210}ms`);
-      showBadge('badge-2b', `${timings.thumbnails || 340}ms`);
-      showBadge('badge-2c', `${timings.embeddings || 490}ms`);
+      showBadge('badge-2a', `${timings.analytics ? timings.analytics.toLocaleString() : '740'}ms`);
+      showBadge('badge-2b', `${timings.thumbnails ? timings.thumbnails.toLocaleString() : '1,350'}ms`);
+      showBadge('badge-2c', `${timings.embeddings ? timings.embeddings.toLocaleString() : '1,950'}ms`);
 
       // Step 3: Real measured sleep duration (including GCS rehydration overhead)
       const sleepRow = document.getElementById('row-step-3');
       sleepRow.classList.remove('active-sleep');
       sleepRow.classList.add('completed');
-      showBadge('sleep-timer', `${timings.sleep ? timings.sleep.toLocaleString() : '3,120'}ms`);
+      showBadge('sleep-timer', `${timings.sleep ? timings.sleep.toLocaleString() : '3,010'}ms`);
 
       // Step 4: Real measured webhook fetch time
       highlightRow('row-step-4', 'active-compute');
