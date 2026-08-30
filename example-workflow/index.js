@@ -112,69 +112,113 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     });
 
     // =========================================================================
-    // STEP 2: 3x Parallel Expensive Compute in V8 Isolates
+    // STEP 2: 3x Parallel Operations (Concurrent External APIs + Compute)
     // (emitOtelSpan inside each worker callback ensures exactly ONE emission)
     // =========================================================================
-    const [analytics, thumbnails, embeddings] = await Promise.all([
-      // Worker 1: Compute heavy analytics
-      step.do("process-analytics", async () => {
+    const [enrichment, thumbnails, security] = await Promise.all([
+      // Worker 1: Query external geo-IP / profile enrichment API
+      step.do("enrich-profile", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(10000000);
+        let geoData = { ip: "34.125.155.130", region: "us-west1" };
+        try {
+          const res = await fetch("https://httpbin.org/delay/1", { signal: AbortSignal.timeout(5000) });
+          if (res.ok) {
+            const data = await res.json();
+            geoData.ip = data?.origin || geoData.ip;
+          }
+        } catch (e) {}
         const t1 = Date.now();
 
         await emitOtelSpan({
           traceId,
           parentSpanId: wfSpanId,
-          name: "02a: process-analytics",
+          name: "02a: enrich-profile (httpbin.org/delay/1)",
           startMs: t0,
           endMs: t1,
-          attributes: { "worker.task": "analytics", "compute.duration_ms": t1 - t0 }
+          attributes: {
+            "http.url": "https://httpbin.org/delay/1",
+            "http.method": "GET",
+            "worker.task": "enrich-profile",
+            "user.ip": geoData.ip
+          }
         });
 
-        return { task: "analytics", ...res, t0, t1 };
+        return { task: "enrich-profile", ...geoData, t0, t1 };
       }),
 
-      // Worker 2: Render image thumbnails
+      // Worker 2: Fetch image asset bundle & process thumbnails
       step.do("render-thumbnails", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(18000000);
+        let bytesCount = 16384;
+        try {
+          const res = await fetch("https://httpbin.org/bytes/16384", { signal: AbortSignal.timeout(5000) });
+          if (res.ok) {
+            const buf = await res.arrayBuffer();
+            bytesCount = buf.byteLength;
+          }
+        } catch (e) {}
+        const comp = doSomethingExpensive(8000000);
         const t1 = Date.now();
 
         await emitOtelSpan({
           traceId,
           parentSpanId: wfSpanId,
-          name: "02b: render-thumbnails",
+          name: "02b: render-thumbnails (httpbin.org/bytes + V8 compute)",
           startMs: t0,
           endMs: t1,
-          attributes: { "worker.task": "thumbnails", "compute.duration_ms": t1 - t0 }
+          attributes: {
+            "http.url": "https://httpbin.org/bytes/16384",
+            "worker.task": "render-thumbnails",
+            "asset.bytes": bytesCount,
+            "compute.duration_ms": t1 - t0
+          }
         });
 
-        return { task: "thumbnails", ...res, t0, t1 };
+        return { task: "render-thumbnails", bytesCount, ...comp, t0, t1 };
       }),
 
-      // Worker 3: Generate AI embeddings
-      step.do("generate-embeddings", async () => {
+      // Worker 3: Post security audit record & calculate embeddings
+      step.do("security-audit", async () => {
         const t0 = Date.now();
-        const res = doSomethingExpensive(26000000);
+        let auditReceipt = "sec_ok";
+        try {
+          const res = await fetch("https://httpbin.org/post", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user?.userId || "usr_84920", event: "user_created" }),
+            signal: AbortSignal.timeout(5000)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            auditReceipt = data?.headers?.["X-Amzn-Trace-Id"] || auditReceipt;
+          }
+        } catch (e) {}
+        const comp = doSomethingExpensive(12000000);
         const t1 = Date.now();
 
         await emitOtelSpan({
           traceId,
           parentSpanId: wfSpanId,
-          name: "02c: generate-embeddings",
+          name: "02c: security-audit (httpbin.org/post + V8 compute)",
           startMs: t0,
           endMs: t1,
-          attributes: { "worker.task": "embeddings", "compute.duration_ms": t1 - t0 }
+          attributes: {
+            "http.url": "https://httpbin.org/post",
+            "http.method": "POST",
+            "worker.task": "security-audit",
+            "audit.receipt": auditReceipt,
+            "compute.duration_ms": t1 - t0
+          }
         });
 
-        return { task: "embeddings", ...res, t0, t1 };
+        return { task: "security-audit", auditReceipt, ...comp, t0, t1 };
       }),
     ]);
 
     // =========================================================================
     // STEP 3: DURABLE HIBERNATION (Scale-to-Zero at 0 CPU)
     // =========================================================================
-    const wave1End = Math.max(analytics?.t1 || 0, thumbnails?.t1 || 0, embeddings?.t1 || 0);
+    const wave1End = Math.max(enrichment?.t1 || 0, thumbnails?.t1 || 0, security?.t1 || 0);
     await step.sleep("wait-for-approval", "3 seconds");
     const wakeTime = Date.now();
 
@@ -289,9 +333,9 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       summary: committed,
       timings: {
         fetchUser: Math.max(1, (user?.t1 || 0) - (user?.t0 || 0)),
-        analytics: Math.max(1, (analytics?.t1 || 0) - (analytics?.t0 || 0)),
+        analytics: Math.max(1, (enrichment?.t1 || 0) - (enrichment?.t0 || 0)),
         thumbnails: Math.max(1, (thumbnails?.t1 || 0) - (thumbnails?.t0 || 0)),
-        embeddings: Math.max(1, (embeddings?.t1 || 0) - (embeddings?.t0 || 0)),
+        embeddings: Math.max(1, (security?.t1 || 0) - (security?.t0 || 0)),
         sleep: sleepDurationMs,
         webhook: Math.max(1, (webhook?.t1 || 0) - (webhook?.t0 || 0)),
         commit: Math.max(1, (committed?.t1 || 0) - (committed?.t0 || 0)),
