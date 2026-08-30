@@ -180,9 +180,7 @@
             <div>
               <span class="c-kw">const</span> user = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"fetch-user-profile"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/json"</span>));
             </div>
-            <span id="badge-1" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              HTTP 200 · httpbin.org
-            </span>
+            <span id="badge-1" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
 
           <!-- STEP 2: Parallel Expensive Compute Header -->
@@ -226,9 +224,7 @@
             <div>
               <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"wait-for-approval"</span>, <span class="c-str">"3 seconds"</span>);
             </div>
-            <span id="sleep-timer" class="mono text-[11.5px] tabular-nums text-fg-secondary-light dark:text-fg-secondary-dark ml-2">
-              3,000ms
-            </span>
+            <span id="sleep-timer" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
 
           <!-- STEP 4: Real Outbound HTTP Webhook -->
@@ -236,9 +232,7 @@
             <div>
               <span class="c-kw">const</span> webhook = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"call-webhook-api"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/uuid"</span>));
             </div>
-            <span id="badge-4" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2">
-              350ms
-            </span>
+            <span id="badge-4" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
 
           <!-- STEP 5: Final Durability Commit -->
@@ -246,9 +240,7 @@
             <div>
               <span class="c-kw">return await</span> step.<span class="c-fn">do</span>(<span class="c-str">"commit-final-state"</span>, <span class="c-kw">async</span> () =&gt; { ... });
             </div>
-            <span id="badge-5" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark shrink-0 ml-2">
-              100ms
-            </span>
+            <span id="badge-5" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark shrink-0 ml-2"></span>
           </div>
 
           <div class="text-fg-secondary-light dark:text-fg-secondary-dark pl-4">
@@ -362,7 +354,7 @@
           // Live elapsed timer while sleeping on Cloud Run
           if (sleepEntered && data.status === 'waiting') {
             const elapsed = ((Date.now() - sleepStart) / 1000).toFixed(1);
-            document.getElementById('sleep-timer').textContent = `${elapsed}s elapsed`;
+            showBadge('sleep-timer', `${elapsed}s elapsed`);
           }
 
           // Before sleep: highlight parallel compute
@@ -395,7 +387,7 @@
       const sleepRow = document.getElementById('row-step-3');
       sleepRow.classList.remove('active-sleep');
       sleepRow.classList.add('completed');
-      document.getElementById('sleep-timer').textContent = `${timings.sleep ? timings.sleep.toLocaleString() : '3,120'}ms`;
+      showBadge('sleep-timer', `${timings.sleep ? timings.sleep.toLocaleString() : '3,120'}ms`);
 
       // Step 4: Real measured webhook fetch time
       highlightRow('row-step-4', 'active-compute');
@@ -470,7 +462,11 @@
 
       const sRow = document.getElementById('row-step-3');
       if (sRow) sRow.className = sRow.className.replace(/active-\w+|completed/g, '').trim();
-      document.getElementById('sleep-timer').textContent = '3,000ms';
+      const sTimer = document.getElementById('sleep-timer');
+      if (sTimer) {
+        sTimer.classList.add('hidden');
+        sTimer.textContent = '';
+      }
 
       document.getElementById('trace-proof-card').classList.add('hidden');
     }
