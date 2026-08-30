@@ -294,7 +294,7 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       });
 
       return {
-        status: "COMMITTED",
+        status: "ACTIVE",
         user: user.author,
         receipt: webhook.receiptId,
         t0,
