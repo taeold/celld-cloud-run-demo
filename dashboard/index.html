@@ -82,10 +82,10 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      padding: 4px 12px;
-      margin: 1px 0;
-      border-left: 3px solid transparent;
-      border-radius: 3px;
+      padding: 1px 8px;
+      margin: 0;
+      border-left: 2px solid transparent;
+      border-radius: 2px;
       transition: all 0.15s ease;
     }
     .code-row.active-compute {
@@ -162,12 +162,12 @@
         </div>
 
         <!-- Monospace Code Body -->
-        <div class="p-4 mono text-[12.5px] leading-[1.6] overflow-x-auto select-text">
+        <div class="p-3 mono text-[12.5px] leading-[1.35] overflow-x-auto select-text">
           
           <div class="text-fg-secondary-light dark:text-fg-secondary-dark">
             <span class="c-kw">import</span> { <span class="c-type">WorkflowEntrypoint</span> } <span class="c-kw">from</span> <span class="c-str">"cloudflare:workers"</span>;
           </div>
-          <br>
+          <div>&nbsp;</div>
           <div class="text-fg-secondary-light dark:text-fg-secondary-dark">
             <span class="c-kw">export class</span> <span class="c-type">DemoWorkflow</span> <span class="c-kw">extends</span> <span class="c-type">WorkflowEntrypoint</span> {
           </div>
@@ -225,7 +225,7 @@
           </div>
 
           <!-- STEP 3: sleep-3s -->
-          <div id="row-step-3" class="code-row pl-8 my-1.5">
+          <div id="row-step-3" class="code-row pl-8">
             <div>
               <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"sleep-3s"</span>, <span class="c-str">"3 seconds"</span>);
             </div>
