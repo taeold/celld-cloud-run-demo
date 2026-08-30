@@ -132,7 +132,7 @@
               Cloudflare Workflows on Celld + Google Cloud Run.
             </h1>
             <p class="text-[14px] text-fg-secondary-light dark:text-fg-secondary-dark leading-relaxed max-w-[660px]">
-              Run standard Cloudflare Workflows on your own Cloud Run containers with celld. Scale to zero during sleeps with zero idle compute costs, and resume automatically with full state preserved.
+              Run standard Cloudflare Workflows on your own Cloud Run containers with celld. Workflows hibernate during sleeps with zero idle CPU overhead, and resume automatically with full state preserved.
             </p>
           </div>
 
@@ -369,7 +369,7 @@
             const sleepRow = document.getElementById('row-step-3');
             sleepRow.classList.add('active-sleep');
             dot.className = 'w-2 h-2 rounded-full bg-status-attention-fg-light dark:bg-status-attention-fg-dark animate-ping';
-            document.getElementById('run-status-label').textContent = 'Dormant sleep (Cloud Run scaled to 0 CPU)...';
+            document.getElementById('run-status-label').textContent = 'Dormant sleep (isolate hibernating at 0 CPU)...';
           }
 
           // Live elapsed timer while sleeping on Cloud Run
