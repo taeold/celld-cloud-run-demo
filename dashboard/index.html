@@ -126,17 +126,12 @@
 
       <!-- Section 1: Hero & Action -->
       <div class="space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div class="space-y-2">
-            <h1 class="text-[24px] sm:text-[26px] font-semibold tracking-tight text-fg-primary-light dark:text-fg-primary-dark leading-tight">
-              Cloudflare Workflows on Celld + Google Cloud Run.
-            </h1>
-            <p class="text-[14px] text-fg-secondary-light dark:text-fg-secondary-dark leading-relaxed max-w-[660px]">
-              Run standard Cloudflare Workflows on your own Cloud Run containers with celld. Workflows hibernate during sleeps with zero idle CPU overhead, and resume automatically with full state preserved.
-            </p>
-          </div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h1 class="text-[22px] sm:text-[24px] font-semibold tracking-tight text-fg-primary-light dark:text-fg-primary-dark leading-tight">
+            Cloudflare Workflows on Celld + Google Cloud Run.
+          </h1>
 
-          <button id="btn-trigger" onclick="runDemoFlow()" class="h-9 px-4 rounded-[6px] bg-accent-default-light hover:bg-accent-hover-light dark:bg-accent-default-dark dark:hover:bg-accent-hover-dark text-white text-[13px] font-semibold transition flex items-center justify-center space-x-1.5 shrink-0 self-start">
+          <button id="btn-trigger" onclick="runDemoFlow()" class="h-9 px-4 rounded-[6px] bg-accent-default-light hover:bg-accent-hover-light dark:bg-accent-default-dark dark:hover:bg-accent-hover-dark text-white text-[13px] font-semibold transition flex items-center justify-center space-x-1.5 shrink-0">
             <span>Run workflow</span>
             <i class="fa-solid fa-arrow-right text-[11px]"></i>
           </button>
