@@ -321,8 +321,17 @@
       const traceId = triggerData.traceId;
       const traceUrl = triggerData.traceUrl;
 
+      if (!wfId || triggerData.error) {
+        dot.className = 'w-2 h-2 rounded-full bg-status-danger-fg-light dark:bg-status-danger-fg-dark';
+        document.getElementById('run-status-label').textContent = 'Trigger error: ' + (triggerData.error || 'Failed to dispatch workflow');
+        btn.disabled = false;
+        btn.innerHTML = '<span>Run workflow</span><i class="fa-solid fa-arrow-right text-[11px]"></i>';
+        isRunning = false;
+        return;
+      }
+
       // Update UI with real Workflow Instance ID
-      document.getElementById('run-id-label').textContent = wfId ? `run ${wfId.slice(0, 8)}` : 'dispatching';
+      document.getElementById('run-id-label').textContent = `run ${wfId.slice(0, 8)}`;
 
       // STEP 1: fetch-json (Outbound HTTP)
       highlightRow('row-step-1', 'active-compute');
@@ -342,6 +351,15 @@
         try {
           const r = await fetch(`/api/workflow/${wfId}`);
           const data = await r.json();
+
+          if (data.error || data.status === 'failed') {
+            dot.className = 'w-2 h-2 rounded-full bg-status-danger-fg-light dark:bg-status-danger-fg-dark';
+            document.getElementById('run-status-label').textContent = 'Workflow failed: ' + (data.error || 'Execution failed');
+            btn.disabled = false;
+            btn.innerHTML = '<span>Run workflow</span><i class="fa-solid fa-arrow-right text-[11px]"></i>';
+            isRunning = false;
+            return;
+          }
 
           const elapsed = Date.now() - pollStart;
 
