@@ -80,9 +80,9 @@
     
     .code-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      padding: 3px 12px;
+      padding: 4px 12px;
       margin: 1px 0;
       border-left: 3px solid transparent;
       border-radius: 3px;
@@ -178,7 +178,8 @@
           <!-- STEP 1: Real Outbound HTTP Fetch -->
           <div id="row-step-1" class="code-row pl-8">
             <div>
-              <span class="c-kw">const</span> init = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"fetch-json"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/json"</span>));
+              <div><span class="c-kw">const</span> init = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"fetch-json"</span>, () =&gt;</div>
+              <div class="pl-4"><span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/json"</span>));</div>
             </div>
             <span id="badge-1" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -193,7 +194,8 @@
           <!-- Worker 2A -->
           <div id="row-step-2a" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"fetch-delay-1s"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/delay/1"</span>)),
+              <div>step.<span class="c-fn">do</span>(<span class="c-str">"fetch-delay-1s"</span>, () =&gt;</div>
+              <div class="pl-4"><span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/delay/1"</span>)),</div>
             </div>
             <span id="badge-2a" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -201,7 +203,8 @@
           <!-- Worker 2B -->
           <div id="row-step-2b" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"fetch-bytes"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/bytes/16384"</span>)),
+              <div>step.<span class="c-fn">do</span>(<span class="c-str">"fetch-bytes"</span>, () =&gt;</div>
+              <div class="pl-4"><span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/bytes/16384"</span>)),</div>
             </div>
             <span id="badge-2b" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -209,7 +212,8 @@
           <!-- Worker 2C -->
           <div id="row-step-2c" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"post-json"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/post"</span>, { <span class="c-var">method</span>: <span class="c-str">"POST"</span>, <span class="c-var">body</span>: <span class="c-str">'{"ping":"pong"}'</span> })),
+              <div>step.<span class="c-fn">do</span>(<span class="c-str">"post-json"</span>, () =&gt;</div>
+              <div class="pl-4"><span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/post"</span>, { <span class="c-var">method</span>: <span class="c-str">"POST"</span> })),</div>
             </div>
             <span id="badge-2c" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -229,7 +233,8 @@
           <!-- STEP 4: Real Outbound HTTP Webhook -->
           <div id="row-step-4" class="code-row pl-8">
             <div>
-              <span class="c-kw">const</span> uuid = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"fetch-uuid"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/uuid"</span>));
+              <div><span class="c-kw">const</span> uuid = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"fetch-uuid"</span>, () =&gt;</div>
+              <div class="pl-4"><span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/uuid"</span>));</div>
             </div>
             <span id="badge-4" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -237,7 +242,9 @@
           <!-- STEP 5: Final Durability Commit -->
           <div id="row-step-5" class="code-row pl-8">
             <div>
-              <span class="c-kw">return await</span> step.<span class="c-fn">do</span>(<span class="c-str">"finish"</span>, <span class="c-kw">async</span> () =&gt; ({ <span class="c-var">status</span>: <span class="c-str">"ok"</span>, <span class="c-var">uuid</span>: uuid.<span class="c-var">uuid</span> }));
+              <div><span class="c-kw">return await</span> step.<span class="c-fn">do</span>(<span class="c-str">"finish"</span>, () =&gt; ({</div>
+              <div class="pl-4"><span class="c-var">status</span>: <span class="c-str">"ok"</span>, <span class="c-var">uuid</span>: uuid.<span class="c-var">uuid</span></div>
+              <div>}));</div>
             </div>
             <span id="badge-5" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark shrink-0 ml-2"></span>
           </div>
