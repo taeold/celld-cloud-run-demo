@@ -5,13 +5,13 @@
   "workflows": [
     {
       "binding": "PIPELINE",
-      "name": "user-onboarding",
-      "class_name": "UserOnboardingWorkflow"
+      "name": "demo-workflow",
+      "class_name": "DemoWorkflow"
     },
     {
       "binding": "DATA_PIPELINE",
       "name": "data-pipeline",
-      "class_name": "UserOnboardingWorkflow"
+      "class_name": "DemoWorkflow"
     }
   ]
 }

@@ -169,7 +169,7 @@
           </div>
           <br>
           <div class="text-fg-secondary-light dark:text-fg-secondary-dark">
-            <span class="c-kw">export class</span> <span class="c-type">UserOnboardingWorkflow</span> <span class="c-kw">extends</span> <span class="c-type">WorkflowEntrypoint</span> {
+            <span class="c-kw">export class</span> <span class="c-type">DemoWorkflow</span> <span class="c-kw">extends</span> <span class="c-type">WorkflowEntrypoint</span> {
           </div>
           <div class="text-fg-secondary-light dark:text-fg-secondary-dark pl-4">
             <span class="c-kw">async</span> <span class="c-fn">run</span>(event, step) {
@@ -178,7 +178,7 @@
           <!-- STEP 1: Real Outbound HTTP Fetch -->
           <div id="row-step-1" class="code-row pl-8">
             <div>
-              <span class="c-kw">const</span> user = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"fetch-user-profile"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/json"</span>));
+              <span class="c-kw">const</span> init = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"fetch-json"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/json"</span>));
             </div>
             <span id="badge-1" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -186,14 +186,14 @@
           <!-- STEP 2: Parallel Operations Header -->
           <div id="row-step-2-header" class="code-row pl-8">
             <div>
-              <span class="c-kw">const</span> [enrichment, thumbnails, security] = <span class="c-kw">await</span> <span class="c-type">Promise</span>.<span class="c-fn">all</span>([
+              <span class="c-kw">const</span> [delayed, bytes, post] = <span class="c-kw">await</span> <span class="c-type">Promise</span>.<span class="c-fn">all</span>([
             </div>
           </div>
 
           <!-- Worker 2A -->
           <div id="row-step-2a" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"enrich-profile"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/delay/1"</span>)),
+              step.<span class="c-fn">do</span>(<span class="c-str">"fetch-delay-1s"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/delay/1"</span>)),
             </div>
             <span id="badge-2a" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -201,7 +201,7 @@
           <!-- Worker 2B -->
           <div id="row-step-2b" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"render-thumbnails"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetchAndProcessAssets</span>(<span class="c-str">"https://httpbin.org/bytes/16384"</span>)),
+              step.<span class="c-fn">do</span>(<span class="c-str">"fetch-bytes"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/bytes/16384"</span>)),
             </div>
             <span id="badge-2b" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -209,7 +209,7 @@
           <!-- Worker 2C -->
           <div id="row-step-2c" class="code-row pl-12">
             <div>
-              step.<span class="c-fn">do</span>(<span class="c-str">"security-audit"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">postAuditAndEmbeddings</span>(<span class="c-str">"https://httpbin.org/post"</span>)),
+              step.<span class="c-fn">do</span>(<span class="c-str">"post-json"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/post"</span>, { <span class="c-var">method</span>: <span class="c-str">"POST"</span>, <span class="c-var">body</span>: <span class="c-str">'{"ping":"pong"}'</span> })),
             </div>
             <span id="badge-2c" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -221,7 +221,7 @@
           <!-- STEP 3: DURABLE HIBERNATION (Scale-to-Zero) -->
           <div id="row-step-3" class="code-row pl-8 my-1.5">
             <div>
-              <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"wait-for-approval"</span>, <span class="c-str">"3 seconds"</span>);
+              <span class="c-kw">await</span> step.<span class="c-fn">sleep</span>(<span class="c-str">"sleep-3s"</span>, <span class="c-str">"3 seconds"</span>);
             </div>
             <span id="sleep-timer" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -229,7 +229,7 @@
           <!-- STEP 4: Real Outbound HTTP Webhook -->
           <div id="row-step-4" class="code-row pl-8">
             <div>
-              <span class="c-kw">const</span> webhook = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"call-webhook-api"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/uuid"</span>));
+              <span class="c-kw">const</span> uuid = <span class="c-kw">await</span> step.<span class="c-fn">do</span>(<span class="c-str">"fetch-uuid"</span>, <span class="c-kw">async</span> () =&gt; <span class="c-fn">fetch</span>(<span class="c-str">"https://httpbin.org/uuid"</span>));
             </div>
             <span id="badge-4" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-border-muted-light dark:border-border-muted-dark text-fg-secondary-light dark:text-fg-secondary-dark shrink-0 ml-2"></span>
           </div>
@@ -237,7 +237,7 @@
           <!-- STEP 5: Final Durability Commit -->
           <div id="row-step-5" class="code-row pl-8">
             <div>
-              <span class="c-kw">return await</span> step.<span class="c-fn">do</span>(<span class="c-str">"commit-final-state"</span>, <span class="c-kw">async</span> () =&gt; ({ <span class="c-var">status</span>: <span class="c-str">"ACTIVE"</span>, <span class="c-var">receipt</span>: webhook.<span class="c-var">receiptId</span> }));
+              <span class="c-kw">return await</span> step.<span class="c-fn">do</span>(<span class="c-str">"finish"</span>, <span class="c-kw">async</span> () =&gt; ({ <span class="c-var">status</span>: <span class="c-str">"ok"</span>, <span class="c-var">uuid</span>: uuid.<span class="c-var">uuid</span> }));
             </div>
             <span id="badge-5" class="hidden mono text-[11px] px-1.5 py-0.2 rounded bg-surface-elevated-light dark:bg-canvas-dark border border-status-success-border-light dark:border-status-success-border-dark text-status-success-fg-light dark:text-status-success-fg-dark shrink-0 ml-2"></span>
           </div>
@@ -317,9 +317,9 @@
       // Update UI with real Workflow Instance ID
       document.getElementById('run-id-label').textContent = wfId ? `run ${wfId.slice(0, 8)}` : 'dispatching';
 
-      // STEP 1: fetch-user-profile (Outbound HTTP)
+      // STEP 1: fetch-json (Outbound HTTP)
       highlightRow('row-step-1', 'active-compute');
-      document.getElementById('run-status-label').textContent = 'Executing step 1: calling https://httpbin.org/json...';
+      document.getElementById('run-status-label').textContent = 'Executing step 1: fetch-json (https://httpbin.org/json)...';
 
       const t0Client = Date.now();
       let completedData = null;
@@ -343,7 +343,7 @@
             step1Done = true;
             finishRow('row-step-1', 'completed');
             ['row-step-2-header', 'row-step-2a', 'row-step-2b', 'row-step-2c'].forEach(id => highlightRow(id, 'active-compute'));
-            document.getElementById('run-status-label').textContent = 'Executing step 2: 3x concurrent parallel workers (HTTP APIs + V8 compute)...';
+            document.getElementById('run-status-label').textContent = 'Executing step 2: 3x parallel calls (delay-1s, bytes, post-json)...';
           }
 
           // Transition 1: Workflow entered durable sleep on Cloud Run!
@@ -397,14 +397,14 @@
 
       // Step 4: Real measured webhook fetch time
       highlightRow('row-step-4', 'active-compute');
-      document.getElementById('run-status-label').textContent = 'Executing step 4: calling webhook https://httpbin.org/uuid...';
+      document.getElementById('run-status-label').textContent = 'Executing step 4: fetch-uuid (https://httpbin.org/uuid)...';
       await sleep(150);
       finishRow('row-step-4', 'completed');
       showBadge('badge-4', `${timings.webhook || 140}ms`);
 
       // Step 5: Real measured commit time
       highlightRow('row-step-5', 'active-compute');
-      document.getElementById('run-status-label').textContent = 'Executing step 5: completing workflow...';
+      document.getElementById('run-status-label').textContent = 'Executing step 5: finish...';
       await sleep(100);
       finishRow('row-step-5', 'completed');
       showBadge('badge-5', `${timings.commit || 45}ms`);

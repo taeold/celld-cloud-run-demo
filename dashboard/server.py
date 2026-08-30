@@ -220,7 +220,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 with _lock:
                     _workflow_cache[wf_id] = {
                         "id": wf_id,
-                        "workflowName": "user-onboarding",
+                        "workflowName": "demo-workflow",
                         "status": "running",
                         "output": None,
                         "error": None

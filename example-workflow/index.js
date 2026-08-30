@@ -65,7 +65,7 @@ async function emitOtelSpan({ traceId, parentSpanId, spanId, name, startMs, endM
   } catch (err) {}
 }
 
-export class UserOnboardingWorkflow extends WorkflowEntrypoint {
+export class DemoWorkflow extends WorkflowEntrypoint {
   async run(event, step) {
     const { name, traceId } = event.payload || {};
     const wfStartTime = Date.now();
@@ -73,58 +73,45 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     const wfSpanId = (traceId && traceId.length === 32) ? traceId.slice(16, 32) : generateSpanId();
 
     // =========================================================================
+    // STEP 1: fetch-json (Outbound HTTP GET)
     // =========================================================================
-    // STEP 1: Real Outbound HTTP Call to External API
-    // (emitOtelSpan inside step.do ensures it only emits ONCE, never on replay)
-    // =========================================================================
-    const user = await step.do("fetch-user-profile", async () => {
+    const jsonRes = await step.do("fetch-json", async () => {
       const t0 = Date.now();
-      let author = "Alex Chen";
+      let ok = true;
       try {
         const res = await fetch("https://httpbin.org/json", { signal: AbortSignal.timeout(3000) });
-        if (res.ok) {
-          const data = await res.json();
-          author = data?.slideshow?.author || author;
-        }
+        ok = res.ok;
       } catch (e) {}
       const t1 = Date.now();
 
       await emitOtelSpan({
         traceId,
         parentSpanId: wfSpanId,
-        name: "01: fetch-user-profile (httpbin.org)",
+        name: "01: fetch-json (httpbin.org)",
         startMs: t0,
         endMs: t1,
         attributes: {
           "http.url": "https://httpbin.org/json",
-          "http.method": "GET",
-          "user.author": author
+          "http.method": "GET"
         }
       });
 
-      return {
-        userId: "usr_84920",
-        author,
-        source: "https://httpbin.org/json",
-        t0,
-        t1
-      };
+      return { endpoint: "https://httpbin.org/json", ok, t0, t1 };
     });
 
     // =========================================================================
-    // STEP 2: 3x Parallel Operations (Concurrent External APIs + Compute)
-    // (emitOtelSpan inside each worker callback ensures exactly ONE emission)
+    // STEP 2: 3x Concurrent Parallel API Calls
     // =========================================================================
-    const [enrichment, thumbnails, security] = await Promise.all([
-      // Worker 1: Query external geo-IP / profile enrichment API
-      step.do("enrich-profile", async () => {
+    const [delayed, bytes, post] = await Promise.all([
+      // Worker 1: 1-second delayed API call
+      step.do("fetch-delay-1s", async () => {
         const t0 = Date.now();
-        let geoData = { ip: "34.125.155.130", region: "us-west1" };
+        let origin = "";
         try {
           const res = await fetch("https://httpbin.org/delay/1", { signal: AbortSignal.timeout(5000) });
           if (res.ok) {
             const data = await res.json();
-            geoData.ip = data?.origin || geoData.ip;
+            origin = data?.origin || "";
           }
         } catch (e) {}
         const t1 = Date.now();
@@ -132,22 +119,21 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
         await emitOtelSpan({
           traceId,
           parentSpanId: wfSpanId,
-          name: "02a: enrich-profile (httpbin.org/delay/1)",
+          name: "02a: fetch-delay-1s (httpbin.org/delay/1)",
           startMs: t0,
           endMs: t1,
           attributes: {
             "http.url": "https://httpbin.org/delay/1",
             "http.method": "GET",
-            "worker.task": "enrich-profile",
-            "user.ip": geoData.ip
+            "origin": origin
           }
         });
 
-        return { task: "enrich-profile", ...geoData, t0, t1 };
+        return { origin, t0, t1 };
       }),
 
-      // Worker 2: Fetch image asset bundle & process thumbnails
-      step.do("render-thumbnails", async () => {
+      // Worker 2: Fetch 16KB binary stream
+      step.do("fetch-bytes", async () => {
         const t0 = Date.now();
         let bytesCount = 16384;
         try {
@@ -163,34 +149,33 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
         await emitOtelSpan({
           traceId,
           parentSpanId: wfSpanId,
-          name: "02b: render-thumbnails (httpbin.org/bytes + V8 compute)",
+          name: "02b: fetch-bytes (httpbin.org/bytes/16384)",
           startMs: t0,
           endMs: t1,
           attributes: {
             "http.url": "https://httpbin.org/bytes/16384",
-            "worker.task": "render-thumbnails",
-            "asset.bytes": bytesCount,
+            "bytes": bytesCount,
             "compute.duration_ms": t1 - t0
           }
         });
 
-        return { task: "render-thumbnails", bytesCount, ...comp, t0, t1 };
+        return { bytes: bytesCount, ...comp, t0, t1 };
       }),
 
-      // Worker 3: Post security audit record & calculate embeddings
-      step.do("security-audit", async () => {
+      // Worker 3: Outbound POST request with JSON payload
+      step.do("post-json", async () => {
         const t0 = Date.now();
-        let auditReceipt = "sec_ok";
+        let echoId = "ok";
         try {
           const res = await fetch("https://httpbin.org/post", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user?.userId || "usr_84920", event: "user_created" }),
+            body: JSON.stringify({ ping: "pong", ts: Date.now() }),
             signal: AbortSignal.timeout(5000)
           });
           if (res.ok) {
             const data = await res.json();
-            auditReceipt = data?.headers?.["X-Amzn-Trace-Id"] || auditReceipt;
+            echoId = data?.headers?.["X-Amzn-Trace-Id"] || echoId;
           }
         } catch (e) {}
         const comp = doSomethingExpensive(12000000);
@@ -199,34 +184,33 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
         await emitOtelSpan({
           traceId,
           parentSpanId: wfSpanId,
-          name: "02c: security-audit (httpbin.org/post + V8 compute)",
+          name: "02c: post-json (httpbin.org/post)",
           startMs: t0,
           endMs: t1,
           attributes: {
             "http.url": "https://httpbin.org/post",
             "http.method": "POST",
-            "worker.task": "security-audit",
-            "audit.receipt": auditReceipt,
+            "echo.id": echoId,
             "compute.duration_ms": t1 - t0
           }
         });
 
-        return { task: "security-audit", auditReceipt, ...comp, t0, t1 };
+        return { echoId, ...comp, t0, t1 };
       }),
     ]);
 
     // =========================================================================
     // STEP 3: DURABLE HIBERNATION (Scale-to-Zero at 0 CPU)
     // =========================================================================
-    const wave1End = Math.max(enrichment?.t1 || 0, thumbnails?.t1 || 0, security?.t1 || 0);
-    await step.sleep("wait-for-approval", "3 seconds");
+    const wave1End = Math.max(delayed?.t1 || 0, bytes?.t1 || 0, post?.t1 || 0);
+    await step.sleep("sleep-3s", "3 seconds");
     const wakeTime = Date.now();
 
     // Emitted only on Drive 2 after waking up, covering full dormant duration
     await emitOtelSpan({
       traceId,
       parentSpanId: wfSpanId,
-      name: "03: wait-for-approval (3s sleep at 0 CPU)",
+      name: "03: sleep-3s (3s sleep at 0 CPU)",
       startMs: wave1End,
       endMs: wakeTime,
       attributes: {
@@ -237,16 +221,16 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     });
 
     // =========================================================================
-    // STEP 4: Real Outbound HTTP Call to External Webhook
+    // STEP 4: fetch-uuid (Outbound HTTP GET)
     // =========================================================================
-    const webhook = await step.do("call-webhook-api", async () => {
+    const uuidRes = await step.do("fetch-uuid", async () => {
       const t0 = Date.now();
-      let receiptId = "rec_" + generateSpanId().slice(0, 8);
+      let uuid = "uuid_" + generateSpanId().slice(0, 8);
       try {
         const res = await fetch("https://httpbin.org/uuid", { signal: AbortSignal.timeout(3000) });
         if (res.ok) {
           const data = await res.json();
-          receiptId = data?.uuid || receiptId;
+          uuid = data?.uuid || uuid;
         }
       } catch (e) {}
       const t1 = Date.now();
@@ -254,19 +238,17 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       await emitOtelSpan({
         traceId,
         parentSpanId: wfSpanId,
-        name: "04: call-webhook-api (httpbin.org)",
+        name: "04: fetch-uuid (httpbin.org)",
         startMs: t0,
         endMs: t1,
         attributes: {
           "http.url": "https://httpbin.org/uuid",
-          "webhook.delivered": true,
-          "webhook.receipt_id": receiptId
+          "uuid": uuid
         }
       });
 
       return {
-        delivered: true,
-        receiptId,
+        uuid,
         endpoint: "https://httpbin.org/uuid",
         t0,
         t1
@@ -274,36 +256,34 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
     });
 
     // =========================================================================
-    // STEP 5: Final state commit
+    // STEP 5: finish (Final state commit)
     // =========================================================================
-    const committed = await step.do("commit-final-state", async () => {
+    const committed = await step.do("finish", async () => {
       const t0 = Date.now();
-      doSomethingExpensive(1000000);
       const t1 = Date.now();
 
       await emitOtelSpan({
         traceId,
         parentSpanId: wfSpanId,
-        name: "05: commit-final-state",
+        name: "05: finish",
         startMs: t0,
         endMs: t1,
         attributes: {
-          "step.status": "COMMITTED",
-          "step.receipt": webhook.receiptId,
+          "step.status": "OK",
+          "uuid": uuidRes.uuid,
         }
       });
 
       return {
-        status: "ACTIVE",
-        user: user.author,
-        receipt: webhook.receiptId,
+        status: "ok",
+        uuid: uuidRes.uuid,
         t0,
         t1
       };
     });
 
     const wfEndTime = Date.now();
-    const startTimeMs = event?.timestamp ? new Date(event.timestamp).getTime() : (user?.t0 || wfStartTime);
+    const startTimeMs = event?.timestamp ? new Date(event.timestamp).getTime() : (jsonRes?.t0 || wfStartTime);
     const realTotalDuration = Math.max(1, wfEndTime - startTimeMs);
 
     // Emit top-level Workflow execution root span
@@ -311,12 +291,12 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
       traceId,
       parentSpanId: undefined,
       spanId: wfSpanId,
-      name: `celld.workflow: user-onboarding`,
-      startMs: user?.t0 || wfStartTime,
+      name: `celld.workflow: demo-workflow`,
+      startMs: jsonRes?.t0 || wfStartTime,
       endMs: wfEndTime,
       attributes: {
-        "workflow.name": "user-onboarding",
-        "workflow.status": "COMMITTED",
+        "workflow.name": "demo-workflow",
+        "workflow.status": "OK",
         "workflow.total_duration_ms": realTotalDuration,
         "celld.runtime": "v0.4.0"
       }
@@ -326,24 +306,26 @@ export class UserOnboardingWorkflow extends WorkflowEntrypoint {
 
     return {
       status: "SUCCESS",
-      workflowName: "user-onboarding",
+      workflowName: "demo-workflow",
       totalDurationMs: realTotalDuration,
       traceId,
       traceUrl: traceId ? `https://console.cloud.google.com/traces/explorer?project=danielylee-junk&traceId=${traceId}` : null,
       summary: committed,
       timings: {
-        fetchUser: Math.max(1, (user?.t1 || 0) - (user?.t0 || 0)),
-        analytics: Math.max(1, (enrichment?.t1 || 0) - (enrichment?.t0 || 0)),
-        thumbnails: Math.max(1, (thumbnails?.t1 || 0) - (thumbnails?.t0 || 0)),
-        embeddings: Math.max(1, (security?.t1 || 0) - (security?.t0 || 0)),
+        fetchUser: Math.max(1, (jsonRes?.t1 || 0) - (jsonRes?.t0 || 0)),
+        analytics: Math.max(1, (delayed?.t1 || 0) - (delayed?.t0 || 0)),
+        thumbnails: Math.max(1, (bytes?.t1 || 0) - (bytes?.t0 || 0)),
+        embeddings: Math.max(1, (post?.t1 || 0) - (post?.t0 || 0)),
         sleep: sleepDurationMs,
-        webhook: Math.max(1, (webhook?.t1 || 0) - (webhook?.t0 || 0)),
+        webhook: Math.max(1, (uuidRes?.t1 || 0) - (uuidRes?.t0 || 0)),
         commit: Math.max(1, (committed?.t1 || 0) - (committed?.t0 || 0)),
         total: realTotalDuration
       }
     };
   }
 }
+
+export const UserOnboardingWorkflow = DemoWorkflow;
 
 const WORKFLOW_REGISTRY = [];
 
