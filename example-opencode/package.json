@@ -1,0 +1,11 @@
+{
+  "name": "celld-opencode-example",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/sdk": "0.0.0-dev-18697"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.9"
+  }
+}
