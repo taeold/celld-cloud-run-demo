@@ -146,7 +146,13 @@ export class Room {
 
   async fetch(request) {
     if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
-      return new Response("WebSocket upgrade required\n", { status: 426 });
+      if (request.method !== "GET" && request.method !== "POST") {
+        return new Response("Method not allowed\n", { status: 405, headers: { allow: "GET, POST" } });
+      }
+      const count = request.method === "POST"
+        ? await this.increment()
+        : (await this.state.storage.get("count")) ?? 0;
+      return Response.json({ count }, { headers: { "cache-control": "no-store" } });
     }
     const pair = new WebSocketPair();
     const server = pair[0];
@@ -164,10 +170,15 @@ export class Room {
       return;
     }
     if (message.type !== "increment") return;
+    await this.increment();
+  }
+
+  async increment() {
     const count = ((await this.state.storage.get("count")) ?? 0) + 1;
     await this.state.storage.put("count", count);
     const update = JSON.stringify({ type: "count", count });
     for (const socket of this.state.getWebSockets()) socket.send(update);
+    return count;
   }
 
   async webSocketClose(socket, code, reason) {
@@ -186,15 +197,17 @@ export default {
     if (url.pathname === "/") {
       return new Response(null, { status: 302, headers: { location: "/alpha" } });
     }
-    const route = roomRoute(url.pathname);
+    const isCount = url.pathname !== "/count" && url.pathname.endsWith("/count");
+    const route = roomRoute(isCount ? url.pathname.slice(0, -6) : url.pathname);
     if (!route) return new Response("Not found\n", { status: 404 });
     if (route.invalid) {
       return new Response("Invalid or reserved room ID. Use 1-64 lowercase letters, numbers, hyphens, or underscores.\n", { status: 404 });
     }
-    if (url.pathname !== route.canonicalPath || url.search) {
-      return new Response(null, { status: 308, headers: { location: route.canonicalPath } });
+    const canonicalPath = route.canonicalPath + (isCount ? "/count" : "");
+    if (url.pathname !== canonicalPath || url.search) {
+      return new Response(null, { status: 308, headers: { location: canonicalPath } });
     }
-    if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
+    if (!isCount && request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
       return new Response(PAGE, { headers: PAGE_HEADERS });
     }
     return env.ROOM.get(env.ROOM.idFromName(route.room)).fetch(request);

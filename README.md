@@ -2,100 +2,101 @@
 
 Deploy [Celld](https://github.com/denoland/celld) **v0.4.1** on Google Cloud Run with Durable Object state in Cloud Storage.
 
-Start with one **Cloud Run Instance** for a small always-on app. Graduate to a **Cloud Run Service + Worker Pool + Direct VPC** when you need more resident objects, compute capacity, or lower write latency through peer-assisted durability.
+---
 
-## Quickstart: one Cloud Run Instance
+## Quickstart
 
-The new [Cloud Run v2 Instance resource](https://docs.cloud.google.com/run/docs/instances/create-and-manage-instances) is a manually managed singleton with a stable HTTPS URL, shared CPU and continuous billing. It is **not** a Cloud Run Service with `--max-instances=1` (nor a Service using instance-based billing). It is currently **Preview / Pre-GA**, not a high-availability deployment. Instances run for up to seven days before restarting; local disk and memory are ephemeral. Celld recovers persisted Durable Object state from GCS, not from that disk. Expect brief interruptions and reconnect clients after restarts.
+Run a single celld node on a [Cloud Run Instance](https://docs.cloud.google.com/run/docs/instances/create-and-manage-instances).
 
-**Cost:** 1 vCPU / 1 GiB in `us-south1` is approximately **$5.70 for 30 continuous days** (~$5–6/month for compute), per [Google's Instance announcement](https://cloud.google.com/blog/products/serverless/introducing-cloud-run-instances). Storage, GCS operations, network transfer and taxes are additional. Shared CPU has a burst budget; this is not a continuously dedicated CPU at that price. A lone celld node waits for Cloud Storage acknowledgement on writes because it has no peer.
+Prerequisites:
 
-### 1. Prepare tools and credentials
+- A billed GCP project and an authenticated, current [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) with `gcloud beta run instances`.
+- [celld v0.4.1](https://github.com/denoland/celld/releases/tag/v0.4.1), `esbuild`, and `git` installed.
+- The default runtime service account needs [Storage Object Admin access](https://cloud.google.com/storage/docs/access-control/using-iam-permissions) to the bucket below.
 
-Use Bash on Linux x86-64 (or adapt the binary filename for Linux ARM64 / macOS ARM64). You need `git`, `curl`, `gzip`, Node.js 22+ with npm, and the [current Google Cloud CLI](https://cloud.google.com/sdk/docs/install). Start with a **GCP project that has billing enabled**, and an account allowed to enable APIs, create buckets/Cloud Run resources, grant bucket permissions and use the default runtime service account (a project Owner is sufficient for this tutorial). Organization policies must permit public demos and the Preview resource.
-
-```bash
-gcloud components update
-gcloud components install beta
-gcloud auth login
-gcloud auth application-default login  # celld deploy uses ADC, not gcloud's login
-
-mkdir -p "$HOME/.local/bin"
-curl -fL https://github.com/denoland/celld/releases/download/v0.4.1/celld-x86_64-unknown-linux-gnu.gz \
-  | gzip -d > "$HOME/.local/bin/celld"
-chmod +x "$HOME/.local/bin/celld"
-export PATH="$HOME/.local/bin:$PATH"
-celld --version  # celld 0.4.1
-
-git clone https://github.com/taeold/celld-cloud-run-demo.git
-cd celld-cloud-run-demo
-npm install --prefix .tools esbuild@0.25.9
-export PATH="$PWD/.tools/node_modules/.bin:$PATH"
-```
-
-If your CLI was installed through apt/yum, update it through that package manager instead. Check `gcloud beta run instances create --help` before continuing; an “Invalid choice: instances” error means your CLI is too old.
-
-### 2. Prepare the project and storage
+### 1. Create a GCS bucket
 
 ```bash
-export PROJECT_ID="your-billed-project-id"
-export REGION="us-south1"
-export PREFIX="celld-demo"
-export BUCKET="${PROJECT_ID}-${PREFIX}-fleet"  # must be globally unique
-export CELLD_BUCKET="gs://${BUCKET}/main"
-gcloud config set project "$PROJECT_ID"
-gcloud auth application-default set-quota-project "$PROJECT_ID"
-gcloud services enable run.googleapis.com compute.googleapis.com storage.googleapis.com \
-  --project="$PROJECT_ID"
+export PROJECT_ID="your-project-id"
+export REGION="us-south1"  # Supported regions: https://cloud.google.com/run/docs/instances/create-and-manage-instances#supported-regions
+export BUCKET="your-bucket-name"  # Globally unique
 
 gcloud storage buckets create "gs://${BUCKET}" \
   --project="$PROJECT_ID" --location="$REGION" --uniform-bucket-level-access
-PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
-RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-gcloud storage buckets add-iam-policy-binding "gs://${BUCKET}" \
-  --member="serviceAccount:${RUNTIME_SA}" --role=roles/storage.objectAdmin
 ```
 
-Enabling Compute Engine creates the default runtime service account. New projects do not necessarily give it Editor permissions; the bucket grant above is necessary for celld to read bundles, coordinate leases and persist state. No service-account key or mounted bucket is needed. `us-south1` supports Instances; check the linked Instance guide for current region exclusions.
-
-### 3. Deploy the counter and start celld
+### 2. Deploy a sample app
 
 ```bash
-celld deploy example-counter --bucket "$CELLD_BUCKET"
-gcloud beta run instances create "${PREFIX}-single" \
-  --project="$PROJECT_ID" --region="$REGION" \
-  --image=ghcr.io/denoland/celld:v0.4.1 \
-  --cpu=1 --memory=1Gi --port=8080 --restart-policy=always --public \
-  --service-account="$RUNTIME_SA" \
-  --set-env-vars="CELLD_BUCKET=${CELLD_BUCKET},CELLD_ADDR=0.0.0.0:8080,CELLD_INTERNAL_ADDR=127.0.0.1:8081,CELLD_ADVERTISE=127.0.0.1:8081"
-
-# The stable URL format documented for Instances (not a Service status.url).
-INSTANCE_URL="https://${PREFIX}-single-${PROJECT_NUMBER}.${REGION}.run.app"
-curl --fail-with-body "${INSTANCE_URL}/.well-known/celld/health"
-curl --fail-with-body "${INSTANCE_URL}/alpha"  # counter HTML
-echo "Open ${INSTANCE_URL}/alpha and click Increment"
+git clone https://github.com/taeold/celld-cloud-run-demo.git
+cd celld-cloud-run-demo
+celld deploy example-counter --bucket "gs://${BUCKET}"
 ```
 
-The stock image runs celld itself; there is no Artifact Registry build. Only the Worker HTTP port is exposed. The internal peer/operator port stays on loopback for this singleton. **`--public` is intentional for this counter tutorial:** anyone with the URL can change these demo counters. Do not put sensitive data in it. The flags above follow the [Instance CLI reference](https://docs.cloud.google.com/sdk/gcloud/reference/beta/run/instances/create); inspect readiness with `gcloud beta run instances describe "${PREFIX}-single" --project="$PROJECT_ID" --region="$REGION"` if a call fails.
+If the upload fails with missing or expired credentials, authenticate locally and retry:
 
-The counter uses a WebSocket, so `curl /alpha` returns the UI, not a JSON count. Open the same room in two tabs: Increment updates both; reload to see the stored value. Different room paths (`/alpha`, `/beta`) have independent Durable Objects.
+```bash
+gcloud auth application-default login
+celld deploy example-counter --bucket "gs://${BUCKET}"
+```
 
-> [!TIP]
-> **Hot deployments:** `celld deploy` uploads a bundle and changes the deployment pointer. v0.4.1 nodes poll `deploy/current.json` every 30 seconds by default (`CELLD_DEPLOY_POLL_S=30`) and adopt updates in place. Keep this bucket/prefix dedicated to this application.
+A permission-denied error with valid credentials means your account needs write access to the bucket.
 
-### Next: a durable OpenCode session
+### 3. Create the Instance
 
-[example-opencode](example-opencode/README.md) adds the pinned Workerd SDK, a real first-turn/resume API, and a small responsive UI. Try it locally first; it uses the free `opencode/nemotron-3.5-lightning-free` model. The model is an external service, so availability, limits and privacy terms still apply.
+```bash
+gcloud beta run instances create celld-demo \
+  --project="$PROJECT_ID" --region="$REGION" \
+  --image=ghcr.io/denoland/celld:v0.4.1 \
+  --cpu=1 --memory=1Gi --port=8080 \
+  --restart-policy=always --public \
+  --set-env-vars="CELLD_BUCKET=gs://${BUCKET},CELLD_ADDR=0.0.0.0:8080,CELLD_INTERNAL_ADDR=127.0.0.1:8081,CELLD_ADVERTISE=127.0.0.1:8081"
+```
 
-Also included: [example-workflow](example-workflow/) demonstrates workflows; [dashboard](dashboard/) is the separate operational dashboard, not required by either Quickstart. Those older samples retain deployment-specific tracing/dashboard defaults: set `CELLD_BUCKET` and `CELLD_INGRESS_URL` for the Python dashboard, and adapt the workflow's trace-console project link before using it in your own project. Its in-memory workflow list is not a durable catalog.
+- `--restart-policy=always`: Restart celld after any exit, including a clean exit. See [restart policies](https://cloud.google.com/run/docs/configuring/instances/restart-policy).
+- `--port=8080` and `CELLD_ADDR`: Route HTTP requests to celld. The internal listener and advertised address use loopback because this is a single node.
+- `--public`: Allow browser access without authentication for this demo.
+
+### 4. Try it
+
+Set `URL` to the HTTPS address printed by the create command:
+
+```bash
+URL="https://YOUR_CELLD_DEPLOYMENT_URL"
+```
+
+Read the counter, increment it twice, then read the stored value. A fresh `alpha` counter returns:
+
+```bash
+curl -fsS --retry 12 --retry-delay 5 --retry-all-errors "$URL/alpha/count"; echo
+# {"count":0}
+
+curl -fsS -X POST "$URL/alpha/count"; echo
+# {"count":1}
+
+curl -fsS -X POST "$URL/alpha/count"; echo
+# {"count":2}
+
+curl -fsS "$URL/alpha/count"; echo
+# {"count":2}
+```
+
+Open `$URL/alpha` in a browser to see the same counter update over WebSocket. `/beta` has its own counter.
+
+---
+
+## Estimated Cost
+
+- **Cloud Run Instance**: 1 vCPU / 1 GiB running continuously in `us-south1` costs approximately **$5.70/month**. See [pricing](https://cloud.google.com/run/pricing).
+- **Cloud Storage**: Regional storage and operations are billed separately, along with any network transfer. See [storage pricing](https://cloud.google.com/storage/pricing).
+
+Instances are **Preview / Pre-GA**.
 
 ---
 
 ## Scale-out architecture
 
-Use this topology when one node's RAM/CPU is no longer enough, or when synchronous GCS write latency limits your app. Two or more resident workers can use **peer-assisted fleet durability** before asynchronous GCS persistence; a singleton remains valid but waits for GCS. Worker Pools provide continuously running nodes and private, directly reachable peers. The request-driven Service is only the public router. Increasing a public Service's replica limit alone does not establish this private peer topology.
-
-Scaling out is not a promise of zero downtime: test reconnection, recovery and capacity for your workload. To move the Quickstart's data, stop the singleton before starting the fleet against the same prefix; its loopback advertisement is not reachable from fleet nodes. Plan a maintenance window and let its old lease expire. Use a separate bucket/prefix for parallel experiments.
+For multi-node celld deployments, consider **Cloud Run Worker Pools**:
 
 ```mermaid
 flowchart TB
@@ -133,22 +134,19 @@ flowchart TB
 To scale backend capacity, update the Worker Pool instance count with a single command:
 
 ```bash
-gcloud beta run worker-pools update "${PREFIX}-workers" \
+gcloud beta run worker-pools update celld-demo-workers \
   --project="$PROJECT_ID" \
   --region="$REGION" \
   --instances=5
 ```
 
 1. Each newly provisioned worker receives a private VPC IP and queries it from the instance metadata server.
-2. The worker registers its presence in Cloud Storage (`gs://${BUCKET}/main/nodes/node_<id>.json`).
+2. The worker registers its presence in Cloud Storage (`gs://${BUCKET}/nodes/node_<id>.json`).
 3. The Ingress Service reads active node records from Cloud Storage and routes newly requested Durable Object rooms across the expanded worker fleet over Direct VPC.
 
----
+### Fleet Cost
 
-## Estimated Cost
-
-- **Single Instance**: ~**$5.70 / 30 days** at 1 vCPU / 1 GiB in `us-south1`, with shared CPU (Quickstart above).
-- **Worker Pool**: Original estimate: 2 instances (1 vCPU / 1 GiB each) continuously provisioned at **~$65.58 / month**; 1 instance at **~$32.79 / month**. These are a different resource and pricing model from the new Instance. Check [current regional pricing](https://cloud.google.com/run/pricing); ≥2 workers enable peer-assisted write acknowledgement, not a prerequisite for persistence.
+- **Worker Pool**: Original estimate: 2 instances (1 vCPU / 1 GiB each) continuously provisioned at **~$65.58 / month**; 1 instance at **~$32.79 / month**. Worker Pools have different pricing from the single Instance above; check [current regional pricing](https://cloud.google.com/run/pricing).
 - **Ingress Service**: Standard Cloud Run request-based pricing (scales to zero when idle).
 - **Cloud Storage**: Standard regional storage + Class A operations ($0.005 per 1,000 operations).
 
@@ -156,13 +154,13 @@ gcloud beta run worker-pools update "${PREFIX}-workers" \
 
 ## Deploy the scale-out fleet
 
-Complete Quickstart steps 1–2 and upload your chosen example with `celld deploy` first. Reuse the environment variables and bucket grant. If the singleton is running, stop it:
-
 ```bash
-gcloud beta run instances stop "${PREFIX}-single" --project="$PROJECT_ID" --region="$REGION"
+export PROJECT_ID="your-project-id"
+export REGION="us-west1"
+export BUCKET="your-fleet-bucket"  # Contains your celld deployment
+export NETWORK="default"
+export SUBNET="default"
 ```
-
-The commands below use the `default` VPC and regional `default` subnet. Verify they exist (some organizations disable default-network creation), have a `/26` or larger subnet with free addresses, and permit **private TCP 8081 between ingress and worker addresses**. The default network's internal firewall rule normally allows this. On a custom VPC, create an appropriately scoped rule using subnet IP ranges and substitute your network/subnet; worker-pool ingress rules cannot target network tags or service identities. Do not expose the operator port to the internet. See [Direct VPC for Worker Pools](https://docs.cloud.google.com/run/docs/configuring/vpc-direct-vpc#worker-pools).
 
 ### 1. Deploy Backend Workers (Worker Pool)
 
@@ -188,19 +186,18 @@ exec /usr/local/bin/celld --bucket "$CELLD_BUCKET" \
 EOF
 )
 
-gcloud beta run worker-pools deploy "${PREFIX}-workers" \
+gcloud beta run worker-pools deploy celld-demo-workers \
   --project="$PROJECT_ID" \
   --region="$REGION" \
   --image="ghcr.io/denoland/celld:v0.4.1" \
-  --service-account="$RUNTIME_SA" \
   --instances=2 \
   --cpu=1 \
   --memory=1Gi \
-  --network=default \
-  --subnet=default \
+  --network="$NETWORK" \
+  --subnet="$SUBNET" \
   --command=/bin/bash \
   --args="-c,$WORKER_CMD" \
-  --set-env-vars="CELLD_BUCKET=${CELLD_BUCKET}"
+  --set-env-vars="CELLD_BUCKET=gs://${BUCKET}"
 ```
 
 ### 2. Deploy Public Entry Point (Cloud Run Service)
@@ -208,18 +205,17 @@ gcloud beta run worker-pools deploy "${PREFIX}-workers" \
 Cloud Run Worker Pools have no public endpoints. We deploy a standard Cloud Run Service in front to provide the HTTPS/WebSocket URL for clients. This service accepts incoming client connections and proxies them across Direct VPC to the backend workers:
 
 ```bash
-gcloud run deploy "${PREFIX}-ingress" \
+gcloud run deploy celld-demo-ingress \
   --project="$PROJECT_ID" \
   --region="$REGION" \
   --image="ghcr.io/denoland/celld:v0.4.1" \
-  --service-account="$RUNTIME_SA" \
   --no-allow-unauthenticated \
-  --network=default \
-  --subnet=default \
+  --network="$NETWORK" \
+  --subnet="$SUBNET" \
   --vpc-egress=private-ranges-only \
   --port=8080 \
   --timeout=3600s \
-  --set-env-vars="CELLD_BUCKET=$CELLD_BUCKET,CELLD_ADDR=0.0.0.0:8080,CELLD_INTERNAL_ADDR=127.0.0.1:8081,CELLD_MAX_RESIDENT_CELLS=0"
+  --set-env-vars="CELLD_BUCKET=gs://${BUCKET},CELLD_ADDR=0.0.0.0:8080,CELLD_INTERNAL_ADDR=127.0.0.1:8081,CELLD_MAX_RESIDENT_CELLS=0"
 ```
 
 > [!NOTE]
@@ -236,14 +232,15 @@ Enable native Cloud Run IAP to secure the application behind Google OAuth SSO, a
 gcloud services enable iap.googleapis.com --project="$PROJECT_ID"
 gcloud components install alpha
 # 1. Enable native IAP on Cloud Run
-gcloud alpha run services update "${PREFIX}-ingress" \
+gcloud alpha run services update celld-demo-ingress \
   --project="$PROJECT_ID" \
   --region="$REGION" \
   --iap
 
 # IAP's service agent needs permission to invoke the IAM-private ingress.
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 gcloud beta services identity create --service=iap.googleapis.com --project="$PROJECT_ID"
-gcloud run services add-iam-policy-binding "${PREFIX}-ingress" \
+gcloud run services add-iam-policy-binding celld-demo-ingress \
   --project="$PROJECT_ID" --region="$REGION" \
   --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-iap.iam.gserviceaccount.com" \
   --role=roles/run.invoker
@@ -253,7 +250,7 @@ USER_EMAIL="$(gcloud config get-value account)"
 gcloud alpha iap web add-iam-policy-binding \
   --project="$PROJECT_ID" \
   --resource-type=cloud-run \
-  --service="${PREFIX}-ingress" \
+  --service=celld-demo-ingress \
   --region="$REGION" \
   --member="user:${USER_EMAIL}" \
   --role="roles/iap.httpsResourceAccessor"
@@ -261,7 +258,7 @@ gcloud alpha iap web add-iam-policy-binding \
 
 Retrieve the service URL and open `/alpha` in your browser:
 ```bash
-SERVICE_URL=$(gcloud run services describe "${PREFIX}-ingress" --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
+SERVICE_URL=$(gcloud run services describe celld-demo-ingress --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')
 echo "Open: ${SERVICE_URL}/alpha"
 ```
 
@@ -271,7 +268,7 @@ Projects without an organization and users outside your organization may also ne
 If you prefer not to configure IAP, you can keep the service IAM-private and start an authenticated local tunnel using your active `gcloud` developer credentials:
 
 ```bash
-gcloud run services proxy "${PREFIX}-ingress" \
+gcloud run services proxy celld-demo-ingress \
   --project="$PROJECT_ID" \
   --region="$REGION" \
   --port=8080
@@ -286,7 +283,7 @@ Open `http://localhost:8080/alpha` in your browser. The proxy automatically inje
 ### 1. Cloud Run Durable Object Performance
 Measures end-to-end transaction latency (isolate execution + SQLite write + regional GCS LTX WAL sync + WebSocket broadcast) on Cloud Run in `us-west1`:
 
-These are the original deployment observations, not a benchmark of the new shared-CPU Instance or the OpenCode model. They are retained as a useful baseline, not a throughput guarantee.
+These measurements are from the original deployment, not the new shared-CPU Instance.
 
 | Metric | Measured Value |
 | :--- | :--- |
@@ -306,14 +303,22 @@ These are the original deployment observations, not a benchmark of the new share
 
 ---
 
+## More Examples
+
+- [OpenCode](example-opencode/README.md): A minimal Worker with curl examples for creating, prompting, and resuming sessions.
+- [Workflows](example-workflow/): A multi-step workflow with a built-in demo UI. Its in-memory workflow list is not a durable catalog; adapt the trace-console project link for your project.
+- [Operational dashboard](dashboard/): A separate Python dashboard for workflows. Set `CELLD_BUCKET` and `CELLD_INGRESS_URL` to your deployment.
+
+---
+
 ## Cleanup
 
-Delete the resources you created to stop their compute billing. **Deleting the bucket destroys the deployed code and persisted demo state**; export anything you want to keep first. Stop the singleton instead if you want to resume later (storage charges remain).
+Delete the resources you created to stop billing. **Deleting the bucket also deletes the deployed code and stored state.** To keep the data, stop the Instance instead; storage charges remain.
 
 ```bash
-gcloud beta run instances delete "${PREFIX}-single" --project="$PROJECT_ID" --region="$REGION" --quiet
+gcloud beta run instances delete celld-demo --project="$PROJECT_ID" --region="$REGION" --quiet
 # Only if you deployed the scale-out topology:
-gcloud run services delete "${PREFIX}-ingress" --project="$PROJECT_ID" --region="$REGION" --quiet
-gcloud beta run worker-pools delete "${PREFIX}-workers" --project="$PROJECT_ID" --region="$REGION" --quiet
+gcloud run services delete celld-demo-ingress --project="$PROJECT_ID" --region="$REGION" --quiet
+gcloud beta run worker-pools delete celld-demo-workers --project="$PROJECT_ID" --region="$REGION" --quiet
 gcloud storage rm --recursive "gs://${BUCKET}" --project="$PROJECT_ID" --quiet
 ```

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 const base = process.argv[2] || "http://localhost:9876";
 async function request(path, body) {
-  const response = await fetch(base + "/api/sessions" + path, {
+  const response = await fetch(base + "/sessions" + path, {
     ...(body === undefined ? {} : {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
     }),
