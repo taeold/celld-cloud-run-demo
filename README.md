@@ -13,6 +13,7 @@ Prerequisites:
 - A billed GCP project and an authenticated, current [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) with `gcloud beta run instances`.
 - [celld v0.4.1](https://github.com/denoland/celld/releases/tag/v0.4.1), `esbuild`, and `git` installed.
 - The default runtime service account needs [Storage Object Admin access](https://cloud.google.com/storage/docs/access-control/using-iam-permissions) to the bucket below.
+- Your gcloud account needs permission to invoke the Instance, such as the [Cloud Run Invoker role](https://docs.cloud.google.com/run/docs/authenticating/developers).
 
 ### 1. Create a GCS bucket
 
@@ -49,13 +50,13 @@ gcloud beta run instances create celld-demo \
   --project="$PROJECT_ID" --region="$REGION" \
   --image=ghcr.io/denoland/celld:v0.4.1 \
   --cpu=1 --memory=1Gi --port=8080 \
-  --restart-policy=always --public \
+  --restart-policy=always --invoker-iam-check \
   --set-env-vars="CELLD_BUCKET=gs://${BUCKET},CELLD_ADDR=0.0.0.0:8080,CELLD_INTERNAL_ADDR=127.0.0.1:8081,CELLD_ADVERTISE=127.0.0.1:8081"
 ```
 
 - `--restart-policy=always`: Restart celld after any exit, including a clean exit. See [restart policies](https://cloud.google.com/run/docs/configuring/instances/restart-policy).
 - `--port=8080` and `CELLD_ADDR`: Route HTTP requests to celld. The internal listener and advertised address use loopback because this is a single node.
-- `--public`: Allow browser access without authentication for this demo.
+- `--invoker-iam-check`: Require authentication and IAM permission to invoke the Instance.
 
 ### 4. Try it
 
@@ -63,25 +64,35 @@ Set `URL` to the HTTPS address printed by the create command:
 
 ```bash
 URL="https://YOUR_CELLD_DEPLOYMENT_URL"
+AUTH="Authorization: Bearer $(gcloud auth print-identity-token)"
 ```
+
+Re-run the `AUTH` assignment when the token expires.
 
 Read the counter, increment it twice, then read the stored value. A fresh `alpha` counter returns:
 
 ```bash
-curl -fsS --retry 12 --retry-delay 5 --retry-all-errors "$URL/alpha/count"; echo
+curl -fsS -H "$AUTH" --retry 12 --retry-delay 5 --retry-all-errors "$URL/alpha/count"; echo
 # {"count":0}
 
-curl -fsS -X POST "$URL/alpha/count"; echo
+curl -fsS -H "$AUTH" -X POST "$URL/alpha/count"; echo
 # {"count":1}
 
-curl -fsS -X POST "$URL/alpha/count"; echo
+curl -fsS -H "$AUTH" -X POST "$URL/alpha/count"; echo
 # {"count":2}
 
-curl -fsS "$URL/alpha/count"; echo
+curl -fsS -H "$AUTH" "$URL/alpha/count"; echo
 # {"count":2}
 ```
 
-Open `$URL/alpha` in a browser to see the same counter update over WebSocket. `/beta` has its own counter.
+For browser/WebSocket access, run an [authenticated local proxy](https://docs.cloud.google.com/sdk/gcloud/reference/beta/run/instances/proxy):
+
+```bash
+gcloud beta run instances proxy celld-demo \
+  --project="$PROJECT_ID" --region="$REGION" --port=8080
+```
+
+Open `http://localhost:8080/alpha`. `/beta` has its own counter.
 
 ---
 

@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 
 const base = process.argv[2] || "http://localhost:9876";
 async function request(path, body) {
+  const headers = body === undefined ? {} : { "content-type": "application/json" };
+  if (process.env.CELLD_ID_TOKEN) headers.authorization = `Bearer ${process.env.CELLD_ID_TOKEN}`;
   const response = await fetch(base + "/sessions" + path, {
+    headers,
     ...(body === undefined ? {} : {
-      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+      method: "POST", body: JSON.stringify(body),
     }),
     signal: AbortSignal.timeout(180_000),
   });
